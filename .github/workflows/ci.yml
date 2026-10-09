@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  # Weekly render against the newest Web A commit, to notice upstream drift before an update.
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun test
+
+  render:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        upstream: [pinned, latest]
+        exclude:
+          - upstream: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'none' || 'latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - if: matrix.upstream == 'latest'
+        run: bun run pin latest
+      - run: bun run examples
+      - if: matrix.upstream == 'latest'
+        run: bun run typecheck:web-a
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wireframes-${{ matrix.upstream }}
+          path: wireframes/

@@ -1,0 +1,110 @@
+diff --git a/src/lib/gramjs/client/MockClient.ts b/src/lib/gramjs/client/MockClient.ts
+index 92cf47b..e270e13 100644
+--- a/src/lib/gramjs/client/MockClient.ts
++++ b/src/lib/gramjs/client/MockClient.ts
+@@ -22,6 +22,7 @@ import getIdFromInputPeer from './mockUtils/getIdFromInputPeer';
+ import { downloadFile } from './downloadFile';
+ 
+ import MockSender from './MockSender';
++import { loadWireframe, WIREFRAME_SCENARIO_PREFIX } from './wireframes/loader';
+ 
+ const sizeTypes: SizeType[] = ['u', 'v', 'w', 'y', 'd', 'x', 'c', 'm', 'b', 'a', 's', 'f'];
+ 
+@@ -63,6 +64,16 @@ class TelegramClient {
+   }
+ 
+   async loadScenario(scenario = 'default'): Promise<void> {
++    if (scenario.startsWith(WIREFRAME_SCENARIO_PREFIX)) {
++      const { mockData, invokeMiddleware } = await loadWireframe(scenario.slice(WIREFRAME_SCENARIO_PREFIX.length));
++      this.mockData = mockData;
++      this.invokeMiddleware = invokeMiddleware as typeof this.invokeMiddleware;
++      this.callbacks.forEach(({ eventBuilder, callback }) => (callback(
++        eventBuilder.build(new UpdateConnectionState(UpdateConnectionState.connected)),
++      )));
++      return;
++    }
++
+     try {
+       const invokeMiddleware = await import(/* @vite-ignore */ `./__invokeMiddlewares__/${scenario}`);
+ 
+@@ -97,12 +108,13 @@ class TelegramClient {
+     return this.mockData.dialogs[type].map((dialog) => createMockedDialog(dialog.id, this.mockData));
+   }
+ 
+-  start({
++  async start({
+     mockScenario,
+   }: {
+     mockScenario: string;
+-  }) {
+-    return this.loadScenario(mockScenario);
++  }, onConnected?: () => void) {
++    await this.loadScenario(mockScenario);
++    onConnected?.();
+   }
+ 
+   async invoke<A, R>(request: Api.Request<A, R>) {
+@@ -237,7 +249,8 @@ class TelegramClient {
+       return new Api.upload.File({
+         type: new Api.storage.FileUnknown(),
+         mtime: 0,
+-        bytes: new Uint8Array(this.mockData.documents.find((i) => i.id === fileId)!.bytes),
++        bytes: new Uint8Array(this.mockData.documents.find((i) => i.id === fileId)!.bytes)
++          .slice(Number(request.offset), Number(request.offset) + request.limit),
+       });
+     }
+ 
+@@ -415,6 +428,18 @@ class TelegramClient {
+ 
+   public setPingCallback() {}
+ 
++  public setIsPremium() {}
++
++  public setAllowHttpTransport() {}
++
++  public setForceHttpTransport() {}
++
++  public invokeBeacon() {}
++
++  public async disconnect() {}
++
++  public async destroy() {}
++
+   public setShouldDebugExportedSenders() {}
+ 
+   public isConnected() {
+diff --git a/src/lib/gramjs/client/mockUtils/createMockedPhoto.ts b/src/lib/gramjs/client/mockUtils/createMockedPhoto.ts
+index 5cd09dd..b1ed646 100644
+--- a/src/lib/gramjs/client/mockUtils/createMockedPhoto.ts
++++ b/src/lib/gramjs/client/mockUtils/createMockedPhoto.ts
+@@ -17,8 +17,10 @@ export default function createMockedPhoto(documentId: number, mockData: MockType
+     dcId = 2,
+     url,
+     size,
++    w = 100,
++    h = 100,
+     ...rest
+-  } = document;
++  } = document as typeof document & { w?: number; h?: number };
+ 
+   return new Api.Photo({
+     ...rest,
+@@ -29,14 +31,14 @@ export default function createMockedPhoto(documentId: number, mockData: MockType
+     sizes: [
+       new Api.PhotoSize({
+         type: 'm',
+-        w: 100,
+-        h: 100,
++        w,
++        h,
+         size: toJSNumber(size),
+       }),
+       new Api.PhotoSize({
+         type: 'x',
+-        w: 100,
+-        h: 100,
++        w,
++        h,
+         size: toJSNumber(size),
+       }),
+     ],

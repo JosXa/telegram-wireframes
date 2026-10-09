@@ -1,0 +1,76 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{ "command": "planet", "description": "Your current planet" },
+			{ "command": "build", "description": "Buildings and upgrades" },
+			{ "command": "fleet", "description": "Fleets in flight" }
+		]
+	},
+	"user": { "first_name": "Joscha" },
+	"messages": [
+		{
+			"from": "user",
+			"text": "/start",
+			"entities": [{ "type": "bot_command", "offset": 0, "length": 6 }]
+		},
+		{
+			"from": "bot",
+			"photo": "system-map.jpg",
+			"caption": "🪐 System 2:14 · Vega Cluster\n7 planets · 2 unclaimed · 👁 1 scouted",
+			"caption_entities": [{ "type": "bold", "offset": 3, "length": 26 }],
+			"reply_markup": {
+				"inline_keyboard": [
+					[
+						{ "text": "◀ 2:13", "callback_data": "sys:2:13" },
+						{ "text": "🏠 Home", "callback_data": "home" },
+						{ "text": "2:15 ▶", "callback_data": "sys:2:15" }
+					],
+					[
+						{
+							"text": "🗺 Open galaxy map",
+							"web_app": { "url": "https://example.org/map" },
+							"style": "primary"
+						}
+					]
+				]
+			}
+		},
+		{
+			"from": "bot",
+			"text": "🏢 Headquarters reached level 4\n\n💠 1 240  🔥 610  ⚡ 380",
+			"entities": [{ "type": "bold", "offset": 3, "length": 28 }],
+			"reply_markup": {
+				"inline_keyboard": [
+					[{ "text": "Queue next upgrade", "callback_data": "upgrade:hq", "style": "success" }],
+					[{ "text": "🔬 Research Lab (needs HQ 5)", "disabled": {} }]
+				]
+			}
+		},
+		{
+			"from": "bot",
+			"text": "⚠️ Fleet incoming at 2:14:6\nArrives in 12 min · 38 Light Fighters",
+			"entities": [{ "type": "bold", "offset": 3, "length": 24 }],
+			"reply_markup": {
+				"inline_keyboard": [
+					[
+						{ "text": "🛡 Recall my fleet", "callback_data": "recall", "style": "danger" },
+						{ "text": "👁 Scan attacker", "callback_data": "scan" }
+					]
+				]
+			}
+		},
+		{
+			"from": "bot",
+			"text": "🛰 Command deck ready. Pick a section below.",
+			"reply_markup": {
+				"keyboard": [["🪐 Planet", "🏗 Build", "🔬 Research"], ["🚀 Fleet", "🤝 Alliance", "⚙️ Settings"]],
+				"resize_keyboard": true,
+				"is_persistent": true
+			}
+		}
+	]
+}

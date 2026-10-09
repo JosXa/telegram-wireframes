@@ -1,0 +1,31 @@
+{
+	"name": "telegram-wireframes",
+	"version": "0.1.0",
+	"description": "Render Telegram bot chats from Bot API JSON with Telegram Web A's own renderer",
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"repository": "github:JosXa/telegram-wireframes",
+	"bin": {
+		"telegram-wireframes": "src/cli.ts"
+	},
+	"scripts": {
+		"render": "bun src/cli.ts render",
+		"serve": "bun src/cli.ts serve",
+		"setup": "bun src/cli.ts setup",
+		"build": "bun src/cli.ts build",
+		"save-patch": "bun src/cli.ts save-patch",
+		"typecheck:web-a": "bun src/cli.ts typecheck",
+		"pin": "bun src/cli.ts pin",
+		"examples": "bun src/cli.ts render examples/*/fixture.json --keyboard --out wireframes/examples",
+		"check": "biome check . && tsc --noEmit",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"playwright": "^1.64.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.5.15",
+		"@types/bun": "^1.4.2",
+		"typescript": "^7.0.2"
+	}
+}
