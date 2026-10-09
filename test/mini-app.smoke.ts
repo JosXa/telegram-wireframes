@@ -42,6 +42,15 @@ try {
 			);
 			const frame = page.frames().find((frame) => frame.url().includes("/app/index.html"));
 			assert.ok(frame);
+			// The Mini App must request the exact same artwork as the surrounding Telegram message.
+			for (const glyph of ["💠", "🔥"]) {
+				const chatEmoji = page.locator(`.Message img.emoji[alt='${glyph}']`).first();
+				const appEmoji = app.locator(`.resources img[alt='${glyph}']`);
+				assert.equal(
+					await appEmoji.evaluate((node: HTMLImageElement) => node.src),
+					await chatEmoji.evaluate((node: HTMLImageElement) => node.src),
+				);
+			}
 			assert.equal(new URLSearchParams(new URL(frame.url()).hash.slice(1)).get("tgWebAppData"), "");
 			assert.ok(new URLSearchParams(new URL(frame.url()).hash.slice(1)).get("tgWebAppThemeParams"));
 			const map = app.locator("#galaxy");
@@ -157,6 +166,12 @@ try {
 				/Mission verified at.*this leg only/,
 			);
 			assert.equal(await app.locator(".composition > div").count(), 3);
+			await app.locator("#verification img[alt='👁']").waitFor();
+			await frame.waitForFunction(() =>
+				[...document.querySelectorAll<HTMLImageElement>("img.telegram-emoji")].every(
+					(image) => image.complete && image.naturalWidth === 64,
+				),
+			);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-espionage.png` });
 			await app.locator(".demo-controls summary").click();
 			await app.getByRole("button", { name: "Recall", exact: true }).click();
@@ -174,6 +189,12 @@ try {
 			assert.equal(await app.locator(".planet.own").count(), 8);
 			assert.equal(await app.locator(".station").count(), 8);
 			assert.equal(await app.locator("[data-fleet]").count(), 27);
+			assert.equal(await app.locator("#orbit-picker img.telegram-emoji").count(), 8);
+			await frame.waitForFunction(() =>
+				[...document.querySelectorAll<HTMLImageElement>("img.telegram-emoji")].every(
+					(image) => image.complete && image.naturalWidth === 64,
+				),
+			);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-developed.png` });
 			for (let orbit = 1; orbit <= 8; orbit++) {
 				const button = app.locator(`[data-orbit-select='28:${orbit}']`);

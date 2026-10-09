@@ -31,6 +31,15 @@ button {
 	background: none;
 	min-height: 48px;
 }
+.telegram-emoji {
+	display: inline-block;
+	width: 1.25em;
+	height: 1.25em;
+	vertical-align: -0.25em;
+	object-fit: contain;
+	flex-shrink: 0;
+	margin-inline-end: 1px;
+}
 button:hover {
 	background: oklch(85% 0.02 245 / 0.07);
 }

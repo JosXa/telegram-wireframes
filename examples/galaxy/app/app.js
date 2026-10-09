@@ -108,6 +108,40 @@ const shipTypes = {
 	fighter: { name: "Light Fighter", symbol: "ship-sprite", width: 20, height: 14 },
 };
 
+function renderEmoji(root) {
+	// Match this study's resource, biome and Observatory glyphs to Web A's own Apple assets.
+	// Keep UI arrows as text icons; never let the operating system choose the emoji artwork.
+	const pattern = /[💠🔥🏝🏔🌋🏜⛰👁]\uFE0F?/gu;
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	const replacements = [];
+	while (walker.nextNode()) {
+		const node = walker.currentNode;
+		if (node.parentElement.namespaceURI === NS) continue;
+		const matches = [...node.textContent.matchAll(pattern)];
+		if (matches.length) replacements.push({ node, matches });
+	}
+	for (const { node, matches } of replacements) {
+		const fragment = document.createDocumentFragment();
+		let offset = 0;
+		for (const match of matches) {
+			fragment.append(node.textContent.slice(offset, match.index));
+			const image = document.createElement("img");
+			image.className = "telegram-emoji";
+			image.alt = match[0];
+			image.draggable = false;
+			// Same normalization as Web A's nativeToUnifiedExtended: omit variation selector 16.
+			const code = [...match[0].replaceAll("\uFE0F", "")]
+				.map((character) => character.codePointAt(0).toString(16).padStart(4, "0"))
+				.join("-");
+			image.src = `/img-apple-64/${code}.png`;
+			fragment.append(image);
+			offset = match.index + match[0].length;
+		}
+		fragment.append(node.textContent.slice(offset));
+		node.replaceWith(fragment);
+	}
+}
+
 function element(tag, attrs, parent, text) {
 	const node = document.createElementNS(NS, tag);
 	for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
@@ -629,6 +663,7 @@ function selectPlanet(planet, approach = false) {
 		updateCamera();
 		$("#planet-action").textContent = "System overview ↗";
 	}
+	renderEmoji($(".selection"));
 }
 function fit() {
 	const outer = view === "galaxy" ? 290 : planets.at(-1).radius;
@@ -708,6 +743,7 @@ function showView(next) {
 	if (view === "galaxy") galaxy();
 	else systemScene();
 	resize();
+	renderEmoji(document.body);
 }
 function resize() {
 	const box = svg.getBoundingClientRect();
@@ -908,6 +944,7 @@ function showMovements() {
 			list.append(button);
 		}
 	}
+	renderEmoji(list);
 }
 function openMovement(fleet) {
 	const previous = activeFleet;
@@ -949,6 +986,7 @@ function openMovement(fleet) {
 				: `<p class="fleet-note">${state.id === "incoming-ally" && !state.ended ? "An alliance member is approaching. Alliance membership does not verify their mission." : state.ended ? "An old report cannot verify a different movement leg." : "Only sender, origin, target and arrival are visible."}</p>`
 		}
 		${!state.own ? `<button type="button" class="scan-button" id="scan-fleet" ${state.ended || report || !state.inScanRange ? "disabled" : ""}>${state.ended ? "Movement ended" : report ? "👁 Verified for this leg" : state.inScanRange ? "👁 Scan fleet with Observatory" : "Outside Observatory range"}</button><p class="fleet-note">${report ? "Recall, arrival or a replacement leg expires this verification." : "Scan availability is sample state; range geometry is still undecided."}</p><details class="demo-controls"><summary>Preview movement changes</summary><p>Prototype controls for report expiry.</p><button type="button" data-expire="recalled">Recall</button><button type="button" data-expire="arrived">Arrival</button><button type="button" data-expire="replaced">Replacement leg</button></details>` : ""}`;
+	renderEmoji(detail);
 	if (!state.own) {
 		$("#scan-fleet").addEventListener("click", () => scanFleet(fleet));
 		for (const button of detail.querySelectorAll("[data-expire]"))
