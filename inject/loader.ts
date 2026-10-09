@@ -114,10 +114,12 @@ function buildFullUser(request: Api.users.GetFullUser, fixture: Fixture, client:
 }
 
 function createMiddleware(fixture: Fixture, config: WireframeConfig): WireframeMiddleware {
-	let isForwarding = false;
+	// Requests handed back to the stock mock logic in debug mode. Tracked per request, because
+	// requests run concurrently.
+	const forwarded = new WeakSet<object>();
 
 	return async (client, request) => {
-		if (isForwarding) return "pass";
+		if (forwarded.has(request)) return "pass";
 
 		if (request instanceof Api.users.GetFullUser) return buildFullUser(request, fixture, client);
 		if (request instanceof Api.langpack.GetLangPack) return buildLangPack(request.langCode);
@@ -143,6 +145,9 @@ function createMiddleware(fixture: Fixture, config: WireframeConfig): WireframeM
 				unreadCount: 0,
 			});
 		}
+		if (request instanceof Api.messages.GetDialogFilters) {
+			return new Api.messages.DialogFilters({ filters: [new Api.DialogFilterDefault()] });
+		}
 		if (request instanceof Api.updates.GetDifference) {
 			return new Api.updates.DifferenceEmpty({ date: Math.floor(Date.now() / 1000), seq: 1 });
 		}
@@ -151,14 +156,10 @@ function createMiddleware(fixture: Fixture, config: WireframeConfig): WireframeM
 
 		// Debug mode: run the stock mock logic and report requests that nothing answers. After a Web A
 		// update, a hang during boot usually traces back to one of these.
-		isForwarding = true;
-		try {
-			const result = await client.invoke(request);
-			if (result === undefined) console.warn("[wireframes] unanswered request", request.className);
-			return result;
-		} finally {
-			isForwarding = false;
-		}
+		forwarded.add(request);
+		const result = await client.invoke(request);
+		if (result === undefined) console.warn("[wireframes] unanswered request", request.className);
+		return result;
 	};
 }
 
