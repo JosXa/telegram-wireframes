@@ -43,10 +43,6 @@ try {
 				systems,
 				"each hex must have its own system",
 			);
-			for (const kind of ["star", "white-dwarf", "neutron-star", "black-hole"])
-				assert.ok(await app.locator(`.stellar-object[data-kind='${kind}']`).count());
-			for (const count of [1, 2, 3])
-				assert.ok(await app.locator(`.system[data-components='${count}']`).count());
 			assert.ok(
 				await app
 					.locator(".stellar-core")
@@ -72,6 +68,19 @@ try {
 			const map = app.locator("#galaxy");
 			const box = await map.boundingBox();
 			assert.ok(box);
+			const popover = app.locator("#selection-popover");
+			assert.equal(
+				await popover.isVisible(),
+				false,
+				"details stay closed until a star or planet is selected",
+			);
+			assert.equal(await app.locator(".heading, footer, .map-caption, .drag-hint").count(), 0);
+			const tabs = await app.locator(".view-switcher").boundingBox();
+			assert.ok(tabs && Math.abs(box.y - (tabs.y + tabs.height)) < 1);
+			assert.ok(
+				await map.evaluate((node) => Math.abs(node.getBoundingClientRect().bottom - innerHeight) < 1),
+				"the map fills all space below the tabs",
+			);
 			const x = box.x + box.width * 0.2;
 			const y = box.y + box.height * 0.2;
 			const before = await map.getAttribute("data-camera");
@@ -140,12 +149,69 @@ try {
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /BINARY SYSTEM/);
 			assert.match((await app.locator("#stellar-classification").textContent()) ?? "", /B6 V.*K4 V/);
 			assert.equal(await map.getAttribute("data-camera"), cameraBeforeSelection);
+			assert.equal(await popover.isVisible(), true);
+			const popoverBox = await popover.boundingBox();
+			assert.ok(
+				popoverBox && popoverBox.y >= box.y && popoverBox.y + popoverBox.height <= box.y + box.height,
+			);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-selection.png` });
+			await page.keyboard.press("Escape");
+			assert.equal(await popover.isVisible(), false);
+			if (touch) await page.touchscreen.tap(hexX, hexY);
+			else await page.mouse.click(hexX, hexY);
+			await app.getByRole("button", { name: "Close selection", exact: true }).click();
+			assert.equal(await popover.isVisible(), false);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
 			await app.locator("#stellar-key summary").click();
 			assert.equal(await app.locator("#stellar-key").getAttribute("open"), "");
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-catalogue.png` });
 			await app.locator("#stellar-key summary").click();
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}.png` });
+			await app.getByRole("button", { name: "Zoom out", exact: true }).click({ clickCount: 14, delay: 30 });
+			const wideCamera = JSON.parse((await map.getAttribute("data-camera")) ?? "{}");
+			assert.ok(wideCamera.scale < 0.025);
+			const census = await frame.evaluate(() => ({
+				cells: document.querySelector("#distant-cells")?.getAttribute("d")?.match(/M/g)?.length,
+				kinds: [
+					...new Set(
+						[...document.querySelectorAll("#distant-stars path")].map((node) =>
+							node.getAttribute("data-kind"),
+						),
+					),
+				].sort(),
+				multiplicities: [
+					...new Set(
+						[...document.querySelectorAll("#distant-stars path")].map((node) =>
+							node.getAttribute("data-components"),
+						),
+					),
+				].sort(),
+			}));
+			assert.ok(
+				census.cells && census.cells > 4000,
+				"the galaxy must extend well beyond the home neighbourhood",
+			);
+			assert.deepEqual(census.kinds, ["black-hole", "neutron-star", "star", "white-dwarf"]);
+			assert.deepEqual(census.multiplicities, ["1", "2", "3"]);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-wide.png` });
+			// Select a hex far beyond the original radius-ten galaxy (axial coordinates 30, -15).
+			const distantX = box.x + wideCamera.x + 30 * 146 * 1.5 * wideCamera.scale;
+			const distantY = box.y + wideCamera.y;
+			if (touch) await page.touchscreen.tap(distantX, distantY);
+			else await page.mouse.click(distantX, distantY);
+			assert.equal(await app.locator(".system.selected").getAttribute("data-axial"), "30,-15");
+			const distantHitbox = await app.locator(".system.selected .planet-hitbox").boundingBox();
+			assert.ok(
+				distantHitbox && distantHitbox.width < 5,
+				"distant system targets must not cover neighbouring hexes",
+			);
+			await app.getByRole("button", { name: "Return to home planet" }).click();
+			assert.equal(await popover.isVisible(), false, "map controls dismiss the selection popover");
+			const homeStar = await app.locator("[data-system='14'] .planet-hitbox").boundingBox();
+			assert.ok(homeStar);
+			if (touch)
+				await page.touchscreen.tap(homeStar.x + homeStar.width / 2, homeStar.y + homeStar.height / 2);
+			else await page.mouse.click(homeStar.x + homeStar.width / 2, homeStar.y + homeStar.height / 2);
 			await app.getByRole("button", { name: "Enter system ↗" }).click();
 			assert.equal(await app.locator(".planet").count(), 4);
 			assert.equal(await app.locator(".planet.own").count(), 2);
@@ -176,6 +242,17 @@ try {
 			else await page.mouse.click(target.x + target.width / 2, target.y + target.height / 2);
 			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /YOUR COLONY/);
+			const planetDisk = app.locator("[data-planet='14:2'] circle[fill='url(#terminator)']");
+			const initialDisk = await planetDisk.boundingBox();
+			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
+			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
+			const enlargedDisk = await planetDisk.boundingBox();
+			assert.ok(initialDisk && enlargedDisk && enlargedDisk.width > initialDisk.width * 1.3);
+			assert.ok(enlargedDisk.width <= 48, "planet growth must remain capped");
+			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
+			const cappedDisk = await planetDisk.boundingBox();
+			assert.ok(cappedDisk && Math.abs(cappedDisk.width - enlargedDisk.width) < 0.1);
+			await app.getByRole("button", { name: "Orbit 2: Kepler", exact: true }).click();
 			assert.equal(await app.locator("[data-fleet]").count(), 5);
 			assert.equal(
 				await app.locator(".route-flow").count(),

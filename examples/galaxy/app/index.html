@@ -8,10 +8,6 @@
   <script src="app.js" type="module"></script>
 </head>
 <body>
-  <header class="heading">
-    <div><p class="eyebrow" id="view-meta">PERSEUS ARM · SECTOR 07</p><h1 id="view-title">The frontier</h1></div>
-    <div class="resources"><span id="minerals">💠 1 240</span><span id="gas">🔥 610</span></div>
-  </header>
   <nav class="view-switcher" aria-label="Map study">
     <button type="button" data-view="galaxy">Galaxy</button>
     <button type="button" data-view="young">First colonies <small>4 planets</small></button>
@@ -51,8 +47,6 @@
       <g id="backdrop"></g>
       <g id="world"><g id="cells"></g><g id="orbits"></g><g id="routes"></g><g id="stars"></g><g id="ships"></g><g id="planets"></g></g>
     </svg>
-    <div class="map-caption"><span class="live-dot"></span><span id="flight-summary"></span></div>
-    <div class="map-mode" id="map-mode">HEX SECTORS</div>
     <button type="button" id="overview" hidden>Overview ↗</button>
     <details id="stellar-key">
       <summary>Star classes</summary>
@@ -71,20 +65,19 @@
       <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
       <button type="button" id="recenter" aria-label="Return to home planet">⌖</button>
     </fieldset>
-    <p class="drag-hint" id="drag-hint">Drag to explore · tap a star</p>
+    <section class="orbit-picker" id="orbit-picker" aria-label="Select an orbit" hidden></section>
+    <section class="selection" id="selection-popover" popover="auto" role="dialog" aria-labelledby="planet-name">
+      <div class="selection-head"><div><p id="planet-meta" class="eyebrow"></p><h2 id="planet-name">Solara</h2></div><span id="planet-biome"></span><button type="button" popovertarget="selection-popover" popovertargetaction="hide" aria-label="Close selection">×</button></div>
+      <p id="stellar-classification"></p>
+      <div class="resources" hidden><span id="minerals">💠 1 240</span><span id="gas">🔥 610</span></div>
+      <div class="selection-footer"><span id="planet-detail"></span><button type="button" id="planet-action">Enter system ↗</button></div>
+    </section>
+    <section id="movement-panel" aria-label="Fleet movements" hidden>
+      <header class="movement-heading"><button type="button" id="movement-back" hidden>‹ All movements</button><h2 id="movement-heading">Fleet movements</h2><button type="button" id="close-movements" aria-label="Close fleet movements">×</button></header>
+      <div id="movement-list"></div>
+      <div id="movement-detail" hidden></div>
+    </section>
   </main>
-  <section class="orbit-picker" id="orbit-picker" aria-label="Select an orbit" hidden></section>
-  <section class="selection" aria-live="polite">
-    <div class="selection-head"><div><p id="planet-meta" class="eyebrow"></p><h2 id="planet-name">Solara</h2></div><span id="planet-biome"></span></div>
-    <p id="stellar-classification"></p>
-    <div class="selection-footer"><span id="planet-detail"></span><button type="button" id="planet-action">Enter system ↗</button></div>
-  </section>
-  <section id="movement-panel" aria-label="Fleet movements" hidden>
-    <header class="movement-heading"><button type="button" id="movement-back" hidden>‹ All movements</button><h2 id="movement-heading">Fleet movements</h2><button type="button" id="close-movements" aria-label="Close fleet movements">×</button></header>
-    <div id="movement-list"></div>
-    <div id="movement-detail" hidden></div>
-  </section>
-  <footer><span id="scene-note">MAP STUDY · SAMPLE STATE</span><span class="ownership-key"><i></i> Your colonies</span></footer>
   <div id="status" role="status"></div>
 </body>
 </html>

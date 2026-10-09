@@ -87,15 +87,17 @@ Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, 
 
 The map study has three views, also selectable with `?variant=galaxy`, `?variant=young` or `?variant=developed` on the app page:
 
-- Galaxy places a small, dim astronomical object or multiple system in every hex, with sparse settlements against a coloured starfield and nebulae.
+- Galaxy places a small, dim astronomical object or multiple system in every hex, with sparse settlements against a coloured starfield and nebulae. Zoom out to see thousands of systems, then pan and zoom into a distant region.
 - First colonies has four different biomes around a central star, with a home planet, a second colony and two unclaimed worlds.
 - High empire has eight settled planets, orbital stations, patrol craft and resource transports.
 
-System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, while their artwork shrinks slightly in overview. Tap an orbit or its planet to select it without moving the camera. The orbit buttons approach individual worlds.
+The map fills the space below the tabs. Tap a star or planet for a popover with its details and actions; tap elsewhere or press Escape to dismiss it. Fleet details also float over the map.
+
+System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, while their artwork grows with zoom up to a fixed size. Tap an orbit or its planet to select it without moving the camera. The orbit buttons approach individual worlds.
 
 Galaxy stars use O–B–A–F–G–K–M spectral classes and separate V/III/I luminosity classes. The catalogue also includes binary and triple systems, DA/DB white dwarfs, neutron stars and pulsars, and stellar-mass black holes with companions. These follow [stellar evolution categories](https://science.nasa.gov/universe/stars/types/) and [black-hole mass classes](https://science.nasa.gov/universe/black-holes/types/). Tap a whole hex to inspect its classification, or open **Star classes** for the key. Ordinary systems reveal their names on selection, keeping settlements prominent. Colours are enhanced and symbols enlarged: true stellar diameters disappear at interstellar map scales. Distribution, planet counts and positions are illustrative.
 
-Fleet positions follow departure and arrival timestamps over journeys lasting minutes or hours. Faint, static dotted trajectories show each fleet's remaining journey. Compact incoming markers pulse gently: an amber warning for unverified contacts, a red target for verified attacks, and a blue shield for verified reinforcements. Tap a marker for details and scanning; the map carries no persistent fleet labels. Your heavy warships, small freighters and Light Fighters travel in formation, with provisional silhouettes and no settled ship statistics. Arrivals end movements rather than looping them.
+Fleet positions follow departure and arrival timestamps over journeys lasting minutes or hours. Faint, static dotted trajectories show each fleet's remaining journey. Compact incoming markers pulse gently: an amber warning for unverified contacts, a red target for verified attacks, and a blue shield for verified reinforcements. Tap a marker for details and scanning. The map carries no persistent fleet labels. Your heavy warships, small freighters and Light Fighters travel in formation, with provisional silhouettes and no settled ship statistics. Arrivals end movements rather than looping them.
 
 Open **Fleet movements** to inspect unknown incoming fleets, a verified attack and your own transports. Scan the allied incoming fleet to reveal reinforcements and its ship composition. The report identifies its movement leg and verification time. The preview controls demonstrate expiry on recall, arrival or replacement. Unknown fleets have no composition or mission in their initial fixture state, including allied fleets. The scan uses a separate static response under `app/intel/`; production authorization and visibility belong on the game server. Scan range and travel times are sample values.
 
@@ -118,6 +120,8 @@ bun run test:mini-app
 </p>
 
 [Full eight-planet system](docs/system-developed-full.png)
+
+[Galaxy overview](docs/galaxy-wide.png) and [selected-system popover](docs/galaxy-selection.png).
 
 [Incoming fleet](docs/fleet-incoming.png), [fleet scan and ship silhouettes](docs/fleet-espionage.png), and [astronomical catalogue](docs/galaxy-catalogue.png).
 

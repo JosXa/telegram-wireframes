@@ -7,6 +7,8 @@ const $ = (selector) => document.querySelector(selector);
 const svg = $("#galaxy");
 const world = $("#world");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const galaxyRadius = 40;
+const galaxyHexSize = 146;
 const biomes = {
 	tropical: { label: "Tropical", icon: "🏝", sea: "#245c82", land: "#70ad83", light: "#afd6ac" },
 	snowy: { label: "Snowy", icon: "🏔", sea: "#759bb4", land: "#c8e3e5", light: "#e2edf0" },
@@ -102,12 +104,10 @@ const systems = [
 	},
 ];
 const galaxyRandom = random(9102);
-for (let q = -10; q <= 10; q++)
-	for (let r = -10; r <= 10; r++) {
-		if (
-			Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 10 ||
-			systems.some((s) => s.q === q && s.r === r)
-		)
+const occupied = new Set(systems.map(({ q, r }) => `${q},${r}`));
+for (let q = -galaxyRadius; q <= galaxyRadius; q++)
+	for (let r = -galaxyRadius; r <= galaxyRadius; r++) {
+		if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > galaxyRadius || occupied.has(`${q},${r}`))
 			continue;
 		const id = 100 + systems.length;
 		const components = stellarSystem(galaxyRandom);
@@ -152,6 +152,8 @@ let planets = [];
 let fleets = [];
 let patrols = [];
 let markers = [];
+const galaxyNodes = new Map();
+let distantScale;
 let camera = { x: 0, y: 0, scale: 1 };
 let width = 420;
 let height = 520;
@@ -294,82 +296,206 @@ function addStar(x, y, radius, parent, blue = false) {
 	return g;
 }
 function galaxy() {
-	const size = 146;
-	for (let q = -10; q <= 10; q++)
-		for (let r = -10; r <= 10; r++) {
-			if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 10) continue;
-			const x = size * 1.5 * q,
-				y = size * Math.sqrt(3) * (r + q / 2);
-			const points = Array.from(
-				{ length: 6 },
-				(_, i) => `${x + Math.cos((i * Math.PI) / 3) * size},${y + Math.sin((i * Math.PI) / 3) * size}`,
-			).join(" ");
-			const system = systems.find((s) => s.q === q && s.r === r);
-			const cell = element(
-				"polygon",
-				{ points, "data-cell": system.id, class: `cell${system.owner === "own" ? " owned" : ""}` },
-				$("#cells"),
-			);
-			// Tiny astronomical symbols still have the whole hex as a finger-sized selection target.
-			cell.addEventListener("click", () => selectSystem(system));
-		}
+	const size = galaxyHexSize;
+	distantScale = undefined;
 	for (const system of systems) {
 		const jitter = random(system.id * 1987);
 		system.x = size * 1.5 * system.q + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
 		system.y =
 			size * Math.sqrt(3) * (system.r + system.q / 2) + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
-		const group = element(
-			"g",
-			{
-				class: `system ${system.owner}`,
-				role: "button",
-				tabindex: 0,
-				"aria-label": `${system.name}, system ${system.id}, ${multiplicity(system.components)}, ${system.components.map(classify).join(" and ")}, ${system.count} planets`,
-				"data-system": system.id,
-				"data-components": system.components.length,
-			},
-			$("#planets"),
-		);
-		const art = element("g", { class: "map-art" }, group);
-		markers.push({ node: group, item: system, art });
-		galacticObject(system, art);
-		if (system.settled) element("circle", { r: 11, class: "ownership-ring" }, art);
-		element("circle", { r: 17, class: "selected-ring" }, art);
-		element("text", { x: 0, y: 30, "text-anchor": "middle", class: "planet-label" }, group, system.name);
-		element(
-			"text",
-			{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
-			group,
-			`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
-		);
-		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
-		bindSelect(group, () => selectSystem(system));
 	}
+	const cells = element(
+		"path",
+		{
+			id: "distant-cells",
+			class: "distant-cells",
+			d: systems.map((system) => `M${hexPoints(system).join("L")}Z`).join(""),
+		},
+		$("#cells"),
+	);
+	cells.addEventListener("click", selectDistantSystem);
+	element("g", { id: "distant-stars", "pointer-events": "none" }, $("#planets"));
 	addFleet(systems[0], systems[1], 0, "💠 240", 10 * 3600000);
 	addFleet(systems[1], systems[0], 1, "🔥 80", 70 * 60000);
 	addIncoming(systems[0]);
-	selectSystem(systems[0]);
+	selectSystem(systems[0], false);
 }
-
-function galacticObject(system, parent) {
-	const positions =
-		system.components.length === 1
-			? [[0, 0]]
-			: system.components.length === 2
-				? [
-						[-3, 0],
-						[3, 1.5],
-					]
-				: [
-						[-3, -1],
-						[3, 1],
-						[0, 5],
-					];
+function renderGalaxy() {
+	const wide = camera.scale < 0.12;
+	const margin = Math.max(100, (galaxyHexSize + 24) * camera.scale);
+	$("#distant-cells").style.display = wide ? "" : "none";
+	$("#distant-stars").style.display = wide ? "" : "none";
+	if (wide) renderDistantStars();
+	markers = [];
+	for (const system of systems) {
+		const x = camera.x + system.x * camera.scale;
+		const y = camera.y + system.y * camera.scale;
+		const visible =
+			x > -margin &&
+			x < width + margin &&
+			y > -margin &&
+			y < height + margin &&
+			(!wide || system.settled || selected === system);
+		const labelled = !wide || !!system.settled || selected === system;
+		let marker = galaxyNodes.get(system.id);
+		if (marker && (!visible || marker.wide !== wide || marker.labelled !== labelled)) {
+			marker.node.remove();
+			marker.cell.remove();
+			galaxyNodes.delete(system.id);
+			marker = undefined;
+		}
+		if (!visible) continue;
+		if (!marker) {
+			marker = drawSystem(system, wide, labelled);
+			galaxyNodes.set(system.id, marker);
+		}
+		markers.push(marker);
+	}
+}
+function hexPoints(system) {
+	const x = galaxyHexSize * 1.5 * system.q;
+	const y = galaxyHexSize * Math.sqrt(3) * (system.r + system.q / 2);
+	return Array.from(
+		{ length: 6 },
+		(_, i) =>
+			`${x + Math.cos((i * Math.PI) / 3) * galaxyHexSize},${y + Math.sin((i * Math.PI) / 3) * galaxyHexSize}`,
+	);
+}
+function selectDistantSystem(event) {
+	const point = svgPoint(event.clientX, event.clientY);
+	const x = (point.x - camera.x) / camera.scale / galaxyHexSize;
+	const y = (point.y - camera.y) / camera.scale / galaxyHexSize;
+	const q = (2 * x) / 3;
+	const r = -x / 3 + y / Math.sqrt(3);
+	const s = -q - r;
+	let rq = Math.round(q),
+		rr = Math.round(r);
+	const rs = Math.round(s);
+	if (Math.abs(rq - q) > Math.abs(rr - r) && Math.abs(rq - q) > Math.abs(rs - s)) rq = -rr - rs;
+	else if (Math.abs(rr - r) > Math.abs(rs - s)) rr = -rq - rs;
+	const system = systems.find((system) => system.q === rq && system.r === rr);
+	if (system) selectSystem(system);
+}
+function renderDistantStars() {
+	if (distantScale === camera.scale) return;
+	distantScale = camera.scale;
+	const root = $("#distant-stars");
+	root.replaceChildren();
+	const scale = (1.3 * galaxySymbolScale()) / camera.scale;
+	const batches = new Map();
+	// One SVG path per colour/type keeps thousands of distant stars cheap to pan and zoom.
+	for (const system of systems) {
+		const positions = componentPositions(system);
+		for (const [index, component] of system.components.entries()) {
+			const { color, radius } = stellarAppearance(component);
+			const key = `${component.kind}:${color}:${system.components.length}`;
+			if (!batches.has(key))
+				batches.set(key, { kind: component.kind, color, count: system.components.length, paths: [] });
+			const [dx, dy] = positions[index];
+			const x = system.x + dx * scale,
+				y = system.y + dy * scale,
+				r = radius * scale;
+			batches.get(key).paths.push(`M${x - r},${y}a${r},${r} 0 1 0 ${r * 2},0a${r},${r} 0 1 0 ${-r * 2},0Z`);
+		}
+	}
+	for (const { kind, color, count, paths } of batches.values()) {
+		element(
+			"path",
+			{
+				d: paths.join(""),
+				"data-kind": kind,
+				"data-components": count,
+				opacity: 0.65,
+				...(kind === "black-hole"
+					? { fill: "none", stroke: color, "stroke-width": 0.3, "vector-effect": "non-scaling-stroke" }
+					: { fill: color }),
+			},
+			root,
+		);
+	}
+}
+function drawSystem(system, wide, labelled) {
+	const active = selected === system;
+	const cell = element(
+		"polygon",
+		{
+			points: hexPoints(system).join(" "),
+			"data-cell": system.id,
+			class: `cell${system.owner === "own" ? " owned" : ""}${active ? " selected" : ""}`,
+		},
+		$("#cells"),
+	);
+	cell.addEventListener("click", () => selectSystem(system));
+	const node = element(
+		"g",
+		{
+			class: `system ${system.owner}${active ? " selected" : ""}`,
+			role: "button",
+			tabindex: 0,
+			"aria-pressed": String(active),
+			"aria-label": `${system.name}, system ${system.id}, ${multiplicity(system.components)}, ${system.components.map(classify).join(" and ")}, ${system.count} planets`,
+			"data-system": system.id,
+			"data-axial": `${system.q},${system.r}`,
+			"data-components": system.components.length,
+		},
+		$("#planets"),
+	);
+	const art = element("g", { class: "map-art" }, node);
+	galacticObject(system, art, wide);
+	if (system.settled) element("circle", { r: 11, class: "ownership-ring" }, art);
+	if (labelled) {
+		element("circle", { r: 17, class: "selected-ring" }, art);
+		element("text", { x: 0, y: 30, "text-anchor": "middle", class: "planet-label" }, node, system.name);
+		element(
+			"text",
+			{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
+			node,
+			`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
+		);
+	}
+	const hitbox = element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, node);
+	bindSelect(node, () => selectSystem(system));
+	return { node, item: system, art, hitbox, cell, wide, labelled };
+}
+function componentPositions(system) {
+	return system.components.length === 1
+		? [[0, 0]]
+		: system.components.length === 2
+			? [
+					[-3, 0],
+					[3, 1.5],
+				]
+			: [
+					[-3, -1],
+					[3, 1],
+					[0, 5],
+				];
+}
+function stellarAppearance(component) {
+	if (component.kind === "black-hole") return { color: "#dca774", radius: 1.8 };
+	const spectral = component.kind === "star" ? spectralClasses[component.spectral] : null;
+	return {
+		color: spectral?.color || "#b1d6e8",
+		radius: spectral
+			? component.luminosity === "I"
+				? 2.8
+				: component.luminosity === "III"
+					? 2.2
+					: spectral.radius
+			: 0.9,
+	};
+}
+function galacticObject(system, parent, wide) {
+	const positions = componentPositions(system);
 	for (const [index, component] of system.components.entries()) {
 		const [x, y] = positions[index];
 		const group = element(
 			"g",
-			{ transform: `translate(${x} ${y})`, class: "stellar-object", "data-kind": component.kind },
+			{
+				transform: `scale(1.3) translate(${x} ${y})`,
+				class: "stellar-object",
+				"data-kind": component.kind,
+			},
 			parent,
 		);
 		if (component.kind === "black-hole") {
@@ -389,22 +515,16 @@ function galacticObject(system, parent) {
 			);
 			element("circle", { r: 1.8, fill: "#050911" }, group);
 		} else {
-			const spectral = component.kind === "star" ? spectralClasses[component.spectral] : null;
-			const color = spectral?.color || "#b1d6e8";
-			const radius = spectral
-				? component.luminosity === "I"
-					? 2.8
-					: component.luminosity === "III"
-						? 2.2
-						: spectral.radius
-				: 0.9;
-			element("circle", { r: radius * 2.8, fill: color, opacity: 0.065 }, group);
-			element("circle", { r: radius * 1.65, fill: color, opacity: 0.12 }, group);
+			const { color, radius } = stellarAppearance(component);
+			if (!wide) {
+				element("circle", { r: radius * 2.8, fill: color, opacity: 0.065 }, group);
+				element("circle", { r: radius * 1.65, fill: color, opacity: 0.12 }, group);
+			}
 			element("circle", { r: radius, fill: color, opacity: 0.65, class: "stellar-core" }, group);
 			if (component.pulsar)
 				element("path", { d: "M-2,5 2,-5", stroke: color, "stroke-width": 0.7, opacity: 0.4 }, group);
 		}
-		element("title", {}, group, classify(component));
+		if (!wide) element("title", {}, group, classify(component));
 	}
 }
 function station(parent, advanced) {
@@ -579,7 +699,7 @@ function systemScene() {
 		);
 	}
 	addIncoming(planets[0]);
-	selectPlanet(planets[0]);
+	selectPlanet(planets[0], false, false);
 }
 function addFleet(from, to, index, cargo, duration, incoming) {
 	if (typeof from.id === "number") from = { ...from, id: `${from.id}:1` };
@@ -762,8 +882,9 @@ function paintFleet(fleet) {
 	);
 	ship.style.display = state.ended ? "none" : "";
 }
-function selectSystem(system) {
+function selectSystem(system, inspect = true) {
 	selected = system;
+	updateCamera();
 	for (const node of document.querySelectorAll(".system")) {
 		const active = node.dataset.system === String(system.id);
 		node.classList.toggle("selected", active);
@@ -779,8 +900,9 @@ function selectSystem(system) {
 		? `${system.count} planets · ${system.settled} settled`
 		: "No charted planets";
 	$("#planet-action").textContent = system.variant ? "Enter system ↗" : "Survey system ↗";
+	if (inspect) openSelection();
 }
-function selectPlanet(planet, approach = false) {
+function selectPlanet(planet, approach = false, inspect = true) {
 	selected = planet;
 	for (const node of document.querySelectorAll(".planet, [data-orbit], [data-orbit-select]")) {
 		const active = (node.dataset.planet || node.dataset.orbit || node.dataset.orbitSelect) === planet.id;
@@ -800,6 +922,28 @@ function selectPlanet(planet, approach = false) {
 		$("#planet-action").textContent = "System overview ↗";
 	}
 	renderEmoji($(".selection"));
+	if (inspect) openSelection();
+}
+function openSelection() {
+	closeMovements();
+	$(".resources").hidden = view === "galaxy" || selected.owner !== "own";
+	$("#planet-biome").hidden = view === "galaxy";
+	$("#selection-popover").showPopover();
+	positionSelection();
+}
+function positionSelection() {
+	const popover = $("#selection-popover");
+	if (!popover.matches(":popover-open")) return;
+	const map = svg.getBoundingClientRect();
+	// Keep the floating orbit strip and map controls usable while inspecting a selection.
+	const bottom = $(".zoom").getBoundingClientRect().top - 12;
+	popover.style.maxHeight = `${bottom - map.top - 12}px`;
+	const x = map.left + camera.x + selected.x * camera.scale;
+	const y = map.top + camera.y + selected.y * camera.scale;
+	const clearance = view === "galaxy" ? 56 : 80;
+	const top = y + clearance + popover.offsetHeight < bottom ? y + clearance : y - popover.offsetHeight - 28;
+	popover.style.left = `${Math.max(map.left + 12, Math.min(map.right - popover.offsetWidth - 12, x - popover.offsetWidth / 2))}px`;
+	popover.style.top = `${Math.max(map.top + 12, Math.min(bottom - popover.offsetHeight, top))}px`;
 }
 function fit() {
 	const outer = view === "galaxy" ? 290 : planets.at(-1).radius;
@@ -812,42 +956,49 @@ function fit() {
 	if (view !== "galaxy") $("#planet-action").textContent = "Orbit detail ↗";
 }
 function home() {
+	$("#selection-popover").hidePopover();
 	if (view === "galaxy") {
 		fit();
-		selectSystem(systems[0]);
+		selectSystem(systems[0], false);
 		return;
 	}
 	// A phone explores a large system rather than compressing eight orbit lanes into its width.
 	camera = { x: width / 2, y: height * 0.65, scale: 0.8 };
-	selectPlanet(planets[0]);
+	selectPlanet(planets[0], false, false);
 	updateCamera();
 }
 function updateCamera() {
 	world.setAttribute("transform", `translate(${camera.x} ${camera.y}) scale(${camera.scale})`);
-	// Markers and hit areas use screen pixels even when the astronomical distances are zoomed out.
-	for (const { node, item, art } of markers) {
+	// Keep offscreen systems out of the SVG; distant stars need neither halos nor hidden labels.
+	if (view === "galaxy") renderGalaxy();
+	svg.dataset.wide = String(view === "galaxy" && camera.scale < 0.12);
+	const size =
+		view === "galaxy"
+			? galaxySymbolScale()
+			: Math.min(1, 0.55 * Math.min(1, 0.72 + camera.scale * 0.35) * Math.max(1, camera.scale / 0.8));
+	for (const marker of markers) {
+		if (marker.scale === camera.scale) continue;
+		marker.scale = camera.scale;
+		const { node, item, art, hitbox } = marker;
 		node.setAttribute("transform", `translate(${item.x} ${item.y}) scale(${1 / camera.scale})`);
-		// Half-size planets still shrink gently in overview; the 64px hit circle stays outside this transform.
-		const size = view === "galaxy" ? 1 : 0.5 * Math.min(1, 0.72 + camera.scale * 0.35);
+		// Planet artwork starts 10% larger in overview, then grows to a 40–48px diameter cap.
+		// Galaxy hit circles shrink with hex spacing so distant systems cannot cover their neighbours.
 		art.setAttribute("transform", `scale(${size})`);
+		if (view === "galaxy") {
+			hitbox.setAttribute("r", Math.min(32, galaxyHexSize * camera.scale * 0.5));
+		} else {
+			const labelY = Math.max(32, 50 * size);
+			node.querySelector(".planet-label").setAttribute("y", labelY);
+			node.querySelector(".coordinate").setAttribute("y", labelY + 14);
+		}
 	}
 	svg.dataset.camera = JSON.stringify(camera);
 	if (view !== "galaxy")
 		$("#planet-action").textContent = camera.scale >= 0.75 ? "System overview ↗" : "Orbit detail ↗";
-	$("#map-mode").textContent =
-		view === "galaxy"
-			? "OPEN SPACE · DRAG TO EXPLORE"
-			: camera.scale >= 0.75
-				? "ORBIT DETAIL · DRAG TO EXPLORE"
-				: "SYSTEM OVERVIEW · TAP TO APPROACH";
-	$("#drag-hint").textContent =
-		view === "galaxy"
-			? "Drag to explore · tap a star"
-			: camera.scale >= 0.75
-				? "Drag between orbits · ⌖ returns home"
-				: "Tap a world or choose its orbit below";
+	positionSelection();
 }
 function showView(next) {
+	$("#selection-popover").hidePopover();
 	closeMovements();
 	view = next;
 	cameraReady = false;
@@ -866,18 +1017,15 @@ function showView(next) {
 	fleets = [];
 	patrols = [];
 	markers = [];
+	galaxyNodes.clear();
 	lastSecond = -1;
 	$("#orbit-picker").hidden = view === "galaxy";
 	$("#overview").hidden = view === "galaxy";
 	$("#stellar-classification").hidden = view !== "galaxy";
 	$("#stellar-key").hidden = view !== "galaxy";
-	$("#view-meta").textContent = view === "galaxy" ? "PERSEUS ARM · SECTOR 07" : scenes[view].subtitle;
-	$("#view-title").textContent = view === "galaxy" ? "The frontier" : scenes[view].name;
 	$("#minerals").textContent =
 		`💠 ${(scenes[view]?.minerals || 1240).toLocaleString("en-US").replaceAll(",", " ")}`;
 	$("#gas").textContent = `🔥 ${(scenes[view]?.gas || 610).toLocaleString("en-US").replaceAll(",", " ")}`;
-	$("#scene-note").textContent =
-		view === "galaxy" ? "STELLAR SYMBOLS ENLARGED" : "SIMULATION · LOCAL TRAFFIC";
 	if (view === "galaxy") galaxy();
 	else systemScene();
 	resize();
@@ -907,7 +1055,7 @@ function zoom(factor, point = { x: width / 2, y: height / 2 }) {
 	updateCamera();
 }
 function minimumScale() {
-	if (view === "galaxy") return 0.42;
+	if (view === "galaxy") return 0.015;
 	let distance = Infinity;
 	for (let i = 0; i < planets.length; i++)
 		for (let j = i + 1; j < planets.length; j++) {
@@ -915,6 +1063,9 @@ function minimumScale() {
 		}
 	// Keep 64px hit circles separated by 16px even in overview; the outer system can be panned into view.
 	return 80 / distance;
+}
+function galaxySymbolScale() {
+	return Math.min(1, Math.max(0.28, camera.scale / 0.42));
 }
 function svgPoint(x, y) {
 	return new DOMPoint(x, y).matrixTransform(svg.getScreenCTM().inverse());
@@ -1013,7 +1164,7 @@ function tick() {
 		const angle = (Math.atan2(next.y - point.y, next.x - point.x) * 180) / Math.PI;
 		fleet.ship.setAttribute(
 			"transform",
-			`translate(${point.x} ${point.y}) rotate(${angle}) scale(${1 / camera.scale})`,
+			`translate(${point.x} ${point.y}) rotate(${angle}) scale(${(view === "galaxy" ? galaxySymbolScale() : 1) / camera.scale})`,
 		);
 		fleet.ship.dataset.progress = progress.toFixed(8);
 		fleet.ship.querySelector(".contact-marker")?.setAttribute("transform", `rotate(${-angle})`);
@@ -1039,8 +1190,6 @@ function tick() {
 	}
 	if (Math.floor(now / 1000) !== lastSecond) {
 		lastSecond = Math.floor(now / 1000);
-		$("#flight-summary").textContent =
-			`${fleets.filter((f) => !f.state.ended).length} movements · journeys in hours`;
 		$("#incoming-count").textContent =
 			`${fleets.filter((f) => !f.state.own && !f.state.ended).length} incoming`;
 		for (const node of document.querySelectorAll("[data-arrival]"))
@@ -1065,6 +1214,7 @@ function closeMovements() {
 	for (const fleet of fleets) fleet.route.classList.remove("focused");
 }
 function showMovements() {
+	$("#selection-popover").hidePopover();
 	activeFleet = undefined;
 	for (const fleet of fleets) fleet.route.classList.remove("focused");
 	$("#movement-panel").hidden = false;
@@ -1105,7 +1255,7 @@ function openMovement(fleet) {
 			);
 			const point = fleet.path.getPointAtLength(fleet.length * progress);
 			camera.x = width / 2 - point.x * camera.scale;
-			camera.y = height * 0.55 - point.y * camera.scale;
+			camera.y = (height - $("#movement-panel").offsetHeight - 16) / 2 - point.y * camera.scale;
 			updateCamera();
 		});
 	for (const item of fleets) item.route.classList.toggle("focused", item === fleet);
