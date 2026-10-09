@@ -528,10 +528,10 @@ function systemScene() {
 		element("circle", { r: 29, class: "ownership-ring" }, art);
 		element("circle", { r: 34, class: "selected-ring" }, art);
 		planetArt(art, planet, index);
-		element("text", { x: 0, y: 50, "text-anchor": "middle", class: "planet-label" }, group, planet.name);
+		element("text", { x: 0, y: 32, "text-anchor": "middle", class: "planet-label" }, group, planet.name);
 		element(
 			"text",
-			{ x: 0, y: 64, "text-anchor": "middle", class: "coordinate" },
+			{ x: 0, y: 46, "text-anchor": "middle", class: "coordinate" },
 			group,
 			`${index + 1} · ${biomes[planet.biome].label}${planet.home ? " · HOME" : ""}`,
 		);
@@ -827,8 +827,8 @@ function updateCamera() {
 	// Markers and hit areas use screen pixels even when the astronomical distances are zoomed out.
 	for (const { node, item, art } of markers) {
 		node.setAttribute("transform", `translate(${item.x} ${item.y}) scale(${1 / camera.scale})`);
-		// Artwork shrinks gently in overview, while the 64px hit circle remains outside this transform.
-		const size = view === "galaxy" ? 1 : Math.min(1, 0.72 + camera.scale * 0.35);
+		// Half-size planets still shrink gently in overview; the 64px hit circle stays outside this transform.
+		const size = view === "galaxy" ? 1 : 0.5 * Math.min(1, 0.72 + camera.scale * 0.35);
 		art.setAttribute("transform", `scale(${size})`);
 	}
 	svg.dataset.camera = JSON.stringify(camera);
