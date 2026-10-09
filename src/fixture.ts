@@ -5,6 +5,8 @@ export type Fixture = {
 	bot: FixtureBot;
 	user?: FixtureUser;
 	messages: FixtureMessage[];
+	/** Optional Mini App screenshot: click this button and wait for the app's ready element. */
+	mini_app?: { button_text: string; ready_selector?: string };
 };
 
 export type FixtureBot = {

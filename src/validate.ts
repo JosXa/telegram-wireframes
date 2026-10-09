@@ -48,4 +48,17 @@ export async function validateFixture(fixture: Fixture, path: string) {
 	}
 
 	if (errors.length) throw new Error(`${path}:\n  ${errors.join("\n  ")}`);
+	if (fixture.mini_app) {
+		const hasButton = fixture.messages.some((message) => {
+			const markup = message.reply_markup;
+			return (
+				markup &&
+				"inline_keyboard" in markup &&
+				markup.inline_keyboard
+					.flat()
+					.some((button) => button.text === fixture.mini_app?.button_text && button.web_app)
+			);
+		});
+		if (!hasButton) throw new Error(`${path}: mini_app.button_text must match an inline web_app button`);
+	}
 }

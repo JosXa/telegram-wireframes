@@ -87,6 +87,19 @@ async function renderOne(browser: Browser, entry: RegisteredFixture, theme: Them
 			await page.screenshot({ path: keyboardFile });
 			files.push(keyboardFile);
 		}
+
+		if (entry.fixture.mini_app) {
+			const { button_text, ready_selector = "body" } = entry.fixture.mini_app;
+			await page.getByRole("button", { name: button_text, exact: true }).click();
+			// Use Telegram's normal permission prompt, rather than bypassing its UI state.
+			await page.locator(".Modal.confirm .confirm-dialog-button").first().click();
+			const app = page.frameLocator("iframe");
+			await app.locator(ready_selector).waitFor({ timeout: options.timeoutMs });
+			await page.waitForTimeout(SETTLE_MS);
+			const appFile = join(options.outDir, `${entry.name}-${theme}-mini-app.png`);
+			await page.screenshot({ path: appFile });
+			files.push(appFile);
+		}
 	} catch (error) {
 		const details = logs.length ? `\n${logs.join("\n")}` : "";
 		throw new Error(`${entry.name} (${theme}): ${(error as Error).message}${details}`);

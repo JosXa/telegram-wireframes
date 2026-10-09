@@ -1,0 +1,369 @@
+/* Throwaway map prototype. Telegram supplies the outer frame and theme parameters. */
+:root {
+	color-scheme: dark;
+	--surface: oklch(20% 0.012 225);
+	--ink: oklch(92% 0.012 225);
+	--muted: oklch(68% 0.025 225);
+	--line: oklch(34% 0.018 225);
+	--own: oklch(78% 0.085 154);
+	--rival: oklch(73% 0.11 35);
+	--open: oklch(73% 0.026 225);
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	height: 100dvh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: var(--surface);
+	color: var(--ink);
+	font:
+		14px / 1.4 system-ui,
+		sans-serif;
+}
+button {
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	border: 0;
+	background: none;
+}
+button:focus-visible,
+[role="button"]:focus-visible {
+	outline: 2px solid var(--own);
+	outline-offset: 4px;
+}
+button:hover {
+	background: oklch(85% 0.025 225 / 0.08);
+}
+.heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 23px 20px 16px;
+	gap: 12px;
+}
+.eyebrow {
+	font-size: 10px;
+	letter-spacing: 0.1em;
+	color: var(--muted);
+	margin: 0 0 5px;
+	font-weight: 600;
+}
+h1 {
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 1.1;
+	letter-spacing: -0.04em;
+	margin: 0;
+}
+.resources {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	font-size: 12px;
+	font-variant-numeric: tabular-nums;
+}
+.legend {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+	padding: 0 20px 16px;
+	font-size: 11px;
+	color: var(--muted);
+}
+.legend span {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.legend i {
+	width: 6px;
+	height: 6px;
+	display: block;
+	background: var(--open);
+	border-radius: 50%;
+}
+.legend .own {
+	background: var(--own);
+}
+.legend .rival {
+	background: var(--rival);
+	border-radius: 1px;
+}
+.legend .open {
+	background: none;
+	border: 1px solid var(--open);
+}
+#map-panel {
+	position: relative;
+	flex: 1;
+	min-height: 200px;
+	overflow: hidden;
+	background: oklch(15% 0.014 225);
+	border-block: 1px solid var(--line);
+}
+#galaxy {
+	width: 100%;
+	height: 100%;
+	touch-action: none;
+	user-select: none;
+	cursor: grab;
+	display: block;
+}
+#galaxy.dragging {
+	cursor: grabbing;
+}
+.map-label {
+	pointer-events: none;
+	position: absolute;
+	z-index: 1;
+	left: 20px;
+	top: 16px;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	font-size: 11px;
+	color: var(--muted);
+}
+.live-dot {
+	display: block;
+	background: var(--own);
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+}
+.cell {
+	fill: oklch(22% 0.02 225 / 0.2);
+	stroke: oklch(44% 0.024 225 / 0.26);
+	stroke-width: 1;
+}
+.cell.owned {
+	fill: oklch(58% 0.06 154 / 0.08);
+}
+.system-label {
+	fill: oklch(62% 0.025 225);
+	font-size: 8px;
+	letter-spacing: 0.08em;
+}
+.planet {
+	cursor: pointer;
+}
+.planet-label {
+	fill: var(--ink);
+	font-size: 11px;
+	font-weight: 500;
+	paint-order: stroke;
+	stroke: oklch(15% 0.014 225);
+	stroke-width: 3px;
+}
+.coordinate {
+	fill: var(--muted);
+	font-size: 8px;
+	font-variant-numeric: tabular-nums;
+}
+.ownership-ring {
+	fill: none;
+	stroke-width: 1;
+	stroke: var(--open);
+	stroke-dasharray: 2 3;
+}
+.planet.own .ownership-ring {
+	stroke: var(--own);
+	stroke-dasharray: none;
+}
+.planet.rival .ownership-ring {
+	stroke: var(--rival);
+	stroke-dasharray: 4 2;
+}
+.selected-ring {
+	fill: none;
+	stroke: var(--own);
+	stroke-width: 1;
+	opacity: 0;
+}
+.planet.selected .selected-ring {
+	opacity: 1;
+}
+.planet.selected .planet-label {
+	fill: var(--own);
+}
+.surface-stripes {
+	animation: spin 18s linear infinite;
+	opacity: 0.23;
+}
+.surface-stripes path {
+	fill: none;
+	stroke: oklch(90% 0.015 225);
+	stroke-width: 5;
+}
+@keyframes spin {
+	from {
+		transform: translateX(-15px);
+	}
+	to {
+		transform: translateX(15px);
+	}
+}
+.trajectory {
+	fill: none;
+	stroke: var(--own);
+	stroke-width: 1;
+	stroke-dasharray: 4 5;
+	opacity: 0.6;
+}
+.trajectory.rival {
+	stroke: var(--rival);
+}
+.ship {
+	fill: var(--own);
+	stroke: oklch(15% 0.014 225);
+	stroke-width: 1;
+}
+.ship.rival {
+	fill: var(--rival);
+}
+.drag-hint {
+	pointer-events: none;
+	position: absolute;
+	bottom: 10px;
+	left: 20px;
+	color: var(--muted);
+	font-size: 10px;
+	margin: 0;
+}
+.zoom {
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+	position: absolute;
+	bottom: 16px;
+	right: 14px;
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	border-radius: 7px;
+	overflow: hidden;
+}
+.zoom :where(button) {
+	height: 32px;
+	width: 34px;
+	font-size: 20px;
+	line-height: 1;
+}
+.zoom :where(button + button) {
+	border-top: 1px solid var(--line);
+}
+.selection {
+	padding: 18px 20px 16px;
+}
+.selection-head,
+.selection-footer {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+h2 {
+	font-size: 22px;
+	letter-spacing: -0.035em;
+	margin: 0;
+	font-weight: 600;
+}
+.selection-head > span {
+	font-size: 30px;
+}
+.selection-footer {
+	margin-top: 15px;
+	font-size: 12px;
+	color: var(--muted);
+}
+.selection-footer :where(button) {
+	color: var(--own);
+	padding: 7px 0 7px 12px;
+	font-weight: 600;
+}
+.selection-footer :where(button span) {
+	margin-left: 10px;
+}
+nav {
+	display: flex;
+	flex-shrink: 0;
+	border-top: 1px solid var(--line);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+nav button[data-tab] {
+	flex: 1;
+	padding: 17px 5px;
+	font-size: 12px;
+	color: var(--muted);
+}
+nav .active {
+	color: var(--own);
+	font-weight: 600;
+}
+.badge {
+	display: inline-block;
+	margin-left: 3px;
+	padding: 0 4px;
+	border: 1px solid var(--line);
+	border-radius: 4px;
+	font-size: 9px;
+}
+#fleet-panel {
+	padding: 8px 20px;
+	max-height: 220px;
+	overflow: auto;
+}
+.fleet-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 13px 0;
+	border-bottom: 1px solid var(--line);
+	font-size: 12px;
+}
+.fleet-row p {
+	margin: 0;
+}
+.fleet-row small {
+	color: var(--muted);
+}
+.fleet-row time {
+	color: var(--own);
+	font-variant-numeric: tabular-nums;
+}
+#status:not(:empty) {
+	position: fixed;
+	left: 16px;
+	right: 16px;
+	bottom: 64px;
+	padding: 12px 16px;
+	border: 1px solid var(--line);
+	background: var(--surface);
+	font-size: 12px;
+	border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+	.surface-stripes {
+		animation: none;
+	}
+}
+@media (max-height: 580px) {
+	.heading {
+		padding-top: 14px;
+	}
+	.selection {
+		padding-block: 12px;
+	}
+	.selection-footer {
+		margin-top: 7px;
+	}
+	nav button {
+		padding-block: 12px;
+	}
+}

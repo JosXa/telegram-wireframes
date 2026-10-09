@@ -113,13 +113,36 @@ function buildFullUser(request: Api.users.GetFullUser, fixture: Fixture, client:
 	});
 }
 
-function createMiddleware(fixture: Fixture, config: WireframeConfig): WireframeMiddleware {
+function createMiddleware(
+	fixture: Fixture,
+	config: WireframeConfig,
+	fixtureRoot: string,
+): WireframeMiddleware {
 	// Requests handed back to the stock mock logic in debug mode. Tracked per request, because
 	// requests run concurrently.
 	const forwarded = new WeakSet<object>();
 
 	return async (client, request) => {
 		if (forwarded.has(request)) return "pass";
+
+		if (
+			request instanceof Api.messages.RequestWebView ||
+			request instanceof Api.messages.RequestSimpleWebView
+		) {
+			if (!request.url) throw new Error("[wireframes] Mini App buttons need a web_app.url");
+			// Local pages stay next to the fixture. Absolute URLs can point at a separate app dev server.
+			const url = new URL(request.url, `${fixtureRoot}/files/`);
+			const params = new URLSearchParams(url.hash.slice(1));
+			params.set("tgWebAppVersion", "9.0");
+			params.set("tgWebAppPlatform", request.platform);
+			params.set("tgWebAppThemeParams", request.themeParams?.data ?? "{}");
+			// This is a wireframe, not authenticated initData. Real app APIs must mock authentication.
+			params.set("tgWebAppData", "");
+			if (request.startParam) params.set("tgWebAppStartParam", request.startParam);
+			url.hash = params.toString();
+			return new Api.WebViewResultUrl({ url: url.href, queryId: BigInt(1) });
+		}
+		if (request instanceof Api.messages.ProlongWebView) return true;
 
 		if (request instanceof Api.users.GetFullUser) return buildFullUser(request, fixture, client);
 		if (request instanceof Api.langpack.GetLangPack) return buildLangPack(request.langCode);
@@ -225,5 +248,5 @@ export async function loadWireframe(name: string) {
 		topPeers: [],
 	};
 
-	return { mockData, invokeMiddleware: createMiddleware(fixture, config) };
+	return { mockData, invokeMiddleware: createMiddleware(fixture, config, fixtureRoot) };
 }

@@ -61,11 +61,48 @@ render <fixture.json...>   Screenshot each fixture into ./wireframes
 serve <fixture.json...>    Serve fixtures for clicking around in a browser
 ```
 
+## Mini Apps
+
+Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt and theme/event bridge. Put an HTML page next to your fixture and use its relative path in a `web_app` button:
+
+```json
+{
+  "bot": { "first_name": "Space Emperors" },
+  "messages": [{
+    "from": "bot",
+    "text": "Explore the galaxy",
+    "reply_markup": {
+      "inline_keyboard": [[{ "text": "Open map", "web_app": { "url": "app/index.html" } }]]
+    }
+  }],
+  "mini_app": { "button_text": "Open map", "ready_selector": "[data-ready='true']" }
+}
+```
+
+`mini_app` is preview metadata. The renderer clicks that inline button, confirms Telegram's permission prompt, waits for the selector inside the iframe, and saves an extra `-mini-app.png`. Without this metadata you can still launch the app manually. The fixture server serves local HTML, CSS, JavaScript and SVG files. An absolute `web_app.url` can point to your app's dev server.
+
+The mock supplies Telegram launch parameters, including theme, platform and version, and an empty `tgWebAppData`. Mock your app's authentication and game API for wireframes. Production `initData` validation belongs in the real server.
+
+Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, pinch and wheel zoom, animated planet surfaces, ownership colors and rings, and fleet trajectories that advance from timestamps. It uses sample state and has no game API.
+
+```sh
+bun run serve examples/galaxy/fixture.json
+bun run render examples/galaxy/fixture.json
+# A desktop shot shows the app floating above the chat:
+bun run render examples/galaxy/fixture.json --theme dark --width 1280 --height 900 --scale 1
+bun run test:mini-app
+```
+
+<p>
+  <img src="docs/galaxy-mini-app.png" width="280" alt="SVG galaxy inside Telegram's Mini App frame, with green owned planets, orange rivals and moving fleets">
+  <img src="docs/galaxy-desktop.png" width="640" alt="The same Mini App floating over the bot chat in Telegram Web A on desktop">
+</p>
+
 ## How it works
 
 Web A ships a mocked client for its own tests. telegram-wireframes pins a Web A commit, applies [a small patch](patches/web-a.patch) that repairs the mock client and adds a hook, and injects [a loader](inject/) into Web A's worker. The loader fetches your fixture from a local server and converts the Bot API objects into the MTProto objects Telegram's servers would send. From there, Web A renders the chat as it would any other, and Playwright takes the screenshot.
 
-Web A changes weekly. `upstream.json` pins the commit; [`.opencode/commands/update-web-a.md`](.opencode/commands/update-web-a.md) describes how to move the pin forward and repair the patch.
+Web A changes weekly. `upstream.json` pins the commit. [`.opencode/commands/update-web-a.md`](.opencode/commands/update-web-a.md) describes how to move the pin forward and repair the patch.
 
 ## License
 

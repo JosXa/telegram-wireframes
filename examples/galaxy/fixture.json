@@ -1,0 +1,24 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"color": 5,
+		"description": "Build your colonies. Explore the galaxy."
+	},
+	"messages": [
+		{ "from": "user", "text": "/galaxy" },
+		{
+			"from": "bot",
+			"text": "🪐 Vega · 14:6\n💠 1 240  🔥 610\n\nTwo fleets in flight. Your transport is approaching Kepler.",
+			"reply_markup": {
+				"inline_keyboard": [
+					[{ "text": "🗺 Open galaxy map", "web_app": { "url": "app/index.html" }, "style": "primary" }]
+				]
+			}
+		}
+	],
+	"mini_app": {
+		"button_text": "🗺 Open galaxy map",
+		"ready_selector": "[data-ready='true']"
+	}
+}

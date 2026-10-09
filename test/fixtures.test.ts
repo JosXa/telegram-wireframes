@@ -42,6 +42,17 @@ describe("validateFixture", () => {
 		const fixture: Fixture = { ...minimal, messages: [{ from: "bot", text: "a", caption: "b" }] };
 		await expect(validateFixture(fixture, "/tmp/x.json")).rejects.toThrow("mixes text");
 	});
+
+	test("accepts the Mini App example", async () => {
+		const fixtures = await registerFixtures(["examples/galaxy/fixture.json"]);
+		expect(fixtures.get("galaxy")?.fixture.mini_app?.button_text).toBe("🗺 Open galaxy map");
+	});
+
+	test("rejects a Mini App launch without a matching button", async () => {
+		await expect(
+			validateFixture({ ...minimal, mini_app: { button_text: "Missing" } }, "/tmp/x.json"),
+		).rejects.toThrow("must match an inline web_app button");
+	});
 });
 
 describe("registerFixtures", () => {
@@ -59,6 +70,24 @@ describe("registerFixtures", () => {
 });
 
 describe("server", () => {
+	test("serves a Mini App and its relative assets", async () => {
+		const fixtures = await registerFixtures(["examples/galaxy/fixture.json"]);
+		const server = startServer({ dist: "/nonexistent", fixtures });
+		try {
+			const root = `${server.url.origin}/__wireframes__/fixtures/galaxy/files/app`;
+			for (const [name, mime] of [
+				["index.html", "text/html"],
+				["app.js", "javascript"],
+				["style.css", "text/css"],
+			]) {
+				const response = await fetch(`${root}/${name}`);
+				expect(response.status).toBe(200);
+				expect(response.headers.get("content-type")).toContain(mime);
+			}
+		} finally {
+			server.stop(true);
+		}
+	});
 	test("serves fixture files and refuses paths outside the fixture directory", async () => {
 		const path = await writeFixture("chat.json", minimal);
 		const fixtures = await registerFixtures([path]);

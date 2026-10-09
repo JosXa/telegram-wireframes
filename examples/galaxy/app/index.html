@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Space Emperors · Galaxy prototype</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="app.js" defer></script>
+</head>
+<body>
+	<header class="heading">
+		<div><p class="eyebrow">SEASON 01 · PROTOTYPE</p><h1>Vega sector</h1></div>
+		<div class="resources"><span>💠 1 240</span><span>🔥 610</span></div>
+	</header>
+	<section class="legend" aria-label="Planet ownership">
+		<span><i class="own"></i>Yours</span><span><i class="rival"></i>Rival</span><span><i class="open"></i>Unclaimed</span>
+	</section>
+	<main id="map-panel">
+		<div class="map-label"><span class="live-dot"></span><span id="flight-summary">2 fleets in flight</span></div>
+		<svg id="galaxy" viewBox="0 0 420 520" aria-label="Galaxy map. Drag to pan, use zoom buttons, select a planet.">
+			<defs>
+				<radialGradient id="own-planet" cx="30%" cy="24%"><stop stop-color="#c0e8c6"/><stop offset=".5" stop-color="#538b6e"/><stop offset="1" stop-color="#19312f"/></radialGradient>
+				<radialGradient id="rival-planet" cx="30%" cy="24%"><stop stop-color="#f2cba4"/><stop offset=".5" stop-color="#b86652"/><stop offset="1" stop-color="#422b32"/></radialGradient>
+				<radialGradient id="open-planet" cx="30%" cy="24%"><stop stop-color="#cad8dc"/><stop offset=".5" stop-color="#687e8b"/><stop offset="1" stop-color="#29383e"/></radialGradient>
+				<radialGradient id="star"><stop stop-color="#eee5c0"/><stop offset=".3" stop-color="#d5bb83"/><stop offset="1" stop-color="#d5bb83" stop-opacity="0"/></radialGradient>
+			</defs>
+			<g id="world"><g id="cells"></g><g id="routes"></g><g id="planets"></g><g id="ships"></g></g>
+		</svg>
+		<p class="drag-hint">Drag to explore · tap a planet</p>
+		<fieldset class="zoom" aria-label="Map controls"><button type="button" id="zoom-in" aria-label="Zoom in">+</button><button type="button" id="zoom-out" aria-label="Zoom out">−</button><button type="button" id="recenter" aria-label="Return to home planet">⌖</button></fieldset>
+	</main>
+	<section class="selection" aria-live="polite">
+		<div class="selection-head"><div><p id="planet-meta" class="eyebrow">YOUR HOME PLANET · 14:6</p><h2 id="planet-name">Vega</h2></div><span id="planet-biome">🏝</span></div>
+		<div class="selection-footer"><span id="planet-detail">12 stationed ships</span><button type="button" id="planet-action">View colony <span>↗</span></button></div>
+	</section>
+	<section id="fleet-panel" hidden aria-label="Fleets in flight"></section>
+	<nav aria-label="Sections"><button type="button" data-tab="galaxy" class="active" aria-current="page">Galaxy</button><button type="button" data-tab="fleets">Fleets <span class="badge">2</span></button><button type="button" data-tab="colonies">Colonies</button></nav>
+	<div id="status" role="status"></div>
+</body>
+</html>

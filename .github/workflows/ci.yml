@@ -38,6 +38,7 @@ jobs:
       - if: matrix.upstream == 'latest'
         run: bun run pin latest
       - run: bun run examples
+      - run: bun run test:mini-app
       - if: matrix.upstream == 'latest'
         run: bun run typecheck:web-a
       - uses: actions/upload-artifact@v7
