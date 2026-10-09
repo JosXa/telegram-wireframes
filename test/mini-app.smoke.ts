@@ -34,8 +34,12 @@ try {
 			// The Telegram permission dialog and browser frame animate before pointer input reaches the map.
 			await page.waitForTimeout(800);
 			assert.equal(await app.locator("#planet-name").textContent(), "Solara");
-			assert.equal(await app.locator(".system").count(), 7);
-			assert.ok((await app.locator(".cell").count()) > 0);
+			const systems = await app.locator(".system").count();
+			assert.ok((await app.locator(".cell").count()) > systems * 4, "most hexes must be empty");
+			assert.ok(
+				(await app.locator(".system.open").count()) > systems * 0.8,
+				"most systems must be unclaimed",
+			);
 			const frame = page.frames().find((frame) => frame.url().includes("/app/index.html"));
 			assert.ok(frame);
 			assert.equal(new URLSearchParams(new URL(frame.url()).hash.slice(1)).get("tgWebAppData"), "");
@@ -111,6 +115,16 @@ try {
 				"orbit lanes must leave room for fingers",
 			);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-young.png` });
+			const systemCamera = JSON.parse((await map.getAttribute("data-camera")) ?? "{}");
+			const systemBox = await map.boundingBox();
+			assert.ok(systemBox);
+			// Select Kepler by touching the opposite side of its orbit, without approaching it.
+			const orbitX = systemBox.x + systemCamera.x + Math.cos((Math.PI * 7) / 6) * 224 * systemCamera.scale;
+			const orbitY = systemBox.y + systemCamera.y + Math.sin((Math.PI * 7) / 6) * 224 * systemCamera.scale;
+			if (touch) await page.touchscreen.tap(orbitX, orbitY);
+			else await page.mouse.click(orbitX, orbitY);
+			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
+			assert.deepEqual(JSON.parse((await map.getAttribute("data-camera")) ?? "{}"), systemCamera);
 			await app.getByRole("button", { name: "Orbit 2: Kepler", exact: true }).click();
 			// Animated SVGs confuse Playwright's locator stability check; send real pointer input at the hit target.
 			const target = await app.locator("[data-planet='14:2'] .planet-hitbox").boundingBox();
@@ -120,20 +134,46 @@ try {
 			else await page.mouse.click(target.x + target.width / 2, target.y + target.height / 2);
 			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /YOUR COLONY/);
-			assert.equal(await app.locator("[data-fleet]").count(), 2);
+			assert.equal(await app.locator("[data-fleet]").count(), 5);
 			const ship = app.locator("[data-fleet='transport']");
 			const progress = Number(await ship.getAttribute("data-progress"));
-			await frame.waitForFunction((previous) => {
-				return (
-					Number(document.querySelector("[data-fleet='transport']")?.getAttribute("data-progress")) >
-					previous + 0.015
-				);
-			}, progress);
+			assert.ok(Number(await ship.getAttribute("data-duration")) >= 8 * 3600000);
+			await page.waitForTimeout(1200);
+			const delta = Number(await ship.getAttribute("data-progress")) - progress;
+			assert.ok(delta > 0 && delta < 0.0001, "ship positions must advance over hours, not seconds");
+			await app.locator("#open-movements").click();
+			await app.locator("[data-movement='incoming-distant']").click();
+			assert.equal(await app.locator("#scan-fleet").isDisabled(), true);
+			await app.locator("#movement-back").click();
+			await app.locator("[data-movement='incoming-ally']").click();
+			assert.equal(await app.locator(".fleet-title h2").textContent(), "Incoming fleet");
+			assert.equal(await app.locator(".composition").count(), 0);
+			assert.equal(await app.locator("[data-fleet='incoming-ally'] [data-ship-type]").count(), 0);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-incoming.png` });
+			await app.locator("#scan-fleet").click();
+			await app.getByRole("heading", { name: "Reinforcements incoming", exact: true }).waitFor();
+			assert.match(
+				(await app.locator("#verification").textContent()) ?? "",
+				/Mission verified at.*this leg only/,
+			);
+			assert.equal(await app.locator(".composition > div").count(), 3);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-espionage.png` });
+			await app.locator(".demo-controls summary").click();
+			await app.getByRole("button", { name: "Recall", exact: true }).click();
+			assert.match((await app.locator("#verification").textContent()) ?? "", /expired.*recalled/);
+			assert.equal(await app.locator(".composition").count(), 0);
+			await app.locator("#movement-back").click();
+			await app.locator("[data-movement='incoming-attack']").click();
+			assert.equal(await app.locator(".fleet-title h2").textContent(), "Attack incoming");
+			await app.locator(".demo-controls summary").click();
+			await app.getByRole("button", { name: "Arrival", exact: true }).click();
+			assert.match((await app.locator("#verification").textContent()) ?? "", /expired.*arrived/);
+			await app.getByRole("button", { name: "Close fleet movements" }).click();
 			await app.getByRole("button", { name: "High empire 8 planets" }).click();
 			assert.equal(await app.locator(".planet").count(), 8);
 			assert.equal(await app.locator(".planet.own").count(), 8);
 			assert.equal(await app.locator(".station").count(), 8);
-			assert.equal(await app.locator("[data-fleet]").count(), 24);
+			assert.equal(await app.locator("[data-fleet]").count(), 27);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-developed.png` });
 			for (let orbit = 1; orbit <= 8; orbit++) {
 				const button = app.locator(`[data-orbit-select='28:${orbit}']`);
@@ -144,6 +184,11 @@ try {
 			}
 			await app.getByRole("button", { name: "Overview ↗", exact: true }).click();
 			assert.ok(JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale < 0.75);
+			const artScale = await app.locator(".planet .map-art").first().getAttribute("transform");
+			assert.ok(
+				artScale && Number(artScale.match(/[\d.]+/)?.[0]) < 0.9,
+				"planet art shrinks gently in overview",
+			);
 			const hitAreas = await app.locator(".planet-hitbox").evaluateAll((nodes) =>
 				nodes.map((node) => {
 					const box = node.getBoundingClientRect();
@@ -158,11 +203,27 @@ try {
 					);
 				}
 			await app.getByRole("button", { name: "Return to home planet" }).click();
+			await app.locator("#open-movements").click();
+			await app.locator("[data-movement='incoming-ally']").click();
+			await app.locator("#scan-fleet").click();
+			await app.getByRole("heading", { name: "Reinforcements incoming", exact: true }).waitFor();
+			await app.locator(".demo-controls summary").click();
+			await app.getByRole("button", { name: "Replacement leg", exact: true }).click();
+			assert.match((await app.locator("#verification").textContent()) ?? "", /expired.*replaced/);
+			assert.equal(await app.locator(".composition").count(), 0);
+			await app.getByRole("button", { name: "Close fleet movements" }).click();
 			// Reduced motion stops the texture animation but retains readable fleet progress.
 			await page.emulateMedia({ reducedMotion: "reduce" });
 			assert.equal(
 				await app
 					.locator(".surface-stripes")
+					.first()
+					.evaluate((node) => getComputedStyle(node).animationName),
+				"none",
+			);
+			assert.equal(
+				await app
+					.locator(".route-flow")
 					.first()
 					.evaluate((node) => getComputedStyle(node).animationName),
 				"none",

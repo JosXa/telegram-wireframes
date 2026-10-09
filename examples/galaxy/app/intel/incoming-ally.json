@@ -1,0 +1,5 @@
+{
+	"legId": "incoming-ally-outbound",
+	"mission": "Reinforcement",
+	"composition": { "heavy": 2, "freighter": 3, "fighter": 12 }
+}

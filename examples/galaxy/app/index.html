@@ -27,15 +27,34 @@
         <radialGradient id="nebula-rose"><stop stop-color="#985a79" stop-opacity=".27"/><stop offset=".55" stop-color="#694368" stop-opacity=".12"/><stop offset="1" stop-color="#452e52" stop-opacity="0"/></radialGradient>
         <filter id="dust" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".009 .014" numOctaves="3" seed="28"/><feColorMatrix type="saturate" values="0"/><feComposite in="SourceGraphic" operator="in"/></filter>
         <filter id="glow"><feGaussianBlur stdDeviation="2"/></filter>
-        <symbol id="ship-sprite" viewBox="-12 -8 24 16"><path d="M-7,-2 L-15,0 L-7,2" fill="#91def3" opacity=".8"/><path d="M10,0 -7,-5 -4,0 -7,5Z" fill="#d9e6e7" stroke="#557284" stroke-width=".8"/><path d="M2,0 -5,-2 -4,2Z" fill="#648796"/></symbol>
-        <symbol id="freighter-sprite" viewBox="-12 -8 24 16"><path d="M-8,-2 -17,0 -8,2" fill="#9ce7ff" opacity=".7"/><path d="M9,0 3,-4 -9,-4 -9,4 3,4Z" fill="#c7cbd0" stroke="#5f7987"/><path d="M-6,-4V4 M-2,-4V4 M2,-3V3" stroke="#d2aa65" stroke-width="2"/></symbol>
+        <linearGradient id="hull" x2="0" y2="1"><stop stop-color="#c4d5db"/><stop offset=".48" stop-color="#708997"/><stop offset=".52" stop-color="#425566"/><stop offset="1" stop-color="#8ea4b1"/></linearGradient>
+        <symbol id="ship-sprite" viewBox="-24 -16 48 32">
+          <path d="M-14,-7 -23,-6 -14,-5 M-14,5 -23,6 -14,7" stroke="#83cde1" stroke-width="2" opacity=".65"/>
+          <path d="M19,0 1,-4 -11,-13 -16,-13 -10,-3 -16,0 -10,3 -16,13 -11,13 1,4Z" fill="url(#hull)" stroke="#b1c7d2" stroke-width=".65"/>
+          <path d="M9,0 -3,-2 -7,0 -3,2Z" fill="#abdbea"/><path d="M-7,-10H2 M-7,10H2" stroke="#d4b781" stroke-width="1.4"/>
+          <path d="M-15,-7H-8V-4H-15Z M-15,4H-8V7H-15Z" fill="#364857"/>
+        </symbol>
+        <symbol id="freighter-sprite" viewBox="-28 -18 56 36">
+          <path d="M-18,-7 -27,-6 -18,-5 M-18,5 -27,6 -18,7" stroke="#83cde1" stroke-width="3" opacity=".5"/>
+          <path d="M23,0 13,-7 -20,-7 -20,7 13,7Z" fill="url(#hull)" stroke="#b2c4ca" stroke-width=".8"/>
+          <path d="M-16,-12H-8V-3H-16Z M-5,-12H3V-3H-5Z M6,-11H12V-3H6Z M-16,3H-8V12H-16Z M-5,3H3V12H-5Z M6,3H12V11H6Z" fill="#bba074" stroke="#514c43"/>
+          <path d="M-17,0H13" stroke="#d5e0dd" stroke-width="2"/><path d="M15,-3 20,0 15,3Z" fill="#8fd1e0"/>
+        </symbol>
+        <symbol id="heavy-sprite" viewBox="-40 -22 80 44">
+          <path d="M-28,-8H-39 M-28,0H-37 M-28,8H-39" stroke="#7dcae2" stroke-width="3" opacity=".55"/>
+          <path d="M36,0 18,-8 6,-10 -4,-17 -25,-17 -30,-10 -26,0 -30,10 -25,17 -4,17 6,10 18,8Z" fill="url(#hull)" stroke="#c3d1d5" stroke-width=".8"/>
+          <path d="M28,0 9,-5 -21,-5 -24,0 -21,5 9,5Z" fill="#c7d2d1"/><path d="M-22,-13H-7 M-22,13H-7 M-17,-10V10 M-7,-8V8" stroke="#425564" stroke-width="1.6"/>
+          <path d="M-2,-12H14 M-2,12H14 M12,-5H26 M12,5H26" stroke="#dfc897" stroke-width="2"/>
+          <path d="M-10,-4H-2V4H-10Z" fill="#3e5362"/><path d="M-7,-3H-3V3H-7Z" fill="#93d3e5"/>
+        </symbol>
       </defs>
       <g id="backdrop"></g>
-      <g id="world"><g id="cells"></g><g id="orbits"></g><g id="routes"></g><g id="stars"></g><g id="planets"></g><g id="ships"></g></g>
+      <g id="world"><g id="cells"></g><g id="orbits"></g><g id="routes"></g><g id="stars"></g><g id="ships"></g><g id="planets"></g></g>
     </svg>
     <div class="map-caption"><span class="live-dot"></span><span id="flight-summary"></span></div>
     <div class="map-mode" id="map-mode">HEX SECTORS</div>
     <button type="button" id="overview" hidden>Overview ↗</button>
+    <button type="button" id="open-movements" aria-expanded="false">Fleet movements <span id="incoming-count">3 incoming</span></button>
     <fieldset class="zoom" aria-label="Map controls">
       <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
       <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
@@ -47,6 +66,11 @@
   <section class="selection" aria-live="polite">
     <div class="selection-head"><div><p id="planet-meta" class="eyebrow"></p><h2 id="planet-name">Solara</h2></div><span id="planet-biome"></span></div>
     <div class="selection-footer"><span id="planet-detail"></span><button type="button" id="planet-action">Enter system ↗</button></div>
+  </section>
+  <section id="movement-panel" aria-label="Fleet movements" hidden>
+    <header class="movement-heading"><button type="button" id="movement-back" hidden>‹ All movements</button><h2 id="movement-heading">Fleet movements</h2><button type="button" id="close-movements" aria-label="Close fleet movements">×</button></header>
+    <div id="movement-list"></div>
+    <div id="movement-detail" hidden></div>
   </section>
   <footer><span id="scene-note">MAP STUDY · SAMPLE STATE</span><span class="ownership-key"><i></i> Your colonies</span></footer>
   <div id="status" role="status"></div>

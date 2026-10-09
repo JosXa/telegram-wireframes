@@ -87,11 +87,15 @@ Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, 
 
 The map study has three views, also selectable with `?variant=galaxy`, `?variant=young` or `?variant=developed` on the app page:
 
-- Galaxy places star systems on a hex grid against a procedural starfield and nebulae.
+- Galaxy places sparse, mostly unclaimed star systems inside a faint hex grid against a procedural starfield and nebulae.
 - First colonies has four different biomes around a central star, with a home planet, a second colony and two unclaimed worlds.
 - High empire has eight settled planets, orbital stations, patrol craft and resource transports.
 
-System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, with a minimum gap between targets. The orbit buttons jump to individual worlds. Overview zoom shows more of the system while preserving those targets. Traffic loops for demonstration and does not represent game balance.
+System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, while their artwork shrinks slightly in overview. Tap an orbit or its planet to select it without moving the camera. The orbit buttons approach individual worlds.
+
+Fleet positions follow departure and arrival timestamps over journeys lasting minutes or hours. Fading dots indicate direction independently of ship speed. Heavy warships, small freighters and Light Fighters travel in formation, with provisional silhouettes and no settled ship statistics. Arrivals end movements rather than looping them.
+
+Open **Fleet movements** to inspect unknown incoming fleets, a verified attack and your own transports. Scan the allied incoming fleet to reveal reinforcements and its ship composition. The report identifies its movement leg and verification time. The preview controls demonstrate expiry on recall, arrival or replacement. Unknown fleets have no composition or mission in their initial fixture state, including allied fleets. The scan uses a separate static response under `app/intel/`; production authorization and visibility belong on the game server. Scan range and travel times are sample values.
 
 ```sh
 bun run serve examples/galaxy/fixture.json
@@ -112,6 +116,8 @@ bun run test:mini-app
 </p>
 
 [Full eight-planet system](docs/system-developed-full.png)
+
+[Incoming fleet](docs/fleet-incoming.png) · [Fleet scan and ship silhouettes](docs/fleet-espionage.png)
 
 ## How it works
 

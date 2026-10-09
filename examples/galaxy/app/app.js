@@ -27,20 +27,43 @@ const systems = [
 	{
 		id: 28,
 		name: "Aurelia",
-		q: 1,
-		r: -1,
+		q: 6,
+		r: -5,
 		owner: "own",
 		count: 8,
 		settled: 8,
 		variant: "developed",
 		type: "F5 · White-gold star",
 	},
-	{ id: 13, name: "Antares", q: -1, r: 0, owner: "rival", count: 6, settled: 3, type: "K4 · Orange dwarf" },
-	{ id: 18, name: "Merope", q: 0, r: -1, owner: "open", count: 5, settled: 0, type: "B6 · Blue star" },
+	{ id: 13, name: "Antares", q: -7, r: 1, owner: "rival", count: 6, settled: 3, type: "K4 · Orange dwarf" },
+	{ id: 18, name: "Merope", q: 0, r: 1, owner: "open", count: 5, settled: 0, type: "B6 · Blue star" },
 	{ id: 19, name: "Altair", q: 1, r: 0, owner: "open", count: 7, settled: 0, type: "A7 · White star" },
-	{ id: 12, name: "Lacaille", q: -1, r: 1, owner: "open", count: 4, settled: 0, type: "M2 · Red dwarf" },
-	{ id: 17, name: "Nivalis", q: 0, r: 1, owner: "rival", count: 8, settled: 5, type: "K1 · Orange dwarf" },
+	{ id: 12, name: "Lacaille", q: -2, r: -1, owner: "open", count: 4, settled: 0, type: "M2 · Red dwarf" },
+	{ id: 17, name: "Nivalis", q: 7, r: 0, owner: "rival", count: 8, settled: 5, type: "K1 · Orange dwarf" },
+	{ id: 62, name: "Aster", q: -5, r: -3, owner: "other", count: 6, settled: 1, type: "K7 · Orange dwarf" },
 ];
+const galaxyRandom = random(9102);
+for (let q = -10; q <= 10; q++)
+	for (let r = -10; r <= 10; r++) {
+		if (
+			Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 10 ||
+			Math.max(Math.abs(q), Math.abs(r)) < 2 ||
+			systems.some((s) => s.q === q && s.r === r) ||
+			galaxyRandom() > 0.13
+		)
+			continue;
+		const id = 100 + systems.length;
+		systems.push({
+			id,
+			name: `${["Eridani", "Carina", "Lyra", "Cygni", "Velorum"][id % 5]} ${id}`,
+			q,
+			r,
+			owner: "open",
+			count: 4 + (id % 5),
+			settled: 0,
+			type: "Unclaimed system",
+		});
+	}
 const scenes = {
 	young: {
 		name: "Solara",
@@ -75,7 +98,15 @@ let camera = { x: 0, y: 0, scale: 1 };
 let width = 420;
 let height = 520;
 let lastSecond = -1;
-let deliveryCount = 0;
+const scenarioTime = Date.now();
+const movementState = new Map();
+let activeFleet;
+let cameraReady = false;
+const shipTypes = {
+	heavy: { name: "Heavy warship", symbol: "heavy-sprite", width: 38, height: 22 },
+	freighter: { name: "Small freighter", symbol: "freighter-sprite", width: 28, height: 18 },
+	fighter: { name: "Light Fighter", symbol: "ship-sprite", width: 20, height: 14 },
+};
 
 function element(tag, attrs, parent, text) {
 	const node = document.createElementNS(NS, tag);
@@ -171,9 +202,10 @@ function addStar(x, y, radius, parent, blue = false) {
 	return g;
 }
 function galaxy() {
-	const size = 112;
-	for (let q = -3; q <= 3; q++)
-		for (let r = -3; r <= 3; r++) {
+	const size = 146;
+	for (let q = -10; q <= 10; q++)
+		for (let r = -10; r <= 10; r++) {
+			if (Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 10) continue;
 			const x = size * 1.5 * q,
 				y = size * Math.sqrt(3) * (r + q / 2);
 			const points = Array.from(
@@ -184,8 +216,10 @@ function galaxy() {
 			element("polygon", { points, class: `cell${system?.owner === "own" ? " owned" : ""}` }, $("#cells"));
 		}
 	for (const system of systems) {
-		system.x = size * 1.5 * system.q;
-		system.y = size * Math.sqrt(3) * (system.r + system.q / 2);
+		const jitter = random(system.id * 1987);
+		system.x = size * 1.5 * system.q + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
+		system.y =
+			size * Math.sqrt(3) * (system.r + system.q / 2) + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
 		const group = element(
 			"g",
 			{
@@ -197,10 +231,11 @@ function galaxy() {
 			},
 			$("#planets"),
 		);
-		markers.push({ node: group, item: system });
-		addStar(0, 0, system.id === 28 ? 10 : 7, group, system.id === 18);
-		element("circle", { r: 23, class: "ownership-ring" }, group);
-		element("circle", { r: 28, class: "selected-ring" }, group);
+		const art = element("g", { class: "map-art" }, group);
+		markers.push({ node: group, item: system, art });
+		addStar(0, 0, system.id === 28 ? 10 : 7, art, system.id === 18);
+		element("circle", { r: 23, class: "ownership-ring" }, art);
+		element("circle", { r: 28, class: "selected-ring" }, art);
 		element("text", { x: 0, y: 43, "text-anchor": "middle", class: "planet-label" }, group, system.name);
 		element(
 			"text",
@@ -211,8 +246,9 @@ function galaxy() {
 		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
 		bindSelect(group, () => selectSystem(system));
 	}
-	addFleet(systems[0], systems[1], 0, "💠 240", 120000);
-	addFleet(systems[1], systems[0], 1, "🔥 80", 160000);
+	addFleet(systems[0], systems[1], 0, "💠 240", 10 * 3600000);
+	addFleet(systems[1], systems[0], 1, "🔥 80", 70 * 60000);
+	addIncoming(systems[0]);
 	selectSystem(systems[0]);
 }
 function station(parent, advanced) {
@@ -318,6 +354,7 @@ function systemScene() {
 	});
 	addStar(0, 0, 34, $("#stars"));
 	for (const [index, planet] of planets.entries()) {
+		element("circle", { r: planet.radius, class: "orbit-halo", "data-orbit": planet.id }, $("#orbits"));
 		element("circle", { r: planet.radius, class: "orbit", "data-orbit": planet.id }, $("#orbits"));
 		const group = element(
 			"g",
@@ -330,10 +367,11 @@ function systemScene() {
 			},
 			$("#planets"),
 		);
-		markers.push({ node: group, item: planet });
-		element("circle", { r: 29, class: "ownership-ring" }, group);
-		element("circle", { r: 34, class: "selected-ring" }, group);
-		planetArt(group, planet, index);
+		const art = element("g", { class: "map-art" }, group);
+		markers.push({ node: group, item: planet, art });
+		element("circle", { r: 29, class: "ownership-ring" }, art);
+		element("circle", { r: 34, class: "selected-ring" }, art);
+		planetArt(art, planet, index);
 		element("text", { x: 0, y: 50, "text-anchor": "middle", class: "planet-label" }, group, planet.name);
 		element(
 			"text",
@@ -342,20 +380,20 @@ function systemScene() {
 			`${index + 1} · ${biomes[planet.biome].label}${planet.home ? " · HOME" : ""}`,
 		);
 		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
-		bindSelect(group, () => selectPlanet(planet, true));
+		bindSelect(group, () => selectPlanet(planet));
 		if (planet.owner === "own") {
 			const count = advanced ? 8 + (index % 5) : index ? 2 : 3;
 			for (let n = 0; n < count; n++) {
 				const ship = element(
 					"use",
 					{ href: "#ship-sprite", x: -6, y: -4, width: 12, height: 8, "pointer-events": "none" },
-					group,
+					art,
 				);
 				patrols.push({
 					ship,
 					phase: (n / count) * Math.PI * 2,
 					radius: 38 + (n % 3) * 5,
-					duration: 15 + n * 3 + index,
+					duration: 3600 + n * 600 + index * 120,
 				});
 			}
 		}
@@ -381,41 +419,183 @@ function systemScene() {
 			to,
 			i,
 			i % 3 ? `💠 ${advanced ? "2 400" : "120"}` : `🔥 ${advanced ? "800" : "40"}`,
-			advanced ? 25000 + i * 1300 : 65000 + i * 20000,
+			i % 4 === 0 ? (8 + (i % 5)) * 3600000 : (45 + i * 2) * 60000,
 		);
 	}
+	addIncoming(planets[0]);
 	selectPlanet(planets[0]);
 }
-function addFleet(from, to, index, cargo, duration) {
+function addFleet(from, to, index, cargo, duration, incoming) {
+	if (typeof from.id === "number") from = { ...from, id: `${from.id}:1` };
+	if (typeof to.id === "number") to = { ...to, id: `${to.id}:1` };
+	const id = incoming?.id || (index === 0 ? "transport" : `freight-${index}`);
+	const key = incoming ? `${to.id}:${id}` : `${view}:${id}`;
+	if (!movementState.has(key))
+		movementState.set(
+			key,
+			incoming || {
+				id,
+				legId: `${id}-outbound`,
+				sender: "You",
+				own: true,
+				mission: "Transport",
+				cargo,
+				composition: { heavy: index % 4 === 0 ? 2 : 0, freighter: 3 + (index % 4), fighter: 8 + (index % 5) },
+				departure: scenarioTime - duration * (0.15 + ((index * 0.173) % 0.7)),
+				arrival: scenarioTime + duration * (0.85 - ((index * 0.173) % 0.7)),
+			},
+		);
+	const state = movementState.get(key);
+	const route = element("g", { class: "fleet-route", "data-route": id }, $("#routes"));
 	const path = element(
 		"path",
 		{
 			d: `M${from.x},${from.y} Q${(from.x + to.x) / 2 + (index % 2 ? 35 : -35)},${(from.y + to.y) / 2 - 38} ${to.x},${to.y}`,
-			class: `trajectory${cargo.includes("🔥") ? " gas" : ""}`,
+			class: "trajectory",
 		},
-		$("#routes"),
+		route,
+	);
+	const flow = element(
+		"path",
+		{
+			d: path.getAttribute("d"),
+			class: "route-flow",
+			pathLength: 100,
+			style: `animation-delay: -${index % 8}s`,
+		},
+		route,
 	);
 	const ship = element(
 		"g",
-		{ "data-fleet": index === 0 ? "transport" : `freight-${index}`, "pointer-events": "none" },
+		{ "data-fleet": id, role: "button", tabindex: 0, class: "fleet-marker" },
 		$("#ships"),
 	);
-	element("use", { href: "#freighter-sprite", x: -9, y: -6, width: 18, height: 12 }, ship);
-	const label =
-		index % 8 === 0
-			? element("text", { x: 0, y: -13, "text-anchor": "middle", class: "coordinate" }, ship, cargo)
-			: null;
-	const title = element("title", {}, ship, `${from.name} → ${to.name} · ${cargo}`);
-	fleets.push({
-		path,
+	const fleet = { path, flow, route, ship, state, from, to, length: path.getTotalLength() };
+	fleets.push(fleet);
+	paintFleet(fleet);
+	bindSelect(ship, () => openMovement(fleet));
+}
+
+function addIncoming(target) {
+	// Observer fixtures deliberately omit unverified mission, composition and cargo.
+	const samples = [
+		{
+			id: "incoming-ally",
+			sender: "Mira · your alliance",
+			origin: "62:3",
+			inScanRange: true,
+			hours: 10,
+			remaining: 2,
+		},
+		{
+			id: "incoming-attack",
+			sender: "Kael",
+			origin: "13:2",
+			inScanRange: true,
+			hours: 9,
+			remaining: 2.4,
+			report: {
+				legId: "incoming-attack-outbound",
+				mission: "Attack",
+				composition: { heavy: 6, freighter: 4, fighter: 24 },
+				verifiedAt: scenarioTime - 5 * 60000,
+			},
+		},
+		{ id: "incoming-distant", sender: "Orin", origin: "17:4", inScanRange: false, hours: 12, remaining: 7 },
+	];
+	for (const [i, sample] of samples.entries()) {
+		const source =
+			view === "galaxy" ? systems.find((system) => system.id === Number(sample.origin.split(":")[0])) : null;
+		const from = {
+			x: source ? source.x : target.x + [-480, 400, -320][i],
+			y: source ? source.y : target.y + [-400, -500, 500][i],
+			name: sample.origin,
+			id: sample.origin,
+		};
+		addFleet(from, target, 30 + i, undefined, sample.hours * 3600000, {
+			...sample,
+			legId: `${sample.id}-outbound`,
+			own: false,
+			departure: scenarioTime - (sample.hours - sample.remaining) * 3600000,
+			arrival: scenarioTime + sample.remaining * 3600000,
+		});
+	}
+}
+function intelligence(state) {
+	return state.report?.legId === state.legId && !state.ended ? state.report : undefined;
+}
+function fleetLabel(state) {
+	if (state.ended) return `Movement ${state.ended}`;
+	if (state.own) return state.mission;
+	const report = intelligence(state);
+	return report?.mission === "Attack"
+		? "Attack incoming"
+		: report?.mission === "Reinforcement"
+			? "Reinforcements incoming"
+			: "Incoming fleet";
+}
+function fleetTone(state) {
+	return state.ended
+		? "ended"
+		: state.own
+			? "own"
+			: intelligence(state)?.mission === "Attack"
+				? "attack"
+				: intelligence(state)
+					? "verified"
+					: "unknown";
+}
+function paintFleet(fleet) {
+	const { ship, state, route } = fleet;
+	ship.replaceChildren();
+	route.setAttribute("class", `fleet-route ${fleetTone(state)}`);
+	ship.setAttribute("aria-label", `${fleetLabel(state)} · ${state.sender}`);
+	ship.dataset.leg = state.legId;
+	ship.dataset.duration = state.arrival - state.departure;
+	const composition = state.own ? state.composition : intelligence(state)?.composition;
+	const formation = element("g", { class: "formation" }, ship);
+	if (composition) {
+		for (const [type, count] of Object.entries(composition)) {
+			if (!count) continue;
+			const shape = shipTypes[type];
+			const positions =
+				type === "heavy"
+					? [[12, 0]]
+					: type === "freighter"
+						? [
+								[-22, -12],
+								[-22, 12],
+							]
+						: [
+								[6, -25],
+								[6, 25],
+							];
+			for (const [x, y] of positions.slice(0, count))
+				element(
+					"use",
+					{
+						href: `#${shape.symbol}`,
+						x: x - shape.width / 2,
+						y: y - shape.height / 2,
+						width: shape.width,
+						height: shape.height,
+						"data-ship-type": type,
+					},
+					formation,
+				);
+		}
+	} else {
+		element("path", { d: "M0,-12 12,0 0,12 -12,0Z", class: "unknown-contact" }, formation);
+		element("text", { x: 0, y: 4, "text-anchor": "middle", class: "contact-question" }, formation, "?");
+	}
+	element("circle", { r: 27, fill: "transparent", class: "fleet-hitbox" }, ship);
+	element(
+		"title",
+		{},
 		ship,
-		title,
-		cargo,
-		label,
-		length: path.getTotalLength(),
-		duration,
-		departure: Date.now() - duration * (0.15 + ((index * 0.173) % 0.7)),
-	});
+		`${state.sender} · ${fleetLabel(state)} · ${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name}`,
+	);
+	ship.style.display = state.ended ? "none" : "";
 }
 function selectSystem(system) {
 	selected = system;
@@ -454,7 +634,7 @@ function fit() {
 	const outer = view === "galaxy" ? 290 : planets.at(-1).radius;
 	const scale =
 		view === "galaxy"
-			? Math.min(width / 540, height / 640)
+			? Math.min(width / 820, height / 780)
 			: Math.min((width - 90) / (outer * 2), (height - 140) / (outer * 2));
 	camera = { x: width / 2, y: height / 2 - 10, scale: Math.max(minimumScale(), scale) };
 	updateCamera();
@@ -474,14 +654,18 @@ function home() {
 function updateCamera() {
 	world.setAttribute("transform", `translate(${camera.x} ${camera.y}) scale(${camera.scale})`);
 	// Markers and hit areas use screen pixels even when the astronomical distances are zoomed out.
-	for (const { node, item } of markers)
+	for (const { node, item, art } of markers) {
 		node.setAttribute("transform", `translate(${item.x} ${item.y}) scale(${1 / camera.scale})`);
+		// Artwork shrinks gently in overview, while the 64px hit circle remains outside this transform.
+		const size = view === "galaxy" ? 1 : Math.min(1, 0.72 + camera.scale * 0.35);
+		art.setAttribute("transform", `scale(${size})`);
+	}
 	svg.dataset.camera = JSON.stringify(camera);
 	if (view !== "galaxy")
 		$("#planet-action").textContent = camera.scale >= 0.75 ? "System overview ↗" : "Orbit detail ↗";
 	$("#map-mode").textContent =
 		view === "galaxy"
-			? "HEX SECTORS · SYSTEMS"
+			? "OPEN SPACE · DRAG TO EXPLORE"
 			: camera.scale >= 0.75
 				? "ORBIT DETAIL · DRAG TO EXPLORE"
 				: "SYSTEM OVERVIEW · TAP TO APPROACH";
@@ -493,7 +677,9 @@ function updateCamera() {
 				: "Tap a world or choose its orbit below";
 }
 function showView(next) {
+	closeMovements();
 	view = next;
+	cameraReady = false;
 	const url = new URL(location.href);
 	url.searchParams.set("variant", view);
 	history.replaceState(null, "", url);
@@ -509,7 +695,6 @@ function showView(next) {
 	fleets = [];
 	patrols = [];
 	markers = [];
-	deliveryCount = 0;
 	lastSecond = -1;
 	$("#orbit-picker").hidden = view === "galaxy";
 	$("#overview").hidden = view === "galaxy";
@@ -526,11 +711,20 @@ function showView(next) {
 }
 function resize() {
 	const box = svg.getBoundingClientRect();
+	const dx = (box.width - width) / 2,
+		dy = (box.height - height) / 2;
 	width = box.width;
 	height = box.height;
 	svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 	sky();
-	home();
+	if (!cameraReady) {
+		home();
+		cameraReady = true;
+	} else {
+		camera.x += dx;
+		camera.y += dy;
+		updateCamera();
+	}
 }
 function zoom(factor, point = { x: width / 2, y: height / 2 }) {
 	const scale = Math.max(minimumScale(), Math.min(2.4, camera.scale * factor)),
@@ -604,6 +798,15 @@ svg.addEventListener(
 	},
 	{ passive: false },
 );
+svg.addEventListener("click", (event) => {
+	if (view === "galaxy" || event.target.closest('[role="button"]')) return;
+	const point = svgPoint(event.clientX, event.clientY);
+	const radius = Math.hypot(point.x - camera.x, point.y - camera.y) / camera.scale;
+	const nearest = planets.reduce((best, planet) =>
+		Math.abs(planet.radius - radius) < Math.abs(best.radius - radius) ? planet : best,
+	);
+	if (Math.abs(nearest.radius - radius) * camera.scale <= 24) selectPlanet(nearest);
+});
 $("#zoom-in").addEventListener("click", () => zoom(1.3));
 $("#zoom-out").addEventListener("click", () => zoom(1 / 1.3));
 $("#recenter").addEventListener("click", home);
@@ -628,12 +831,9 @@ $("#planet-action").addEventListener("click", () => {
 function tick() {
 	const now = Date.now();
 	for (const fleet of fleets) {
-		let progress = (now - fleet.departure) / fleet.duration;
-		if (progress >= 1) {
-			fleet.departure += Math.floor(progress) * fleet.duration;
-			deliveryCount++;
-			progress %= 1;
-		}
+		const { state } = fleet;
+		if (!state.ended && now >= state.arrival) expireMovement(fleet, "arrived");
+		const progress = Math.min(1, Math.max(0, (now - state.departure) / (state.arrival - state.departure)));
 		const point = fleet.path.getPointAtLength(fleet.length * progress);
 		const next = fleet.path.getPointAtLength(Math.min(fleet.length, fleet.length * progress + 1));
 		const angle = (Math.atan2(next.y - point.y, next.x - point.x) * 180) / Math.PI;
@@ -641,11 +841,11 @@ function tick() {
 			"transform",
 			`translate(${point.x} ${point.y}) rotate(${angle}) scale(${1 / camera.scale})`,
 		);
-		fleet.ship.dataset.progress = progress.toFixed(5);
-		if (fleet.label) {
-			fleet.label.setAttribute("transform", `rotate(${-angle})`);
-			fleet.label.style.display = camera.scale >= 0.75 ? "" : "none";
-		}
+		fleet.ship.dataset.progress = progress.toFixed(8);
+		fleet.ship.querySelector(".contact-question")?.setAttribute("transform", `rotate(${-angle})`);
+		fleet.ship
+			.querySelector(".formation")
+			.setAttribute("transform", `scale(${Math.min(1, 0.48 + camera.scale * 0.35)})`);
 	}
 	for (const patrol of patrols) {
 		const a = patrol.phase + (reducedMotion.matches ? 0 : (now / (patrol.duration * 1000)) * Math.PI * 2);
@@ -657,13 +857,136 @@ function tick() {
 	if (Math.floor(now / 1000) !== lastSecond) {
 		lastSecond = Math.floor(now / 1000);
 		$("#flight-summary").textContent =
-			view === "galaxy"
-				? "2 transports crossing the sector"
-				: `${fleets.length} transport routes · ${patrols.length} orbital craft${deliveryCount ? ` · ${deliveryCount} delivered` : ""}`;
+			`${fleets.filter((f) => !f.state.ended).length} movements · journeys in hours`;
+		$("#incoming-count").textContent =
+			`${fleets.filter((f) => !f.state.own && !f.state.ended).length} incoming`;
+		for (const node of document.querySelectorAll("[data-arrival]"))
+			node.textContent = timeLeft(Number(node.dataset.arrival));
 	}
 	if (reducedMotion.matches) setTimeout(tick, 1000);
 	else requestAnimationFrame(tick);
 }
+
+function timeLeft(arrival) {
+	const minutes = Math.max(0, Math.ceil((arrival - Date.now()) / 60000));
+	return minutes ? `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m` : "Arrived";
+}
+function clock(time) {
+	return new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+function closeMovements() {
+	$("#movement-panel").hidden = true;
+	document.body.classList.remove("movements-open");
+	$("#open-movements").setAttribute("aria-expanded", "false");
+	activeFleet = undefined;
+	for (const fleet of fleets) fleet.route.classList.remove("focused");
+}
+function showMovements() {
+	activeFleet = undefined;
+	for (const fleet of fleets) fleet.route.classList.remove("focused");
+	$("#movement-panel").hidden = false;
+	document.body.classList.add("movements-open");
+	$("#open-movements").setAttribute("aria-expanded", "true");
+	$("#movement-heading").textContent = "Fleet movements";
+	$("#movement-back").hidden = true;
+	$("#movement-detail").hidden = true;
+	$("#movement-list").hidden = false;
+	const list = $("#movement-list");
+	list.replaceChildren();
+	for (const own of [false, true]) {
+		const heading = document.createElement("h3");
+		heading.textContent = own ? "Your fleets" : "Incoming fleets";
+		list.append(heading);
+		for (const fleet of fleets.filter((f) => f.state.own === own)) {
+			const { state } = fleet;
+			const button = document.createElement("button");
+			button.type = "button";
+			button.className = `movement-row ${fleetTone(state)}`;
+			button.dataset.movement = state.id;
+			button.innerHTML = `<span class="movement-symbol">${state.own ? "↗" : intelligence(state) ? "👁" : "◇"}</span><span><strong>${fleetLabel(state)}</strong><small>${state.sender} · ${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name}</small></span><span class="arrival-time" ${state.ended ? "" : `data-arrival="${state.arrival}"`}>${state.ended || timeLeft(state.arrival)}</span>`;
+			button.addEventListener("click", () => openMovement(fleet));
+			list.append(button);
+		}
+	}
+}
+function openMovement(fleet) {
+	const previous = activeFleet;
+	showMovements();
+	activeFleet = fleet;
+	if (previous !== fleet)
+		requestAnimationFrame(() => {
+			const progress = Math.min(
+				1,
+				Math.max(0, (Date.now() - fleet.state.departure) / (fleet.state.arrival - fleet.state.departure)),
+			);
+			const point = fleet.path.getPointAtLength(fleet.length * progress);
+			camera.x = width / 2 - point.x * camera.scale;
+			camera.y = height * 0.55 - point.y * camera.scale;
+			updateCamera();
+		});
+	for (const item of fleets) item.route.classList.toggle("focused", item === fleet);
+	$("#movement-list").hidden = true;
+	$("#movement-back").hidden = false;
+	$("#movement-heading").textContent = "";
+	const detail = $("#movement-detail");
+	detail.hidden = false;
+	const { state } = fleet,
+		report = intelligence(state);
+	const composition = state.own ? state.composition : report?.composition;
+	detail.innerHTML = `<div class="fleet-title ${fleetTone(state)}"><p class="eyebrow">${state.own ? "YOUR FLEET" : `SENDER · ${state.sender}`}</p><h2>${fleetLabel(state)}</h2><p>${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name} · ${state.ended ? state.ended : `<span data-arrival="${state.arrival}">${timeLeft(state.arrival)}</span> · arrival ${clock(state.arrival)}`}</p></div>
+		<p class="verification ${fleetTone(state)}" id="verification">${state.ended ? `Verification expired: movement ${state.ended}.` : report ? `👁 Mission verified at ${clock(report.verifiedAt)} · this leg only` : state.own ? `Travel time fixed at dispatch · ${Math.round((state.arrival - state.departure) / 60000)} min` : "◇ Mission unverified · ship composition unknown"}</p>
+		${
+			composition
+				? `<div class="composition">${Object.entries(composition)
+						.filter(([, count]) => count)
+						.map(
+							([type, count]) =>
+								`<div><svg viewBox="-42 -24 84 48" aria-hidden="true"><use href="#${shipTypes[type].symbol}" x="${-shipTypes[type].width}" y="${-shipTypes[type].height}" width="${shipTypes[type].width * 2}" height="${shipTypes[type].height * 2}"/></svg><strong>${count} × ${shipTypes[type].name}</strong></div>`,
+						)
+						.join(
+							"",
+						)}</div><p class="fleet-note">${state.own ? `${state.cargo} · all ships travel together at the slowest ship's speed.` : "Cargo unknown. The scan reveals mission and ship composition."}</p>`
+				: `<p class="fleet-note">${state.id === "incoming-ally" && !state.ended ? "An alliance member is approaching. Alliance membership does not verify their mission." : state.ended ? "An old report cannot verify a different movement leg." : "Only sender, origin, target and arrival are visible."}</p>`
+		}
+		${!state.own ? `<button type="button" class="scan-button" id="scan-fleet" ${state.ended || report || !state.inScanRange ? "disabled" : ""}>${state.ended ? "Movement ended" : report ? "👁 Verified for this leg" : state.inScanRange ? "👁 Scan fleet with Observatory" : "Outside Observatory range"}</button><p class="fleet-note">${report ? "Recall, arrival or a replacement leg expires this verification." : "Scan availability is sample state; range geometry is still undecided."}</p><details class="demo-controls"><summary>Preview movement changes</summary><p>Prototype controls for report expiry.</p><button type="button" data-expire="recalled">Recall</button><button type="button" data-expire="arrived">Arrival</button><button type="button" data-expire="replaced">Replacement leg</button></details>` : ""}`;
+	if (!state.own) {
+		$("#scan-fleet").addEventListener("click", () => scanFleet(fleet));
+		for (const button of detail.querySelectorAll("[data-expire]"))
+			button.addEventListener("click", () => expireMovement(fleet, button.dataset.expire));
+	}
+}
+async function scanFleet(fleet) {
+	const legId = fleet.state.legId;
+	const button = $("#scan-fleet");
+	button.disabled = true;
+	button.textContent = "Observatory scanning…";
+	try {
+		// Static scan response for the wireframe. Production visibility and authorization belong on the server.
+		const response = await fetch(`intel/${fleet.state.id}.json`);
+		if (!response.ok) throw new Error("Scan sample unavailable");
+		const report = await response.json();
+		if (fleet.state.ended || fleet.state.legId !== legId || report.legId !== legId)
+			throw new Error("Movement changed. This report no longer verifies it.");
+		fleet.state.report = { ...report, verifiedAt: Date.now() };
+		paintFleet(fleet);
+		if (activeFleet === fleet) openMovement(fleet);
+	} catch (error) {
+		if (activeFleet === fleet) {
+			button.textContent = error.message;
+			button.disabled = false;
+		}
+	}
+}
+function expireMovement(fleet, reason) {
+	fleet.state.ended = reason;
+	delete fleet.state.report;
+	if (reason === "replaced") fleet.state.legId += "-replacement";
+	paintFleet(fleet);
+	if (activeFleet === fleet) openMovement(fleet);
+}
+$("#open-movements").addEventListener("click", showMovements);
+$("#close-movements").addEventListener("click", closeMovements);
+$("#movement-back").addEventListener("click", showMovements);
 // Telegram owns the window and event bridge. No account or SDK download is needed for this study.
 function send(eventType, eventData = {}) {
 	if (parent !== window) parent.postMessage(JSON.stringify({ eventType, eventData }), location.origin);

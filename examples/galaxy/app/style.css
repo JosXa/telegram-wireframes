@@ -60,6 +60,12 @@ h1 {
 	letter-spacing: -0.035em;
 	margin: 0;
 }
+h2 {
+	margin: 0;
+	font-size: 23px;
+	letter-spacing: -0.03em;
+	font-weight: 550;
+}
 .resources {
 	display: flex;
 	flex-direction: column;
@@ -178,13 +184,13 @@ h1 {
 	border-top: 1px solid var(--line);
 }
 .cell {
-	fill: oklch(30% 0.035 245 / 0.035);
-	stroke: oklch(68% 0.035 245 / 0.22);
+	fill: oklch(30% 0.035 245 / 0.015);
+	stroke: oklch(68% 0.035 245 / 0.09);
 	stroke-width: 1;
 }
 .cell.owned {
-	fill: oklch(68% 0.06 160 / 0.06);
-	stroke: oklch(72% 0.06 160 / 0.32);
+	fill: oklch(68% 0.06 160 / 0.025);
+	stroke: oklch(72% 0.06 160 / 0.16);
 }
 .orbit {
 	fill: none;
@@ -193,7 +199,23 @@ h1 {
 	vector-effect: non-scaling-stroke;
 }
 .orbit.selected {
-	stroke: oklch(84% 0.09 160 / 0.55);
+	stroke: oklch(84% 0.09 160 / 0.85);
+	stroke-width: 1.6;
+}
+.orbit-halo {
+	fill: none;
+	stroke: var(--own);
+	stroke-width: 18;
+	vector-effect: non-scaling-stroke;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 160ms ease-out;
+}
+.orbit-halo.selected {
+	opacity: 0.065;
+}
+.orbit {
+	transition: stroke 160ms ease-out;
 }
 .orbit-number {
 	fill: oklch(72% 0.04 65 / 0.75);
@@ -242,6 +264,8 @@ h1 {
 	stroke: var(--own);
 	stroke-width: 1.5;
 	opacity: 0;
+	stroke-dasharray: 18 6;
+	transition: opacity 160ms ease-out;
 }
 .selected .selected-ring {
 	opacity: 0.85;
@@ -272,14 +296,235 @@ h1 {
 }
 .trajectory {
 	fill: none;
-	stroke: var(--own);
+	stroke: currentColor;
 	stroke-width: 0.8;
-	stroke-dasharray: 3 7;
-	opacity: 0.3;
+	opacity: 0.18;
 	vector-effect: non-scaling-stroke;
 }
-.trajectory.gas {
-	stroke: oklch(76% 0.09 65);
+.fleet-route {
+	color: var(--own);
+	pointer-events: none;
+}
+.unknown {
+	color: oklch(80% 0.1 80);
+}
+.attack {
+	color: oklch(76% 0.15 28);
+}
+.verified {
+	color: oklch(81% 0.09 225);
+}
+.ended {
+	color: var(--muted);
+}
+.fleet-route.ended {
+	display: none;
+}
+.route-flow {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.5;
+	stroke-linecap: round;
+	stroke-dasharray: 1 19;
+	vector-effect: non-scaling-stroke;
+	animation: route-flow 12s linear infinite;
+}
+@keyframes route-flow {
+	0% {
+		stroke-dashoffset: 0;
+		opacity: 0.15;
+	}
+	50% {
+		opacity: 0.65;
+	}
+	100% {
+		stroke-dashoffset: -20;
+		opacity: 0.15;
+	}
+}
+.fleet-route.focused .trajectory {
+	opacity: 0.6;
+	stroke-width: 1.4;
+}
+.fleet-route.focused .route-flow {
+	stroke-width: 2.5;
+}
+.fleet-marker {
+	cursor: pointer;
+}
+.unknown-contact {
+	fill: oklch(20% 0.025 80);
+	stroke: oklch(80% 0.1 80);
+	stroke-width: 1.5;
+}
+.contact-question {
+	fill: oklch(88% 0.08 80);
+	font-size: 12px;
+	font-weight: 650;
+}
+#open-movements {
+	position: absolute;
+	bottom: 16px;
+	left: 14px;
+	padding: 8px 14px;
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	font-size: 12px;
+	text-align: left;
+}
+#open-movements span {
+	display: block;
+	color: oklch(80% 0.1 80);
+	font-size: 10px;
+	margin-top: 2px;
+}
+.drag-hint {
+	bottom: 82px;
+	max-width: calc(100% - 85px);
+}
+#movement-panel {
+	flex: 0 1 49%;
+	min-height: 240px;
+	overflow: auto;
+	overscroll-behavior: contain;
+	border-top: 1px solid var(--line);
+	background: var(--surface);
+}
+.movements-open :is(.selection, .orbit-picker) {
+	display: none;
+}
+.movement-heading {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-inline: 16px 8px;
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+}
+.movement-heading h2 {
+	font-size: 16px;
+}
+.movement-heading button {
+	font-size: 12px;
+}
+#close-movements {
+	font-size: 24px;
+	width: 48px;
+}
+#movement-list h3 {
+	font-size: 10px;
+	color: var(--muted);
+	font-weight: 500;
+	padding: 10px 18px 0;
+}
+.movement-row {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	gap: 10px;
+	text-align: left;
+	padding: 12px 18px;
+	border-bottom: 1px solid oklch(30% 0.02 245);
+}
+.movement-row strong {
+	display: block;
+	font-size: 12px;
+	font-weight: 550;
+}
+.movement-row small {
+	display: block;
+	font-size: 10px;
+	color: var(--muted);
+	margin-top: 3px;
+}
+.movement-symbol {
+	font-size: 19px;
+	width: 22px;
+	flex-shrink: 0;
+}
+.arrival-time {
+	margin-left: auto;
+	font-size: 11px;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+#movement-detail {
+	padding: 16px 18px 20px;
+}
+.fleet-title h2 {
+	font-size: 21px;
+}
+.fleet-title p:not(.eyebrow) {
+	font-size: 11px;
+	color: var(--muted);
+	margin: 8px 0;
+}
+.verification {
+	font-size: 11px;
+	padding-block: 10px;
+	border-block: 1px solid var(--line);
+}
+.composition {
+	display: flex;
+	gap: 10px;
+	padding-top: 2px;
+}
+.composition > div {
+	flex: 1;
+	min-width: 0;
+	text-align: center;
+}
+.composition svg {
+	width: 100%;
+	height: 54px;
+}
+.composition strong {
+	display: block;
+	font-size: 10px;
+	font-weight: 500;
+}
+.fleet-note {
+	font-size: 11px;
+	line-height: 1.6;
+	color: var(--muted);
+}
+.scan-button {
+	width: 100%;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	color: var(--own);
+	font-size: 12px;
+}
+.scan-button:disabled {
+	color: var(--muted);
+	cursor: default;
+}
+.demo-controls {
+	font-size: 10px;
+	color: var(--muted);
+	margin-top: 16px;
+}
+.demo-controls summary {
+	min-height: 44px;
+	display: list-item;
+	align-content: center;
+	cursor: pointer;
+}
+.demo-controls button {
+	font-size: 11px;
+	border: 1px solid var(--line);
+	padding-inline: 12px;
+	margin-right: 6px;
+}
+#movement-panel[hidden],
+#movement-back[hidden],
+#movement-list[hidden],
+#movement-detail[hidden] {
+	display: none;
 }
 .orbit-picker {
 	display: flex;
@@ -327,12 +572,6 @@ h1 {
 	justify-content: space-between;
 	gap: 10px;
 }
-h2 {
-	margin: 0;
-	font-size: 23px;
-	letter-spacing: -0.03em;
-	font-weight: 550;
-}
 #planet-biome {
 	font-size: 24px;
 }
@@ -374,8 +613,14 @@ footer {
 	font-size: 12px;
 }
 @media (prefers-reduced-motion: reduce) {
-	.surface-stripes {
+	.surface-stripes,
+	.route-flow {
 		animation: none;
+	}
+	.orbit,
+	.orbit-halo,
+	.selected-ring {
+		transition: none;
 	}
 }
 @media (max-height: 650px) {
