@@ -603,30 +603,22 @@ function addFleet(from, to, index, cargo, duration, incoming) {
 		);
 	const state = movementState.get(key);
 	const route = element("g", { class: "fleet-route", "data-route": id }, $("#routes"));
+	// Geometry is private to this movement. Only its remaining journey is drawn on the map.
 	const path = element(
 		"path",
 		{
 			d: `M${from.x},${from.y} Q${(from.x + to.x) / 2 + (index % 2 ? 35 : -35)},${(from.y + to.y) / 2 - 38} ${to.x},${to.y}`,
-			class: "trajectory",
+			"data-scene-def": "",
 		},
-		route,
+		svg.querySelector("defs"),
 	);
-	const flow = element(
-		"path",
-		{
-			d: path.getAttribute("d"),
-			class: "route-flow",
-			pathLength: 100,
-			style: `animation-delay: -${index % 8}s`,
-		},
-		route,
-	);
+	const trajectory = element("path", { class: "trajectory" }, route);
 	const ship = element(
 		"g",
 		{ "data-fleet": id, role: "button", tabindex: 0, class: "fleet-marker" },
 		$("#ships"),
 	);
-	const fleet = { path, flow, route, ship, state, from, to, length: path.getTotalLength() };
+	const fleet = { path, trajectory, route, ship, state, from, to, length: path.getTotalLength() };
 	fleets.push(fleet);
 	paintFleet(fleet);
 	bindSelect(ship, () => openMovement(fleet));
@@ -709,8 +701,8 @@ function paintFleet(fleet) {
 	ship.dataset.leg = state.legId;
 	ship.dataset.duration = state.arrival - state.departure;
 	const composition = state.own ? state.composition : intelligence(state)?.composition;
-	const formation = element("g", { class: "formation" }, ship);
-	if (composition) {
+	if (state.own) {
+		const formation = element("g", { class: "formation" }, ship);
 		for (const [type, count] of Object.entries(composition)) {
 			if (!count) continue;
 			const shape = shipTypes[type];
@@ -741,8 +733,25 @@ function paintFleet(fleet) {
 				);
 		}
 	} else {
-		element("path", { d: "M0,-12 12,0 0,12 -12,0Z", class: "unknown-contact" }, formation);
-		element("text", { x: 0, y: 4, "text-anchor": "middle", class: "contact-question" }, formation, "?");
+		// Incoming contacts stay compact. Ship types and counts belong in the scanned detail view.
+		const tone = fleetTone(state);
+		const contact = element("g", { class: `contact-marker ${tone}`, "data-contact": tone }, ship);
+		element("circle", { r: 14, class: "contact-pulse" }, contact);
+		if (tone === "attack") {
+			element("circle", { r: 9, class: "contact-body" }, contact);
+			element(
+				"path",
+				{ d: "M-13,0H-6 M6,0H13 M0,-13V-6 M0,6V13 M-3,-3 3,3 M3,-3 -3,3", class: "contact-glyph" },
+				contact,
+			);
+		} else if (tone === "verified") {
+			element("path", { d: "M0,-11 9,-7V1Q8,7 0,11Q-8,7 -9,1V-7Z", class: "contact-body" }, contact);
+			element("path", { d: "M-4,0H4 M0,-4V4", class: "contact-glyph" }, contact);
+		} else {
+			element("path", { d: "M0,-11 11,8Q12,10 9,10H-9Q-12,10 -11,8Z", class: "contact-body" }, contact);
+			element("path", { d: "M0,-4V2 M0,6V6.1", class: "contact-glyph" }, contact);
+		}
+		element("path", { d: "M20,-3 24,0 20,3", class: `contact-heading ${tone}` }, ship);
 	}
 	element("circle", { r: 27, fill: "transparent", class: "fleet-hitbox" }, ship);
 	element(
@@ -1007,10 +1016,19 @@ function tick() {
 			`translate(${point.x} ${point.y}) rotate(${angle}) scale(${1 / camera.scale})`,
 		);
 		fleet.ship.dataset.progress = progress.toFixed(8);
-		fleet.ship.querySelector(".contact-question")?.setAttribute("transform", `rotate(${-angle})`);
+		fleet.ship.querySelector(".contact-marker")?.setAttribute("transform", `rotate(${-angle})`);
 		fleet.ship
 			.querySelector(".formation")
-			.setAttribute("transform", `scale(${Math.min(1, 0.48 + camera.scale * 0.35)})`);
+			?.setAttribute("transform", `scale(${Math.min(1, 0.48 + camera.scale * 0.35)})`);
+		if (Math.floor(now / 1000) !== lastSecond) {
+			const remaining = Array.from({ length: 17 }, (_, index) => {
+				const position = fleet.path.getPointAtLength(
+					fleet.length * (progress + ((1 - progress) * index) / 16),
+				);
+				return `${index ? "L" : "M"}${position.x},${position.y}`;
+			}).join(" ");
+			fleet.trajectory.setAttribute("d", remaining);
+		}
 	}
 	for (const patrol of patrols) {
 		const a = patrol.phase + (reducedMotion.matches ? 0 : (now / (patrol.duration * 1000)) * Math.PI * 2);

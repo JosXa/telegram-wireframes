@@ -386,8 +386,10 @@ h2 {
 .trajectory {
 	fill: none;
 	stroke: currentColor;
-	stroke-width: 0.8;
-	opacity: 0.18;
+	stroke-width: 1;
+	stroke-dasharray: 1 6;
+	stroke-linecap: round;
+	opacity: 0.22;
 	vector-effect: non-scaling-stroke;
 }
 .fleet-route {
@@ -409,47 +411,49 @@ h2 {
 .fleet-route.ended {
 	display: none;
 }
-.route-flow {
-	fill: none;
-	stroke: currentColor;
-	stroke-width: 1.5;
-	stroke-linecap: round;
-	stroke-dasharray: 1 19;
-	vector-effect: non-scaling-stroke;
-	animation: route-flow 12s linear infinite;
-}
-@keyframes route-flow {
-	0% {
-		stroke-dashoffset: 0;
-		opacity: 0.15;
-	}
-	50% {
-		opacity: 0.65;
-	}
-	100% {
-		stroke-dashoffset: -20;
-		opacity: 0.15;
-	}
-}
 .fleet-route.focused .trajectory {
-	opacity: 0.6;
-	stroke-width: 1.4;
-}
-.fleet-route.focused .route-flow {
-	stroke-width: 2.5;
+	opacity: 0.5;
 }
 .fleet-marker {
 	cursor: pointer;
 }
-.unknown-contact {
-	fill: oklch(20% 0.025 80);
-	stroke: oklch(80% 0.1 80);
+.contact-body {
+	fill: var(--surface);
+	stroke: currentColor;
 	stroke-width: 1.5;
 }
-.contact-question {
-	fill: oklch(88% 0.08 80);
-	font-size: 12px;
-	font-weight: 650;
+.contact-glyph,
+.contact-heading {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.contact-heading {
+	opacity: 0.7;
+}
+.contact-pulse {
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1;
+	opacity: 0;
+	animation: contact-pulse 5.5s ease-out infinite;
+}
+@keyframes contact-pulse {
+	0%,
+	65%,
+	100% {
+		transform: scale(1);
+		opacity: 0;
+	}
+	10% {
+		opacity: 0.3;
+	}
+	40% {
+		transform: scale(1.65);
+		opacity: 0;
+	}
 }
 #open-movements {
 	position: absolute;
@@ -703,7 +707,7 @@ footer {
 }
 @media (prefers-reduced-motion: reduce) {
 	.surface-stripes,
-	.route-flow {
+	.contact-pulse {
 		animation: none;
 	}
 	.orbit,

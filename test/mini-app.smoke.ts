@@ -177,6 +177,22 @@ try {
 			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /YOUR COLONY/);
 			assert.equal(await app.locator("[data-fleet]").count(), 5);
+			assert.equal(
+				await app.locator(".route-flow").count(),
+				0,
+				"trajectories must not resemble animated lanes",
+			);
+			assert.ok(
+				await app
+					.locator("#routes .trajectory")
+					.evaluateAll((nodes) =>
+						nodes.every(
+							(node) =>
+								getComputedStyle(node).animationName === "none" &&
+								getComputedStyle(node).strokeDasharray !== "none",
+						),
+					),
+			);
 			const ship = app.locator("[data-fleet='transport']");
 			const progress = Number(await ship.getAttribute("data-progress"));
 			assert.ok(Number(await ship.getAttribute("data-duration")) >= 8 * 3600000);
@@ -191,6 +207,29 @@ try {
 			assert.equal(await app.locator(".fleet-title h2").textContent(), "Incoming fleet");
 			assert.equal(await app.locator(".composition").count(), 0);
 			assert.equal(await app.locator("[data-fleet='incoming-ally'] [data-ship-type]").count(), 0);
+			const contact = app.locator("[data-fleet='incoming-ally']");
+			assert.equal(await contact.locator("[data-contact='unknown']").count(), 1);
+			assert.equal(await contact.locator("text").count(), 0, "contact markers must not carry large labels");
+			await app.getByRole("button", { name: "Close fleet movements" }).click();
+			// Opening a contact from the map uses a large invisible target around its compact glyph.
+			const contactBox = await contact.locator(".fleet-hitbox").boundingBox();
+			assert.ok(contactBox && contactBox.width >= 53 && contactBox.height >= 53);
+			if (touch)
+				await page.touchscreen.tap(contactBox.x + contactBox.width / 2, contactBox.y + contactBox.height / 2);
+			else await page.mouse.click(contactBox.x + contactBox.width / 2, contactBox.y + contactBox.height / 2);
+			await app.getByRole("heading", { name: "Incoming fleet", exact: true }).waitFor();
+			assert.ok(
+				await contact.evaluate((node) => {
+					const marker = node as unknown as SVGGraphicsElement;
+					const trajectory = document.querySelector(
+						"[data-route='incoming-ally'] .trajectory",
+					) as SVGPathElement;
+					const position = marker.transform.baseVal.consolidate()?.matrix;
+					const start = trajectory.getPointAtLength(0);
+					return position && Math.hypot(position.e - start.x, position.f - start.y) < 1;
+				}),
+				"trajectory starts at the current contact, not its origin system",
+			);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-incoming.png` });
 			await app.locator("#scan-fleet").click();
 			await app.getByRole("heading", { name: "Reinforcements incoming", exact: true }).waitFor();
@@ -199,6 +238,12 @@ try {
 				/Mission verified at.*this leg only/,
 			);
 			assert.equal(await app.locator(".composition > div").count(), 3);
+			assert.equal(await contact.locator("[data-contact='verified']").count(), 1);
+			assert.equal(
+				await contact.locator("[data-ship-type]").count(),
+				0,
+				"scanned details stay in the detail view",
+			);
 			await app.locator("#verification img[alt='👁']").waitFor();
 			await frame.waitForFunction(() =>
 				[...document.querySelectorAll<HTMLImageElement>("img.telegram-emoji")].every(
@@ -213,6 +258,7 @@ try {
 			await app.locator("#movement-back").click();
 			await app.locator("[data-movement='incoming-attack']").click();
 			assert.equal(await app.locator(".fleet-title h2").textContent(), "Attack incoming");
+			assert.equal(await app.locator("[data-fleet='incoming-attack'] [data-contact='attack']").count(), 1);
 			await app.locator(".demo-controls summary").click();
 			await app.getByRole("button", { name: "Arrival", exact: true }).click();
 			assert.match((await app.locator("#verification").textContent()) ?? "", /expired.*arrived/);
@@ -277,7 +323,7 @@ try {
 			);
 			assert.equal(
 				await app
-					.locator(".route-flow")
+					.locator(".contact-pulse")
 					.first()
 					.evaluate((node) => getComputedStyle(node).animationName),
 				"none",
