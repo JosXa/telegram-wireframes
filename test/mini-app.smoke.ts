@@ -33,7 +33,9 @@ try {
 			await app.locator("[data-telegram-theme]").waitFor();
 			// The Telegram permission dialog and browser frame animate before pointer input reaches the map.
 			await page.waitForTimeout(800);
-			assert.equal(await app.locator("#planet-name").textContent(), "Vega");
+			assert.equal(await app.locator("#planet-name").textContent(), "Solara");
+			assert.equal(await app.locator(".system").count(), 7);
+			assert.ok((await app.locator(".cell").count()) > 0);
 			const frame = page.frames().find((frame) => frame.url().includes("/app/index.html"));
 			assert.ok(frame);
 			assert.equal(new URLSearchParams(new URL(frame.url()).hash.slice(1)).get("tgWebAppData"), "");
@@ -87,21 +89,38 @@ try {
 				await page.mouse.wheel(0, -100);
 			}
 			await frame.waitForFunction(
-				() => JSON.parse(document.querySelector("#galaxy")?.getAttribute("data-camera") ?? "{}").scale > 1,
+				(scale) =>
+					JSON.parse(document.querySelector("#galaxy")?.getAttribute("data-camera") ?? "{}").scale > scale,
+				JSON.parse(before ?? "{}").scale,
 			);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
 			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
-			assert.ok(JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale > 1);
+			assert.ok(
+				JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale > JSON.parse(before ?? "{}").scale,
+			);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}.png` });
+			await app.getByRole("button", { name: "Enter system ↗" }).click();
+			assert.equal(await app.locator(".planet").count(), 4);
+			assert.equal(await app.locator(".planet.own").count(), 2);
+			assert.equal(await app.locator(".station").count(), 2);
+			assert.equal(await app.locator(".cell").count(), 0);
+			assert.equal(await app.locator(".orbit").count(), 4);
+			assert.ok(
+				JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale * 112 >= 84,
+				"orbit lanes must leave room for fingers",
+			);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-young.png` });
+			await app.getByRole("button", { name: "Orbit 2: Kepler", exact: true }).click();
 			// Animated SVGs confuse Playwright's locator stability check; send real pointer input at the hit target.
-			const target = await app.locator("[data-planet='15:3'] .planet-hitbox").boundingBox();
+			const target = await app.locator("[data-planet='14:2'] .planet-hitbox").boundingBox();
 			assert.ok(target);
+			assert.ok(target.width >= 63 && target.height >= 63, "planet targets must remain finger-sized");
 			if (touch) await page.touchscreen.tap(target.x + target.width / 2, target.y + target.height / 2);
 			else await page.mouse.click(target.x + target.width / 2, target.y + target.height / 2);
 			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /YOUR COLONY/);
-			await app.getByRole("button", { name: "Fleets 2" }).click();
-			assert.equal(await app.locator(".fleet-row").count(), 2);
+			assert.equal(await app.locator("[data-fleet]").count(), 2);
 			const ship = app.locator("[data-fleet='transport']");
 			const progress = Number(await ship.getAttribute("data-progress"));
 			await frame.waitForFunction((previous) => {
@@ -110,9 +129,35 @@ try {
 					previous + 0.015
 				);
 			}, progress);
-			await app.getByRole("button", { name: "Galaxy", exact: true }).click();
+			await app.getByRole("button", { name: "High empire 8 planets" }).click();
+			assert.equal(await app.locator(".planet").count(), 8);
+			assert.equal(await app.locator(".planet.own").count(), 8);
+			assert.equal(await app.locator(".station").count(), 8);
+			assert.equal(await app.locator("[data-fleet]").count(), 24);
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-developed.png` });
+			for (let orbit = 1; orbit <= 8; orbit++) {
+				const button = app.locator(`[data-orbit-select='28:${orbit}']`);
+				await button.click();
+				assert.match((await app.locator("#planet-meta").textContent()) ?? "", new RegExp(`28:${orbit}$`));
+				const hit = await app.locator(`[data-planet='28:${orbit}'] .planet-hitbox`).boundingBox();
+				assert.ok(hit && hit.width >= 63 && hit.height >= 63);
+			}
+			await app.getByRole("button", { name: "Overview ↗", exact: true }).click();
+			assert.ok(JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale < 0.75);
+			const hitAreas = await app.locator(".planet-hitbox").evaluateAll((nodes) =>
+				nodes.map((node) => {
+					const box = node.getBoundingClientRect();
+					return { x: box.x + box.width / 2, y: box.y + box.height / 2, width: box.width };
+				}),
+			);
+			for (const [i, a] of hitAreas.entries())
+				for (const b of hitAreas.slice(i + 1)) {
+					assert.ok(
+						Math.hypot(a.x - b.x, a.y - b.y) >= (a.width + b.width) / 2 + 15,
+						"overview targets must not overlap",
+					);
+				}
 			await app.getByRole("button", { name: "Return to home planet" }).click();
-			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}.png` });
 			// Reduced motion stops the texture animation but retains readable fleet progress.
 			await page.emulateMedia({ reducedMotion: "reduce" });
 			assert.equal(
@@ -124,7 +169,7 @@ try {
 			);
 			assert.deepEqual(appErrors, []);
 			console.log(
-				`${touch ? "Touch" : "Mouse"}: Telegram frame, theme bridge, pan, zoom, selection, live fleets, reduced motion passed.`,
+				`${touch ? "Touch" : "Mouse"}: Telegram frame, galaxy, both systems, orbit spacing, pan, zoom, selection, live fleets, reduced motion passed.`,
 			);
 		} finally {
 			await context.close();

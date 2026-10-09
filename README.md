@@ -85,6 +85,14 @@ The mock supplies Telegram launch parameters, including theme, platform and vers
 
 Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, pinch and wheel zoom, animated planet surfaces, ownership colors and rings, and fleet trajectories that advance from timestamps. It uses sample state and has no game API.
 
+The map study has three views, also selectable with `?variant=galaxy`, `?variant=young` or `?variant=developed` on the app page:
+
+- Galaxy places star systems on a hex grid against a procedural starfield and nebulae.
+- First colonies has four different biomes around a central star, with a home planet, a second colony and two unclaimed worlds.
+- High empire has eight settled planets, orbital stations, patrol craft and resource transports.
+
+System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, with a minimum gap between targets. The orbit buttons jump to individual worlds. Overview zoom shows more of the system while preserving those targets. Traffic loops for demonstration and does not represent game balance.
+
 ```sh
 bun run serve examples/galaxy/fixture.json
 bun run render examples/galaxy/fixture.json
@@ -94,9 +102,16 @@ bun run test:mini-app
 ```
 
 <p>
-  <img src="docs/galaxy-mini-app.png" width="280" alt="SVG galaxy inside Telegram's Mini App frame, with green owned planets, orange rivals and moving fleets">
+  <img src="docs/galaxy-mini-app.png" width="280" alt="Hex galaxy inside Telegram's Mini App frame, with stars, nebulae and ownership rings">
   <img src="docs/galaxy-desktop.png" width="640" alt="The same Mini App floating over the bot chat in Telegram Web A on desktop">
 </p>
+
+<p>
+  <img src="docs/system-young.png" width="280" alt="First colonies around Solara, with wide orbit lanes and a station above the home planet">
+  <img src="docs/system-developed.png" width="280" alt="Aurelia's inner orbits with a citadel, patrol ships and resource transports">
+</p>
+
+[Full eight-planet system](docs/system-developed-full.png)
 
 ## How it works
 

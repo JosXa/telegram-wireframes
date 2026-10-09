@@ -1,13 +1,12 @@
-/* Throwaway map prototype. Telegram supplies the outer frame and theme parameters. */
+/* Map study: dark sky preserves contrast for stars, orbit tracks and ownership signals. */
 :root {
 	color-scheme: dark;
-	--surface: oklch(20% 0.012 225);
-	--ink: oklch(92% 0.012 225);
-	--muted: oklch(68% 0.025 225);
-	--line: oklch(34% 0.018 225);
-	--own: oklch(78% 0.085 154);
-	--rival: oklch(73% 0.11 35);
-	--open: oklch(73% 0.026 225);
+	--surface: oklch(18% 0.015 252);
+	--ink: oklch(93% 0.014 240);
+	--muted: oklch(69% 0.025 240);
+	--line: oklch(36% 0.025 245);
+	--own: oklch(82% 0.1 165);
+	--rival: oklch(75% 0.13 35);
 }
 * {
 	box-sizing: border-box;
@@ -15,9 +14,9 @@
 body {
 	margin: 0;
 	height: 100dvh;
+	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
 	background: var(--surface);
 	color: var(--ink);
 	font:
@@ -30,340 +29,369 @@ button {
 	cursor: pointer;
 	border: 0;
 	background: none;
+	min-height: 48px;
+}
+button:hover {
+	background: oklch(85% 0.02 245 / 0.07);
 }
 button:focus-visible,
 [role="button"]:focus-visible {
 	outline: 2px solid var(--own);
-	outline-offset: 4px;
-}
-button:hover {
-	background: oklch(85% 0.025 225 / 0.08);
+	outline-offset: -2px;
 }
 .heading {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 23px 20px 16px;
+	padding: 19px 20px 16px;
 	gap: 12px;
 }
 .eyebrow {
-	font-size: 10px;
-	letter-spacing: 0.1em;
+	font-size: 9px;
+	letter-spacing: 0.13em;
 	color: var(--muted);
 	margin: 0 0 5px;
 	font-weight: 600;
 }
 h1 {
-	font-size: 24px;
-	font-weight: 600;
-	line-height: 1.1;
-	letter-spacing: -0.04em;
+	font-size: 26px;
+	font-weight: 550;
+	line-height: 1.15;
+	letter-spacing: -0.035em;
 	margin: 0;
 }
 .resources {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	font-size: 12px;
+	gap: 3px;
+	font-size: 11px;
 	font-variant-numeric: tabular-nums;
 }
-.legend {
+.view-switcher {
 	display: flex;
-	align-items: center;
-	gap: 18px;
-	padding: 0 20px 16px;
-	font-size: 11px;
+	padding: 0 12px;
+	gap: 4px;
+	border-bottom: 1px solid var(--line);
+}
+.view-switcher button {
+	flex: 1;
+	padding: 8px 3px 12px;
 	color: var(--muted);
+	font-size: 12px;
+	border-bottom: 2px solid transparent;
 }
-.legend span {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-}
-.legend i {
-	width: 6px;
-	height: 6px;
+.view-switcher small {
 	display: block;
-	background: var(--open);
-	border-radius: 50%;
+	font-size: 9px;
+	opacity: 0.8;
+	margin-top: 2px;
 }
-.legend .own {
-	background: var(--own);
-}
-.legend .rival {
-	background: var(--rival);
-	border-radius: 1px;
-}
-.legend .open {
-	background: none;
-	border: 1px solid var(--open);
+.view-switcher [aria-current="page"] {
+	color: var(--ink);
+	border-color: var(--own);
 }
 #map-panel {
 	position: relative;
 	flex: 1;
-	min-height: 200px;
+	min-height: 180px;
 	overflow: hidden;
-	background: oklch(15% 0.014 225);
-	border-block: 1px solid var(--line);
+	background: oklch(12% 0.021 260);
 }
 #galaxy {
 	width: 100%;
 	height: 100%;
+	display: block;
 	touch-action: none;
 	user-select: none;
 	cursor: grab;
-	display: block;
 }
 #galaxy.dragging {
 	cursor: grabbing;
 }
-.map-label {
-	pointer-events: none;
+.map-caption {
 	position: absolute;
-	z-index: 1;
-	left: 20px;
-	top: 16px;
+	top: 14px;
+	left: 16px;
+	pointer-events: none;
 	display: flex;
 	align-items: center;
 	gap: 7px;
-	font-size: 11px;
+	font-size: 10px;
 	color: var(--muted);
+	text-shadow: 0 1px 4px oklch(12% 0.02 260);
 }
-.live-dot {
-	display: block;
-	background: var(--own);
-	width: 4px;
-	height: 4px;
+.live-dot,
+.ownership-key i {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
 	border-radius: 50%;
+	background: var(--own);
 }
-.cell {
-	fill: oklch(22% 0.02 225 / 0.2);
-	stroke: oklch(44% 0.024 225 / 0.26);
-	stroke-width: 1;
-}
-.cell.owned {
-	fill: oklch(58% 0.06 154 / 0.08);
-}
-.system-label {
-	fill: oklch(62% 0.025 225);
+.map-mode {
+	position: absolute;
+	top: 38px;
+	left: 16px;
+	color: var(--muted);
 	font-size: 8px;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.12em;
+	pointer-events: none;
 }
-.planet {
-	cursor: pointer;
-}
-.planet-label {
-	fill: var(--ink);
-	font-size: 11px;
-	font-weight: 500;
-	paint-order: stroke;
-	stroke: oklch(15% 0.014 225);
-	stroke-width: 3px;
-}
-.coordinate {
-	fill: var(--muted);
-	font-size: 8px;
-	font-variant-numeric: tabular-nums;
-}
-.ownership-ring {
-	fill: none;
-	stroke-width: 1;
-	stroke: var(--open);
-	stroke-dasharray: 2 3;
-}
-.planet.own .ownership-ring {
-	stroke: var(--own);
-	stroke-dasharray: none;
-}
-.planet.rival .ownership-ring {
-	stroke: var(--rival);
-	stroke-dasharray: 4 2;
-}
-.selected-ring {
-	fill: none;
-	stroke: var(--own);
-	stroke-width: 1;
-	opacity: 0;
-}
-.planet.selected .selected-ring {
-	opacity: 1;
-}
-.planet.selected .planet-label {
-	fill: var(--own);
-}
-.surface-stripes {
-	animation: spin 18s linear infinite;
-	opacity: 0.23;
-}
-.surface-stripes path {
-	fill: none;
-	stroke: oklch(90% 0.015 225);
-	stroke-width: 5;
-}
-@keyframes spin {
-	from {
-		transform: translateX(-15px);
-	}
-	to {
-		transform: translateX(15px);
-	}
-}
-.trajectory {
-	fill: none;
-	stroke: var(--own);
-	stroke-width: 1;
-	stroke-dasharray: 4 5;
-	opacity: 0.6;
-}
-.trajectory.rival {
-	stroke: var(--rival);
-}
-.ship {
-	fill: var(--own);
-	stroke: oklch(15% 0.014 225);
-	stroke-width: 1;
-}
-.ship.rival {
-	fill: var(--rival);
+#overview {
+	position: absolute;
+	right: 12px;
+	top: 6px;
+	font-size: 10px;
+	color: var(--own);
+	padding-inline: 10px;
 }
 .drag-hint {
-	pointer-events: none;
 	position: absolute;
-	bottom: 10px;
-	left: 20px;
+	bottom: 12px;
+	left: 16px;
+	margin: 0;
 	color: var(--muted);
 	font-size: 10px;
-	margin: 0;
+	pointer-events: none;
+	text-shadow: 0 1px 3px oklch(12% 0.02 260);
 }
 .zoom {
-	margin: 0;
-	padding: 0;
-	min-width: 0;
 	position: absolute;
+	right: 12px;
 	bottom: 16px;
-	right: 14px;
+	padding: 0;
+	margin: 0;
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	border: 1px solid var(--line);
+	border-radius: 9px;
 	background: var(--surface);
-	border-radius: 7px;
 	overflow: hidden;
 }
 .zoom :where(button) {
-	height: 32px;
-	width: 34px;
-	font-size: 20px;
-	line-height: 1;
+	width: 48px;
+	height: 48px;
+	font-size: 23px;
 }
 .zoom :where(button + button) {
 	border-top: 1px solid var(--line);
 }
+.cell {
+	fill: oklch(30% 0.035 245 / 0.035);
+	stroke: oklch(68% 0.035 245 / 0.22);
+	stroke-width: 1;
+}
+.cell.owned {
+	fill: oklch(68% 0.06 160 / 0.06);
+	stroke: oklch(72% 0.06 160 / 0.32);
+}
+.orbit {
+	fill: none;
+	stroke: oklch(73% 0.05 65 / 0.2);
+	stroke-width: 1;
+	vector-effect: non-scaling-stroke;
+}
+.orbit.selected {
+	stroke: oklch(84% 0.09 160 / 0.55);
+}
+.orbit-number {
+	fill: oklch(72% 0.04 65 / 0.75);
+	font-size: 10px;
+	letter-spacing: 0.1em;
+}
+.planet,
+.system {
+	cursor: pointer;
+}
+.planet-label {
+	fill: var(--ink);
+	font-size: 12px;
+	font-weight: 550;
+	paint-order: stroke;
+	stroke: oklch(12% 0.021 260);
+	stroke-width: 3px;
+	stroke-linejoin: round;
+	pointer-events: none;
+}
+.coordinate {
+	fill: var(--muted);
+	font-size: 9px;
+	paint-order: stroke;
+	stroke: oklch(12% 0.021 260);
+	stroke-width: 3px;
+	pointer-events: none;
+}
+.ownership-ring {
+	fill: none;
+	stroke: var(--muted);
+	stroke-width: 1;
+	stroke-dasharray: 2 4;
+	opacity: 0.75;
+}
+.own .ownership-ring {
+	stroke: var(--own);
+	stroke-dasharray: none;
+}
+.rival .ownership-ring {
+	stroke: var(--rival);
+	stroke-dasharray: 5 3;
+}
+.selected-ring {
+	fill: none;
+	stroke: var(--own);
+	stroke-width: 1.5;
+	opacity: 0;
+}
+.selected .selected-ring {
+	opacity: 0.85;
+}
+.selected .planet-label {
+	fill: var(--own);
+}
+.surface-stripes {
+	animation: surface-turn 55s linear infinite;
+}
+@keyframes surface-turn {
+	from {
+		transform: translateX(-6px);
+	}
+	to {
+		transform: translateX(8px);
+	}
+}
+.station {
+	fill: oklch(74% 0.025 240);
+	stroke: oklch(24% 0.025 245);
+	stroke-width: 0.8;
+}
+.station-panel {
+	fill: oklch(43% 0.06 242);
+	stroke: oklch(70% 0.07 220);
+	stroke-width: 0.5;
+}
+.trajectory {
+	fill: none;
+	stroke: var(--own);
+	stroke-width: 0.8;
+	stroke-dasharray: 3 7;
+	opacity: 0.3;
+	vector-effect: non-scaling-stroke;
+}
+.trajectory.gas {
+	stroke: oklch(76% 0.09 65);
+}
+.orbit-picker {
+	display: flex;
+	gap: 6px;
+	padding: 10px 14px;
+	flex-shrink: 0;
+	overflow-x: auto;
+	border-block: 1px solid var(--line);
+}
+.orbit-picker[hidden],
+#overview[hidden] {
+	display: none;
+}
+.orbit-picker button {
+	flex: 0 0 56px;
+	min-height: 50px;
+	padding: 4px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	font-size: 12px;
+	color: var(--muted);
+}
+.orbit-picker small {
+	display: block;
+	font-size: 8px;
+	letter-spacing: 0.04em;
+}
+.orbit-picker [aria-pressed="true"] {
+	color: var(--own);
+	border-color: var(--own);
+	background: oklch(70% 0.08 165 / 0.06);
+}
 .selection {
-	padding: 18px 20px 16px;
+	padding: 14px 20px 10px;
+	flex-shrink: 0;
+	border-top: 1px solid var(--line);
+}
+.orbit-picker:not([hidden]) + .selection {
+	border-top: 0;
 }
 .selection-head,
 .selection-footer {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	gap: 12px;
+	justify-content: space-between;
+	gap: 10px;
 }
 h2 {
-	font-size: 22px;
-	letter-spacing: -0.035em;
 	margin: 0;
-	font-weight: 600;
+	font-size: 23px;
+	letter-spacing: -0.03em;
+	font-weight: 550;
 }
-.selection-head > span {
-	font-size: 30px;
+#planet-biome {
+	font-size: 24px;
 }
 .selection-footer {
-	margin-top: 15px;
-	font-size: 12px;
+	margin-top: 5px;
+	font-size: 11px;
 	color: var(--muted);
 }
 .selection-footer :where(button) {
 	color: var(--own);
-	padding: 7px 0 7px 12px;
 	font-weight: 600;
+	padding-inline: 12px 0;
+	white-space: nowrap;
 }
-.selection-footer :where(button span) {
-	margin-left: 10px;
-}
-nav {
-	display: flex;
-	flex-shrink: 0;
-	border-top: 1px solid var(--line);
-	padding-bottom: env(safe-area-inset-bottom);
-}
-nav button[data-tab] {
-	flex: 1;
-	padding: 17px 5px;
-	font-size: 12px;
-	color: var(--muted);
-}
-nav .active {
-	color: var(--own);
-	font-weight: 600;
-}
-.badge {
-	display: inline-block;
-	margin-left: 3px;
-	padding: 0 4px;
-	border: 1px solid var(--line);
-	border-radius: 4px;
-	font-size: 9px;
-}
-#fleet-panel {
-	padding: 8px 20px;
-	max-height: 220px;
-	overflow: auto;
-}
-.fleet-row {
+footer {
 	display: flex;
 	justify-content: space-between;
-	gap: 16px;
-	padding: 13px 0;
-	border-bottom: 1px solid var(--line);
-	font-size: 12px;
-}
-.fleet-row p {
-	margin: 0;
-}
-.fleet-row small {
+	gap: 10px;
+	padding: 7px 20px calc(10px + env(safe-area-inset-bottom));
+	font-size: 8px;
+	letter-spacing: 0.06em;
 	color: var(--muted);
 }
-.fleet-row time {
-	color: var(--own);
-	font-variant-numeric: tabular-nums;
+.ownership-key {
+	white-space: nowrap;
+}
+.ownership-key i {
+	margin-right: 4px;
 }
 #status:not(:empty) {
 	position: fixed;
+	bottom: 165px;
 	left: 16px;
 	right: 16px;
-	bottom: 64px;
-	padding: 12px 16px;
-	border: 1px solid var(--line);
+	padding: 12px;
 	background: var(--surface);
-	font-size: 12px;
+	border: 1px solid var(--line);
 	border-radius: 6px;
+	font-size: 12px;
 }
 @media (prefers-reduced-motion: reduce) {
 	.surface-stripes {
 		animation: none;
 	}
 }
-@media (max-height: 580px) {
+@media (max-height: 650px) {
 	.heading {
-		padding-top: 14px;
+		padding-block: 10px;
 	}
 	.selection {
-		padding-block: 12px;
+		padding-block: 8px 0;
 	}
-	.selection-footer {
-		margin-top: 7px;
+	h1 {
+		font-size: 23px;
 	}
-	nav button {
-		padding-block: 12px;
+	.view-switcher button {
+		padding-block: 5px;
+	}
+	footer {
+		padding-top: 0;
 	}
 }
