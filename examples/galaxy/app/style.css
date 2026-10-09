@@ -201,6 +201,13 @@ h2 {
 	fill: oklch(68% 0.06 160 / 0.025);
 	stroke: oklch(72% 0.06 160 / 0.16);
 }
+.cell.selected {
+	fill: oklch(68% 0.06 160 / 0.035);
+	stroke: oklch(72% 0.06 160 / 0.24);
+}
+.cell {
+	cursor: pointer;
+}
 .orbit {
 	fill: none;
 	stroke: oklch(73% 0.05 65 / 0.2);
@@ -281,6 +288,79 @@ h2 {
 }
 .selected .planet-label {
 	fill: var(--own);
+}
+.system .planet-label {
+	font-size: 10px;
+}
+.system.open .planet-label,
+.system.open .coordinate {
+	visibility: hidden;
+}
+.system.open.selected .planet-label,
+.system.open.selected .coordinate {
+	visibility: visible;
+}
+#stellar-classification {
+	font-size: 11px;
+	color: var(--muted);
+	margin: 4px 0 8px;
+}
+#stellar-key {
+	position: absolute;
+	right: 12px;
+	top: 8px;
+	z-index: 2;
+	font-size: 11px;
+	max-width: min(290px, calc(100% - 24px));
+}
+#stellar-key[hidden],
+#stellar-classification[hidden] {
+	display: none;
+}
+:where(#stellar-key) summary {
+	min-height: 44px;
+	padding: 12px 4px;
+	color: var(--muted);
+	cursor: pointer;
+	text-align: right;
+}
+#stellar-key[open] {
+	padding: 0 12px 8px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	background: var(--surface);
+}
+#stellar-key p {
+	margin: 8px 0;
+}
+.spectral-key {
+	display: flex;
+	justify-content: space-between;
+	font-size: 16px;
+}
+.spectral-key span:nth-child(1) {
+	color: #8baaff;
+}
+.spectral-key span:nth-child(2) {
+	color: #a4c6ff;
+}
+.spectral-key span:nth-child(3) {
+	color: #d2e1ff;
+}
+.spectral-key span:nth-child(4) {
+	color: #f3efda;
+}
+.spectral-key span:nth-child(5) {
+	color: #f2d99c;
+}
+.spectral-key span:nth-child(6) {
+	color: #e9a367;
+}
+.spectral-key span:nth-child(7) {
+	color: #d87856;
+}
+.catalog-note {
+	color: var(--muted);
 }
 .surface-stripes {
 	animation: surface-turn 55s linear infinite;

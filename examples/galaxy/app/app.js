@@ -1,5 +1,7 @@
 // Throwaway map study: galaxy, four-planet frontier and eight-planet empire on one route.
 // ?variant=galaxy|young|developed selects the scene. All traffic and settlements are sample state.
+import { classify, multiplicity, spectralClasses, stellarSystem } from "./astronomy.js";
+
 const NS = "http://www.w3.org/2000/svg";
 const $ = (selector) => document.querySelector(selector);
 const svg = $("#galaxy");
@@ -22,7 +24,7 @@ const systems = [
 		count: 4,
 		settled: 2,
 		variant: "young",
-		type: "G2 · Yellow dwarf",
+		components: [{ kind: "star", spectral: "G", subclass: 2, luminosity: "V" }],
 	},
 	{
 		id: 28,
@@ -33,35 +35,91 @@ const systems = [
 		count: 8,
 		settled: 8,
 		variant: "developed",
-		type: "F5 · White-gold star",
+		components: [{ kind: "star", spectral: "F", subclass: 5, luminosity: "V" }],
 	},
-	{ id: 13, name: "Antares", q: -7, r: 1, owner: "rival", count: 6, settled: 3, type: "K4 · Orange dwarf" },
-	{ id: 18, name: "Merope", q: 0, r: 1, owner: "open", count: 5, settled: 0, type: "B6 · Blue star" },
-	{ id: 19, name: "Altair", q: 1, r: 0, owner: "open", count: 7, settled: 0, type: "A7 · White star" },
-	{ id: 12, name: "Lacaille", q: -2, r: -1, owner: "open", count: 4, settled: 0, type: "M2 · Red dwarf" },
-	{ id: 17, name: "Nivalis", q: 7, r: 0, owner: "rival", count: 8, settled: 5, type: "K1 · Orange dwarf" },
-	{ id: 62, name: "Aster", q: -5, r: -3, owner: "other", count: 6, settled: 1, type: "K7 · Orange dwarf" },
+	{
+		id: 13,
+		name: "Antares",
+		q: -7,
+		r: 1,
+		owner: "rival",
+		count: 6,
+		settled: 3,
+		components: [{ kind: "star", spectral: "M", subclass: 1, luminosity: "I" }],
+	},
+	{
+		id: 18,
+		name: "Merope",
+		q: 0,
+		r: 1,
+		owner: "open",
+		count: 5,
+		settled: 0,
+		components: [
+			{ kind: "star", spectral: "B", subclass: 6, luminosity: "V" },
+			{ kind: "star", spectral: "K", subclass: 4, luminosity: "V" },
+		],
+	},
+	{
+		id: 19,
+		name: "Altair",
+		q: 1,
+		r: 0,
+		owner: "open",
+		count: 7,
+		settled: 0,
+		components: [{ kind: "star", spectral: "A", subclass: 7, luminosity: "V" }],
+	},
+	{
+		id: 12,
+		name: "Lacaille",
+		q: -2,
+		r: -1,
+		owner: "open",
+		count: 4,
+		settled: 0,
+		components: [{ kind: "star", spectral: "M", subclass: 2, luminosity: "V" }],
+	},
+	{
+		id: 17,
+		name: "Nivalis",
+		q: 7,
+		r: 0,
+		owner: "rival",
+		count: 8,
+		settled: 5,
+		components: [{ kind: "star", spectral: "K", subclass: 1, luminosity: "V" }],
+	},
+	{
+		id: 62,
+		name: "Aster",
+		q: -5,
+		r: -3,
+		owner: "other",
+		count: 6,
+		settled: 1,
+		components: [{ kind: "star", spectral: "K", subclass: 7, luminosity: "V" }],
+	},
 ];
 const galaxyRandom = random(9102);
 for (let q = -10; q <= 10; q++)
 	for (let r = -10; r <= 10; r++) {
 		if (
 			Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r)) > 10 ||
-			Math.max(Math.abs(q), Math.abs(r)) < 2 ||
-			systems.some((s) => s.q === q && s.r === r) ||
-			galaxyRandom() > 0.13
+			systems.some((s) => s.q === q && s.r === r)
 		)
 			continue;
 		const id = 100 + systems.length;
+		const components = stellarSystem(galaxyRandom);
 		systems.push({
 			id,
 			name: `${["Eridani", "Carina", "Lyra", "Cygni", "Velorum"][id % 5]} ${id}`,
 			q,
 			r,
 			owner: "open",
-			count: 4 + (id % 5),
+			count: components.some((component) => component.kind !== "star") ? 0 : 4 + (id % 5),
 			settled: 0,
-			type: "Unclaimed system",
+			components,
 		});
 	}
 const scenes = {
@@ -247,7 +305,13 @@ function galaxy() {
 				(_, i) => `${x + Math.cos((i * Math.PI) / 3) * size},${y + Math.sin((i * Math.PI) / 3) * size}`,
 			).join(" ");
 			const system = systems.find((s) => s.q === q && s.r === r);
-			element("polygon", { points, class: `cell${system?.owner === "own" ? " owned" : ""}` }, $("#cells"));
+			const cell = element(
+				"polygon",
+				{ points, "data-cell": system.id, class: `cell${system.owner === "own" ? " owned" : ""}` },
+				$("#cells"),
+			);
+			// Tiny astronomical symbols still have the whole hex as a finger-sized selection target.
+			cell.addEventListener("click", () => selectSystem(system));
 		}
 	for (const system of systems) {
 		const jitter = random(system.id * 1987);
@@ -260,22 +324,23 @@ function galaxy() {
 				class: `system ${system.owner}`,
 				role: "button",
 				tabindex: 0,
-				"aria-label": `${system.name}, system ${system.id}, ${system.count} planets`,
+				"aria-label": `${system.name}, system ${system.id}, ${multiplicity(system.components)}, ${system.components.map(classify).join(" and ")}, ${system.count} planets`,
 				"data-system": system.id,
+				"data-components": system.components.length,
 			},
 			$("#planets"),
 		);
 		const art = element("g", { class: "map-art" }, group);
 		markers.push({ node: group, item: system, art });
-		addStar(0, 0, system.id === 28 ? 10 : 7, art, system.id === 18);
-		element("circle", { r: 23, class: "ownership-ring" }, art);
-		element("circle", { r: 28, class: "selected-ring" }, art);
-		element("text", { x: 0, y: 43, "text-anchor": "middle", class: "planet-label" }, group, system.name);
+		galacticObject(system, art);
+		if (system.settled) element("circle", { r: 11, class: "ownership-ring" }, art);
+		element("circle", { r: 17, class: "selected-ring" }, art);
+		element("text", { x: 0, y: 30, "text-anchor": "middle", class: "planet-label" }, group, system.name);
 		element(
 			"text",
-			{ x: 0, y: 57, "text-anchor": "middle", class: "coordinate" },
+			{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
 			group,
-			`${system.id} · ${system.count} worlds${system.owner === "own" ? " · YOURS" : ""}`,
+			`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
 		);
 		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
 		bindSelect(group, () => selectSystem(system));
@@ -284,6 +349,63 @@ function galaxy() {
 	addFleet(systems[1], systems[0], 1, "🔥 80", 70 * 60000);
 	addIncoming(systems[0]);
 	selectSystem(systems[0]);
+}
+
+function galacticObject(system, parent) {
+	const positions =
+		system.components.length === 1
+			? [[0, 0]]
+			: system.components.length === 2
+				? [
+						[-3, 0],
+						[3, 1.5],
+					]
+				: [
+						[-3, -1],
+						[3, 1],
+						[0, 5],
+					];
+	for (const [index, component] of system.components.entries()) {
+		const [x, y] = positions[index];
+		const group = element(
+			"g",
+			{ transform: `translate(${x} ${y})`, class: "stellar-object", "data-kind": component.kind },
+			parent,
+		);
+		if (component.kind === "black-hole") {
+			// Accretion light belongs to the surrounding gas; the hole itself emits no light.
+			element(
+				"ellipse",
+				{
+					rx: 4,
+					ry: 1.8,
+					fill: "none",
+					stroke: "#dca774",
+					"stroke-width": 0.8,
+					opacity: 0.55,
+					transform: "rotate(-28)",
+				},
+				group,
+			);
+			element("circle", { r: 1.8, fill: "#050911" }, group);
+		} else {
+			const spectral = component.kind === "star" ? spectralClasses[component.spectral] : null;
+			const color = spectral?.color || "#b1d6e8";
+			const radius = spectral
+				? component.luminosity === "I"
+					? 2.8
+					: component.luminosity === "III"
+						? 2.2
+						: spectral.radius
+				: 0.9;
+			element("circle", { r: radius * 2.8, fill: color, opacity: 0.065 }, group);
+			element("circle", { r: radius * 1.65, fill: color, opacity: 0.12 }, group);
+			element("circle", { r: radius, fill: color, opacity: 0.65, class: "stellar-core" }, group);
+			if (component.pulsar)
+				element("path", { d: "M-2,5 2,-5", stroke: color, "stroke-width": 0.7, opacity: 0.4 }, group);
+		}
+		element("title", {}, group, classify(component));
+	}
 }
 function station(parent, advanced) {
 	const g = element("g", { transform: "translate(27 -26) rotate(-25)", class: "station" }, parent);
@@ -639,9 +761,14 @@ function selectSystem(system) {
 		node.setAttribute("aria-pressed", String(active));
 	}
 	$("#planet-name").textContent = system.name;
-	$("#planet-meta").textContent = `SYSTEM ${system.id} · ${system.type}`;
+	$("#planet-meta").textContent = `SYSTEM ${system.id} · ${multiplicity(system.components).toUpperCase()}`;
+	$("#stellar-classification").textContent = system.components.map(classify).join(" / ");
+	for (const cell of document.querySelectorAll("[data-cell]"))
+		cell.classList.toggle("selected", cell.dataset.cell === String(system.id));
 	$("#planet-biome").textContent = "✦";
-	$("#planet-detail").textContent = `${system.count} planets · ${system.settled} settled`;
+	$("#planet-detail").textContent = system.count
+		? `${system.count} planets · ${system.settled} settled`
+		: "No charted planets";
 	$("#planet-action").textContent = system.variant ? "Enter system ↗" : "Survey system ↗";
 }
 function selectPlanet(planet, approach = false) {
@@ -733,13 +860,15 @@ function showView(next) {
 	lastSecond = -1;
 	$("#orbit-picker").hidden = view === "galaxy";
 	$("#overview").hidden = view === "galaxy";
+	$("#stellar-classification").hidden = view !== "galaxy";
+	$("#stellar-key").hidden = view !== "galaxy";
 	$("#view-meta").textContent = view === "galaxy" ? "PERSEUS ARM · SECTOR 07" : scenes[view].subtitle;
 	$("#view-title").textContent = view === "galaxy" ? "The frontier" : scenes[view].name;
 	$("#minerals").textContent =
 		`💠 ${(scenes[view]?.minerals || 1240).toLocaleString("en-US").replaceAll(",", " ")}`;
 	$("#gas").textContent = `🔥 ${(scenes[view]?.gas || 610).toLocaleString("en-US").replaceAll(",", " ")}`;
 	$("#scene-note").textContent =
-		view === "galaxy" ? "MAP STUDY · SAMPLE STATE" : "SIMULATION · LOCAL TRAFFIC";
+		view === "galaxy" ? "STELLAR SYMBOLS ENLARGED" : "SIMULATION · LOCAL TRAFFIC";
 	if (view === "galaxy") galaxy();
 	else systemScene();
 	resize();

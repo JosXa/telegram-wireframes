@@ -35,7 +35,23 @@ try {
 			await page.waitForTimeout(800);
 			assert.equal(await app.locator("#planet-name").textContent(), "Solara");
 			const systems = await app.locator(".system").count();
-			assert.ok((await app.locator(".cell").count()) > systems * 4, "most hexes must be empty");
+			assert.equal(await app.locator(".cell").count(), systems, "every hex must contain a system");
+			assert.equal(
+				await app
+					.locator("[data-cell]")
+					.evaluateAll((nodes) => new Set(nodes.map((node) => node.getAttribute("data-cell"))).size),
+				systems,
+				"each hex must have its own system",
+			);
+			for (const kind of ["star", "white-dwarf", "neutron-star", "black-hole"])
+				assert.ok(await app.locator(`.stellar-object[data-kind='${kind}']`).count());
+			for (const count of [1, 2, 3])
+				assert.ok(await app.locator(`.system[data-components='${count}']`).count());
+			assert.ok(
+				await app
+					.locator(".stellar-core")
+					.evaluateAll((nodes) => nodes.every((node) => Number(node.getAttribute("r")) <= 2.8)),
+			);
 			assert.ok(
 				(await app.locator(".system.open").count()) > systems * 0.8,
 				"most systems must be unclaimed",
@@ -112,6 +128,23 @@ try {
 				JSON.parse((await map.getAttribute("data-camera")) ?? "{}").scale > JSON.parse(before ?? "{}").scale,
 			);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
+			// Tap empty space within Merope's hex, away from the tiny binary-star symbol.
+			const merope = await app.locator("[data-cell='18']").boundingBox();
+			assert.ok(merope);
+			const hexX = merope.x + merope.width / 2 + 38;
+			const hexY = merope.y + merope.height / 2;
+			const cameraBeforeSelection = await map.getAttribute("data-camera");
+			if (touch) await page.touchscreen.tap(hexX, hexY);
+			else await page.mouse.click(hexX, hexY);
+			assert.equal(await app.locator("#planet-name").textContent(), "Merope");
+			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /BINARY SYSTEM/);
+			assert.match((await app.locator("#stellar-classification").textContent()) ?? "", /B6 V.*K4 V/);
+			assert.equal(await map.getAttribute("data-camera"), cameraBeforeSelection);
+			await app.getByRole("button", { name: "Return to home planet" }).click();
+			await app.locator("#stellar-key summary").click();
+			assert.equal(await app.locator("#stellar-key").getAttribute("open"), "");
+			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-catalogue.png` });
+			await app.locator("#stellar-key summary").click();
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}.png` });
 			await app.getByRole("button", { name: "Enter system ↗" }).click();
 			assert.equal(await app.locator(".planet").count(), 4);

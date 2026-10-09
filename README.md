@@ -87,11 +87,13 @@ Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, 
 
 The map study has three views, also selectable with `?variant=galaxy`, `?variant=young` or `?variant=developed` on the app page:
 
-- Galaxy places sparse, mostly unclaimed star systems inside a faint hex grid against a procedural starfield and nebulae.
+- Galaxy places a small, dim astronomical object or multiple system in every hex, with sparse settlements against a coloured starfield and nebulae.
 - First colonies has four different biomes around a central star, with a home planet, a second colony and two unclaimed worlds.
 - High empire has eight settled planets, orbital stations, patrol craft and resource transports.
 
 System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, while their artwork shrinks slightly in overview. Tap an orbit or its planet to select it without moving the camera. The orbit buttons approach individual worlds.
+
+Galaxy stars use O–B–A–F–G–K–M spectral classes and separate V/III/I luminosity classes. The catalogue also includes binary and triple systems, DA/DB white dwarfs, neutron stars and pulsars, and stellar-mass black holes with companions. These follow [stellar evolution categories](https://science.nasa.gov/universe/stars/types/) and [black-hole mass classes](https://science.nasa.gov/universe/black-holes/types/). Tap a whole hex to inspect its classification, or open **Star classes** for the key. Ordinary systems reveal their names on selection, keeping settlements prominent. Colours are enhanced and symbols enlarged: true stellar diameters disappear at interstellar map scales. Distribution, planet counts and positions are illustrative.
 
 Fleet positions follow departure and arrival timestamps over journeys lasting minutes or hours. Fading dots indicate direction independently of ship speed. Heavy warships, small freighters and Light Fighters travel in formation, with provisional silhouettes and no settled ship statistics. Arrivals end movements rather than looping them.
 
@@ -117,7 +119,7 @@ bun run test:mini-app
 
 [Full eight-planet system](docs/system-developed-full.png)
 
-[Incoming fleet](docs/fleet-incoming.png) · [Fleet scan and ship silhouettes](docs/fleet-espionage.png)
+[Incoming fleet](docs/fleet-incoming.png), [fleet scan and ship silhouettes](docs/fleet-espionage.png), and [astronomical catalogue](docs/galaxy-catalogue.png).
 
 ## How it works
 

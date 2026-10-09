@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Space Emperors · Map study</title>
   <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <script src="app.js" type="module"></script>
 </head>
 <body>
   <header class="heading">
@@ -23,8 +23,8 @@
         <radialGradient id="sun-halo"><stop stop-color="#ffbe63" stop-opacity=".55"/><stop offset=".3" stop-color="#ef8833" stop-opacity=".16"/><stop offset="1" stop-color="#e88739" stop-opacity="0"/></radialGradient>
         <radialGradient id="sun"><stop stop-color="#fff0bd"/><stop offset=".55" stop-color="#ffd475"/><stop offset=".9" stop-color="#e98738"/><stop offset="1" stop-color="#ffcb79"/></radialGradient>
         <radialGradient id="terminator" cx="27%" cy="24%" r="80%"><stop stop-color="#cdeaff" stop-opacity=".18"/><stop offset=".42" stop-color="#0a1020" stop-opacity="0"/><stop offset=".8" stop-color="#070c18" stop-opacity=".6"/><stop offset="1" stop-color="#070c18" stop-opacity=".98"/></radialGradient>
-        <radialGradient id="nebula-blue"><stop stop-color="#476b9b" stop-opacity=".42"/><stop offset=".5" stop-color="#354671" stop-opacity=".15"/><stop offset="1" stop-color="#202c52" stop-opacity="0"/></radialGradient>
-        <radialGradient id="nebula-rose"><stop stop-color="#985a79" stop-opacity=".27"/><stop offset=".55" stop-color="#694368" stop-opacity=".12"/><stop offset="1" stop-color="#452e52" stop-opacity="0"/></radialGradient>
+        <radialGradient id="nebula-blue"><stop stop-color="#3a739b" stop-opacity=".46"/><stop offset=".5" stop-color="#354b85" stop-opacity=".20"/><stop offset="1" stop-color="#202c52" stop-opacity="0"/></radialGradient>
+        <radialGradient id="nebula-rose"><stop stop-color="#a14765" stop-opacity=".38"/><stop offset=".55" stop-color="#794066" stop-opacity=".16"/><stop offset="1" stop-color="#452e52" stop-opacity="0"/></radialGradient>
         <filter id="dust" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".009 .014" numOctaves="3" seed="28"/><feColorMatrix type="saturate" values="0"/><feComposite in="SourceGraphic" operator="in"/></filter>
         <filter id="glow"><feGaussianBlur stdDeviation="2"/></filter>
         <linearGradient id="hull" x2="0" y2="1"><stop stop-color="#c4d5db"/><stop offset=".48" stop-color="#708997"/><stop offset=".52" stop-color="#425566"/><stop offset="1" stop-color="#8ea4b1"/></linearGradient>
@@ -54,6 +54,17 @@
     <div class="map-caption"><span class="live-dot"></span><span id="flight-summary"></span></div>
     <div class="map-mode" id="map-mode">HEX SECTORS</div>
     <button type="button" id="overview" hidden>Overview ↗</button>
+    <details id="stellar-key">
+      <summary>Star classes</summary>
+      <div>
+        <p class="spectral-key"><span>O</span><span>B</span><span>A</span><span>F</span><span>G</span><span>K</span><span>M</span></p>
+        <p>Hotter blue → cooler orange-red</p>
+        <p><b>V</b> Main sequence · <b>III</b> Giant · <b>I</b> Supergiant</p>
+        <p>One, two or three points: single, binary or triple systems.</p>
+        <p><b>DA / DB</b> White dwarf with hydrogen / helium atmosphere.<br>Neutron star; a pulsar has a beam marker.<br>Stellar-mass black hole with accretion disk and companion.</p>
+        <p class="catalog-note">Symbols and colour differences are enlarged. Remnant marks indicate detections, not naked-eye appearance. Sample distribution.</p>
+      </div>
+    </details>
     <button type="button" id="open-movements" aria-expanded="false">Fleet movements <span id="incoming-count">3 incoming</span></button>
     <fieldset class="zoom" aria-label="Map controls">
       <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
@@ -65,6 +76,7 @@
   <section class="orbit-picker" id="orbit-picker" aria-label="Select an orbit" hidden></section>
   <section class="selection" aria-live="polite">
     <div class="selection-head"><div><p id="planet-meta" class="eyebrow"></p><h2 id="planet-name">Solara</h2></div><span id="planet-biome"></span></div>
+    <p id="stellar-classification"></p>
     <div class="selection-footer"><span id="planet-detail"></span><button type="button" id="planet-action">Enter system ↗</button></div>
   </section>
   <section id="movement-panel" aria-label="Fleet movements" hidden>
