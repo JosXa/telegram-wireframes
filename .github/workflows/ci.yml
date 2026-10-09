@@ -13,7 +13,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run check
@@ -28,9 +28,9 @@ jobs:
         exclude:
           - upstream: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'none' || 'latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
       - run: bun install --frozen-lockfile
@@ -40,7 +40,7 @@ jobs:
       - run: bun run examples
       - if: matrix.upstream == 'latest'
         run: bun run typecheck:web-a
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: wireframes-${{ matrix.upstream }}
