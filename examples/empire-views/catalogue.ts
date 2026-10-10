@@ -1,4 +1,13 @@
 import type { Fixture, FixtureMessage, InlineKeyboardButton } from "../../src/fixture";
+import {
+	archiveMessage,
+	battles,
+	lineupMessage,
+	lossesMessage,
+	reportMessage,
+	resourceMessage,
+	roundsMessage,
+} from "./battle-reports";
 
 // Design proposals only. Draft labels are authorized for this wireframe pass; they do not settle the glossary.
 export type Scene = {
@@ -34,7 +43,7 @@ export const views = [
 	"Alert Preferences",
 	"Season Briefing",
 	"Activity Summary",
-	"Battle Replay",
+	"Battle Rounds",
 ];
 export const resource = (minerals: string | number, gas: string | number) => `💠 ${minerals}  ·  🔥 ${gas}`;
 const stock = resource("12 400", "6 100");
@@ -198,7 +207,7 @@ export const scenes: Scene[] = [
 			message(
 				`🏗 Logistics Depot · 6 → 7\nNacre · 1:214:6\n\nStorage capacity\n💠 20 000 → 26 000\n🔥 10 000 → 13 000\n\nCost: ${resource("2 400", "800")}\nAfter payment: ${resource("10 000", "5 300")}\nDuration: 24 min once started\n\nBoth building slots are occupied.\nJoins the paid waiting queue.`,
 				[
-					[cb("Pay and queue · Level 7", "building-queue", "success")],
+					[cb("Queue upgrade · Level 7", "building-queue", "success")],
 					[cb("Back to buildings", "buildings")],
 				],
 			),
@@ -290,7 +299,7 @@ export const scenes: Scene[] = [
 			message(
 				`🔬 Solar Sails · 1 → 2\nApplies across all your colonies\n\nExample effect: greater travel speed\nNew speeds apply to future dispatches.\nFleets already in flight keep their arrival times.\n\nPaid from Nacre · 1:214:6\n${stock}\nCost: ${resource("3 600", "1 800")}\nDuration: 1h 20m once started\n\nJoins your research queue.`,
 				[
-					[cb("Pay and queue · Level 2", "research")],
+					[cb("Queue research · Level 2", "research")],
 					[cb("Change paying colony", "colony-picker")],
 					[cb("Research", "research")],
 				],
@@ -356,7 +365,7 @@ export const scenes: Scene[] = [
 	scene(
 		"ship-batch",
 		"Shipyard",
-		"Pay for a ship batch",
+		"Queue a ship batch",
 		"Colony",
 		economy,
 		"The batch is paid in full when queued. Values and ship characteristics are sample state.",
@@ -365,7 +374,7 @@ export const scenes: Scene[] = [
 				`🛠 Scout Fighter × 10\nFast · fragile · small cargo hold\n\nBatch cost: ${resource("2 000", "500")}\n2 min per ship once started\nEach completed ship becomes available.\n\nAlready queued: 1 active, 1 waiting\nThis batch joins the waiting queue.`,
 				[
 					[cb("− 1", "ship-batch"), cb("10 ships", "ship-batch"), cb("+ 1", "ship-batch")],
-					[cb("Pay and queue 10 ships", "shipyard", "success")],
+					[cb("Build 10 ships", "shipyard", "success")],
 					[cb("Shipyard", "shipyard")],
 				],
 			),
@@ -378,7 +387,7 @@ export const scenes: Scene[] = [
 		"Insufficient local resources",
 		"Colony",
 		economy,
-		"Unaffordable actions use Telegram's disabled button support. Another colony's resources cannot pay silently.",
+		"Unaffordable actions use Telegram's disabled button support. Resources come from the selected colony.",
 		[
 			message(
 				`🛠 Scout Fighter × 100\nNacre · 1:214:6\n\nCost: ${resource("20 000", "5 000")}\nAvailable: ${stock}\n\nNeed 💠 7 600 more at Nacre.\nChoose a smaller batch or transport resources.`,
@@ -471,11 +480,27 @@ export const scenes: Scene[] = [
 		[
 			message(
 				`🚀 Fleet Command\nNacre · 1:214:6\n\n1 outbound · 1 returning\n1 unverified incoming fleet\n\n${warning}`,
-				[[app("Open Fleet Command", "fleets")]],
+				[
+					[cb("Your ship lineup", "fleet-lineup")],
+					[app("Open Fleet Command", "fleets")],
+					[cb("Battle Reports", "battle-reports")],
+				],
 			),
 		],
-		["dispatch", "incoming", "stationed", "fleet-returning"],
-		{ launch: "Open Fleet Command" },
+		["dispatch", "incoming", "stationed", "fleet-returning", "fleet-lineup"],
+	),
+	...([false, true] as const).map((large) =>
+		scene(
+			large ? "fleet-lineup-large" : "fleet-lineup",
+			"Fleet Command",
+			large ? "Large fleet lineup" : "Colony ship lineup",
+			"Fleets & map",
+			warfare,
+			"Compact text lists use shortlisted draft names and sample base stats. Speed is an index; higher is faster. Research and travel formulas remain separate.",
+			[lineupMessage(large)],
+			[large ? "fleet-lineup" : "fleet-lineup-large", "battle-reports", "fleets"],
+			{ status: "Proposal" },
+		),
 	),
 	scene(
 		"dispatch",
@@ -550,7 +575,7 @@ export const scenes: Scene[] = [
 		"Returning fleets cannot be recalled. Withdrawing stationed ships is a separate action from recall.",
 		[
 			message(
-				"↙ Fleet returning\nAsh 1:214:8 → Nacre 1:214:6\n\nScout Fighter × 18\nCargo: 💠 3 200  ·  🔥 800\nArrival: 19:10\n\nThis fleet is already returning.",
+				"↙ Fleet returning\nAsh 1:214:8 → Nacre 1:214:6\n\nScout Fighter × 18\nResource Transport × 2\nCargo: 💠 2 688  ·  🔥 672\nArrival: 19:10\n\nThis fleet is already returning.",
 				[[off("Recall unavailable on return")], [app("Fleet movements", "fleets")]],
 			),
 		],
@@ -565,6 +590,7 @@ export const scenes: Scene[] = [
 		"The host cannot dispatch visiting ships. Withdraw is available for your contingent stationed at another player's colony.",
 		[
 			message("🛡 Stationed ships\nOwned ships and visiting reinforcements remain separate.", [
+				[cb("Ship lineup & stats", "fleet-lineup")],
 				[app("Open stationed ships", "stationed")],
 			]),
 		],
@@ -905,82 +931,53 @@ export const scenes: Scene[] = [
 		"Battle archive",
 		"Reports",
 		warfare,
-		"Reports distinguish outcomes and preserve per-player loss attribution. Replay uses an illustrative round sequence.",
-		[
-			message(
-				"⚔ Battle Reports\n\n10 Oct · 18:04 · Ash 1:214:8\nAttack won · Joscha\nCargo: 💠 3 200  ·  🔥 800\n\n9 Oct · 07:30 · Nacre 1:214:6\nDefense held · Joscha + Mira\n\n8 Oct · 21:18 · Cairn 1:228:5\nDraw · surviving attackers returned",
-				[
-					[cb("Ash · attack won", "battle-report")],
-					[cb("Nacre · defense held", "battle-defense")],
-					[cb("Cairn · draw", "battle-draw")],
-				],
-			),
-		],
-		["battle-report", "battle-defense", "battle-draw", "battle-replay"],
+		"Text reports stay in Telegram, including ship losses, resource accounting and round detail. Outcomes and stats are illustrative.",
+		[archiveMessage()],
+		battles.map((battle) => battle.id),
 	),
-	scene(
-		"battle-report",
-		"Battle Reports",
-		"Outcome, losses and salvage",
-		"Reports",
-		warfare,
-		"Sample losses and resources, not a simulation. Salvage remains at the orbit and is collected on a separate mission.",
-		[
-			message(
-				"⚔ Victory at Ash · 1:214:8\n10 Oct · 18:04 · 3 rounds\n\nATTACKER · JOSCHA\n24 Scout Fighters → 18 survived\n\nDEFENDERS · ABANDONED WORLD\n8 Scout Fighters → 0 survived\n\nCargo taken: 💠 3 200  ·  🔥 800\nSalvage at 1:214:8: 💠 840  ·  🔥 210\nYour survivors return at 19:10.\nAsh remains an abandoned world.",
-				[
-					[app("Watch Battle Replay", "replay")],
-					[app("Collect salvage", "salvage")],
-					[cb("Battle Reports", "battle-reports")],
-				],
+	...battles.flatMap((battle) => [
+		scene(
+			battle.id,
+			"Battle Reports",
+			battle.label,
+			"Reports",
+			warfare,
+			"Authored sample losses. Cargo is capped by surviving holds and half of each resource; salvage is 30% of lost construction resources, collected separately.",
+			[reportMessage(battle)],
+			[`${battle.id}-ships-0`, `${battle.id}-resources`, "battle-reports"],
+		),
+		...battle.contingents.map((contingent, index) =>
+			scene(
+				`${battle.id}-ships-${index}`,
+				"Battle Reports",
+				`${battle.planet} · ${contingent.owner}'s ships`,
+				"Reports",
+				warfare,
+				"One contingent per page keeps full ship names and per-ship stats readable. Losses remain attributed to their owner.",
+				[lossesMessage(battle, index)],
+				[battle.id, "battle-reports"],
 			),
-		],
-		["battle-replay", "dispatch", "fleet-returning"],
-	),
-	scene(
-		"battle-defense",
-		"Battle Reports",
-		"Allied loss attribution",
-		"Reports",
-		warfare,
-		"Each contingent keeps ownership. The host cannot command surviving visiting ships.",
-		[
-			message(
-				"🛡 Defense held · Nacre 1:214:6\n9 Oct · 07:30\n\nDEFENDERS\nJoscha · 20 → 15 Scout Fighters\nMira · 12 → 9 Scout Fighters\n\nATTACKER\nOrin · 18 → 0 Scout Fighters\n\nMira's 9 survivors remain stationed.\nMira decides when to withdraw them.\nSalvage remains at Nacre's orbit.",
-				[[app("Stationed reinforcements", "stationed")], [cb("Battle Reports", "battle-reports")]],
-			),
-		],
-		["stationed", "battle-reports"],
-	),
-	scene(
-		"battle-draw",
-		"Battle Reports",
-		"Draw after the final round",
-		"Reports",
-		warfare,
-		"Default draw outcome: surviving attackers return with no loot. Exact battle timing and round balance remain undecided.",
-		[
-			message(
-				"⚔ Draw at Cairn · 1:228:5\n8 Oct · 21:18 · 6 rounds\n\nBoth sides have surviving ships.\nYour survivors are returning.\nNo resources taken.\n\nSalvage remains at 1:228:5.",
-				[[cb("Battle Reports", "battle-reports")], [app("Fleet movements", "fleets")]],
-			),
-		],
-		["battle-reports", "fleet-returning"],
-	),
+		),
+		scene(
+			`${battle.id}-resources`,
+			"Battle Reports",
+			`${battle.planet} · loot and loss value`,
+			"Reports",
+			warfare,
+			"Loot travels with survivors. Salvage stays at the battle orbit. Travel gas is excluded from destroyed construction value.",
+			[resourceMessage(battle)],
+			[battle.id, "battle-reports"],
+		),
+	]),
 	scene(
 		"battle-replay",
-		"Battle Replay",
-		"Replay a recorded battle",
+		"Battle Rounds",
+		"Read a battle round by round",
 		"Reports",
 		warfare,
-		"Interactive play, pause and scrubbing through three recorded sample rounds. Replay time does not choose the unresolved live battle-window duration.",
-		[
-			message("⚔ Battle Replay\nAsh · 1:214:8 · 10 Oct · 18:04\nJoscha against an abandoned world", [
-				[app("Open Battle Replay", "replay")],
-			]),
-		],
+		"Round details are native Telegram text. Sample losses do not choose a live battle-window duration.",
+		[roundsMessage()],
 		["battle-report", "battle-window"],
-		{ launch: "Open Battle Replay" },
 	),
 	scene(
 		"battle-window",

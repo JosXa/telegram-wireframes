@@ -303,51 +303,6 @@ dd {
 .error {
 	color: var(--warning);
 }
-.battle {
-	display: grid;
-	grid-template-columns: 1fr auto 1fr;
-	gap: 12px;
-	align-items: center;
-	padding: 28px 12px;
-	margin: 24px 0;
-	background: var(--panel);
-	border-radius: 8px;
-	text-align: center;
-}
-.battle strong {
-	font-size: 34px;
-	display: block;
-	font-variant-numeric: tabular-nums;
-}
-.battle small {
-	display: block;
-	font-size: 11px;
-}
-.ships {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: center;
-	gap: 5px;
-	min-height: 48px;
-	align-content: center;
-	color: var(--accent);
-}
-.ships svg {
-	width: 16px;
-	height: 20px;
-}
-.battle .opponent {
-	color: var(--warning);
-}
-.rounds {
-	padding-left: 20px;
-}
-.rounds li {
-	padding: 7px 0;
-}
-.rounds li[aria-current="step"] {
-	color: var(--accent);
-}
 #status {
 	margin: 0;
 	padding: 0 20px 20px;

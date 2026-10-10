@@ -1,4 +1,6 @@
 // Local interaction study, not game rules. All quotes and losses below are illustrative sample state.
+import { type Ship, shipStats, ships } from "./battle-reports";
+
 type Mission = "Transport" | "Attack" | "Reinforce" | "Colonize" | "Collect salvage";
 const root = document.querySelector<HTMLElement>("#content");
 if (!root) throw new Error("Missing app content");
@@ -15,7 +17,11 @@ const targetLabel = (index: number) => {
 	const item = targets[index];
 	return `${item.name} · ${item.coordinates.join(":")} · ${item.detail}`;
 };
-let route = new URLSearchParams(location.search).get("view") || "fleets";
+const params = new URLSearchParams(location.search);
+let route = params.get("view") || "fleets";
+const salvageCoordinates = ["sector", "system", "orbit"].map((name) => params.get(name) || "");
+if (route === "salvage" && salvageCoordinates.every((value) => /^[1-9]\d*$/.test(value)))
+	targets[4].coordinates = salvageCoordinates;
 let mission: Mission =
 	route === "attack" || route === "ally-attack"
 		? "Attack"
@@ -49,14 +55,6 @@ let verification: "unknown" | "verified" | "failed" | "expired" =
 	route === "verified" ? "verified" : route === "scan-failed" ? "failed" : "unknown";
 type Verification = { movement: string; mission: string; ships: Record<string, number>; verifiedAt: string };
 let report: Verification | undefined;
-let round = 0;
-let timer: ReturnType<typeof setInterval> | undefined;
-const rounds = [
-	{ own: 24, enemy: 8, event: "Initial forces at Ash. All defenders are stationed at the planet." },
-	{ own: 22, enemy: 5, event: "Both sides fire simultaneously. Joscha loses 2 ships; defenders lose 3." },
-	{ own: 20, enemy: 2, event: "Joscha loses 2 ships; defenders lose 3. Damage carries between rounds." },
-	{ own: 18, enemy: 0, event: "Defenders eliminated. Joscha's 18 survivors return with cargo." },
-];
 const number = (value: number) => value.toLocaleString("en-GB").replaceAll(",", " ");
 const resources = (m: number, g: number) => `💠 ${number(m)} · 🔥 ${number(g)}`;
 const button = (text: string, to: string, primary = false) =>
@@ -94,7 +92,8 @@ function invalid(): string {
 		return "Choose a colony to receive this transport.";
 	if (mission === "Colonize" && (target !== 3 || colonyShips < 1))
 		return "Colonization needs a free planet and a Colony Ship.";
-	if (mission === "Collect salvage" && target !== 4) return "Choose the salvage at 1:214:8.";
+	if (mission === "Collect salvage" && target !== 4)
+		return `Choose the salvage at ${targets[4].coordinates.join(":")}.`;
 	if (cargoMinerals + cargoGas > quote().capacity) return "Cargo exceeds the selected ships' capacity.";
 	if (cargoMinerals > minerals) return "Not enough 💠 minerals at Nacre.";
 	if (cargoGas + quote().travelGas > gas) return "Not enough 🔥 gas for cargo and both travel legs.";
@@ -110,15 +109,18 @@ function renderFleets() {
 	<h2>Your fleets</h2><div class="row"><div><strong>${returning ? "Returning transport" : "Transport"}</strong><small>${returning ? "Returning to Nacre" : "Nacre → Rime"} · 2 Resource Transports</small></div><div class="arrival">${returning ? "19:05" : "19:35"}<small>${returning ? "returning" : "outbound"}</small></div></div>
 	<div class="actions">${returning ? '<button type="button" disabled>Already returning</button>' : '<button type="button" data-action="recall-review">Recall transport</button>'}</div>
 	<div id="recall-review"></div>
-	<div class="row"><div><strong>Returning from Ash</strong><small>18 Scout Fighters · ${resources(3200, 800)}</small></div><div class="arrival">19:10<small>returning</small></div></div>
+	<div class="row"><div><strong>Returning from Ash</strong><small>18 Scout Fighters · 2 Resource Transports<br>${resources(2688, 672)}</small></div><div class="arrival">19:10<small>returning</small></div></div>
 	${sent ? `<div class="row"><div><strong>${sentMission} dispatched in this preview</strong><small>Nacre → ${targetLabel(sentTarget)}</small></div><span>${sentQuote?.arrival}</span></div>` : ""}
 	${withdrawn ? '<div class="row"><div><strong>Reinforcements returning</strong><small>Your 8 Scout Fighters · Beacon → Nacre</small></div><span>19:50</span></div>' : ""}
 	<div class="actions">${button("Prepare dispatch", "dispatch", true)}</div><p class="note">Times use a fixed 18:20 sample clock. Returning fleets cannot be recalled.</p>`;
 }
 function renderStationed() {
+	const row = (id: Ship, amount: number) =>
+		`<div class="row"><div><strong>${amount} ${ships[id].name}${amount === 1 ? "" : "s"}</strong><small>${shipStats(id).join("<br>")}</small></div></div>`;
 	return `${heading("Stationed ships", "Ownership stays with the sender")}
 	<h2>Nacre · 1:214:6 · your colony</h2>
-	<div class="row"><div><strong>Your ships</strong><small>${availableFighters} Scout Fighters · ${availableFreighters} Resource Transports<br>${availableColonyShips} Colony Ship</small></div></div>
+	<p class="note">Sample base stats per ship. Higher speed is faster.</p>
+	<h2>Your ships</h2>${row("scout", availableFighters)}${row("transport", availableFreighters)}${row("colony", availableColonyShips)}
 	<div class="actions">${button("Dispatch your ships", "dispatch", true)}</div>
 	<div class="row"><div><strong>Mira's reinforcements</strong><small>12 Scout Fighters · stationed at Nacre</small></div><span class="muted">Mira owns them</span></div>
 	<p class="note">These ships defend Nacre. Only Mira can withdraw or command them.</p>
@@ -134,9 +136,9 @@ function renderDispatch() {
 	<p class="note">Sector : System : Orbit · Choose a target to fill all three coordinates, or enter them directly.</p>
 	<label>Mission<select name="mission">${(["Transport", "Attack", "Reinforce", "Colonize", "Collect salvage"] as Mission[]).map((name) => `<option ${mission === name ? "selected" : ""}>${name}</option>`).join("")}</select></label></fieldset>
 	<fieldset><legend>Owned ships at Nacre</legend>
-	<label class="row"><span>Resource Transport<small>${availableFreighters} available · cargo 1 500 each</small></span><input name="freighters" aria-label="Resource Transports" type="number" min="0" max="${availableFreighters}" step="1" value="${freighters}" required></label>
-	<label class="row"><span>Scout Fighter<small>${availableFighters} available · fast, fragile</small></span><input name="fighters" aria-label="Scout Fighters" type="number" min="0" max="${availableFighters}" step="1" value="${fighters}" required></label>
-	<label class="row"><span>Colony Ship<small>${availableColonyShips} completed · expansion sample</small></span><input name="colonies" aria-label="Colony Ships" type="number" min="0" max="${availableColonyShips}" step="1" value="${colonyShips}" required></label>
+	<label class="row"><span>Resource Transport<small>${availableFreighters} available<br>${shipStats("transport").join("<br>")}</small></span><input name="freighters" aria-label="Resource Transports" type="number" min="0" max="${availableFreighters}" step="1" value="${freighters}" required></label>
+	<label class="row"><span>Scout Fighter<small>${availableFighters} available<br>${shipStats("scout").join("<br>")}</small></span><input name="fighters" aria-label="Scout Fighters" type="number" min="0" max="${availableFighters}" step="1" value="${fighters}" required></label>
+	<label class="row"><span>Colony Ship<small>${availableColonyShips} completed<br>${shipStats("colony").join("<br>")}</small></span><input name="colonies" aria-label="Colony Ships" type="number" min="0" max="${availableColonyShips}" step="1" value="${colonyShips}" required></label>
 	<p class="note">Mira's 12 stationed ships belong to Mira and are not selectable.</p></fieldset>
 	<fieldset><legend>Cargo</legend><div class="pair"><label>💠 Minerals<input name="minerals" type="number" min="0" max="${minerals}" step="1" value="${cargoMinerals}" required></label><label>🔥 Gas<input name="gas" type="number" min="0" max="${gas}" step="1" value="${cargoGas}" required></label></div></fieldset>
 	<fieldset><legend>Arrival time</legend><label>Travel speed <output id="speed-label">${speed}%</output><input name="speed" type="range" min="30" max="100" step="5" value="${speed}"></label><p class="note">Slower uses less gas. Departure is immediate; there is no scheduled departure. Bounds and prices are illustrative.</p></fieldset>
@@ -189,19 +191,6 @@ function renderIncoming() {
 	<p class="note">Investigation availability and outcomes are sample states. Drone operation, range and success rates remain under design.</p>
 	<div class="actions">${button("Stationed defenders", "stationed")}${button("All movements", "fleets")}</div>`;
 }
-function renderReplay() {
-	const step = rounds[round];
-	const ships = (count: number) =>
-		`<div class="ships" aria-hidden="true">${Array.from({ length: count }, () => '<svg viewBox="0 0 16 20"><path d="M8 1 14 17 8 13 2 17Z" fill="currentColor"/></svg>').join("")}</div>`;
-	return `${heading("Battle Replay", "Ash · 1:214:8 · 10 Oct · 18:04")}
-	<p class="muted">Recorded outcome · ${round ? `Round ${round} of 3` : "Initial forces"}</p>
-	<div class="battle"><div><small>JOSCHA · ATTACKER</small><strong>${step.own}</strong>${ships(step.own)}<small>Scout Fighters</small></div><span>⚔</span><div class="opponent"><small>DEFENDERS</small><strong>${step.enemy}</strong>${ships(step.enemy)}<small>Scout Fighters</small></div></div>
-	<label>Round <output>${round}</output><input type="range" id="round" min="0" max="3" step="1" value="${round}"></label>
-	<div class="actions"><button type="button" data-action="replay-start">↤ Start</button><button type="button" data-action="replay-toggle" class="primary">${timer ? "Pause" : round === 3 ? "Play again" : "Play"}</button><button type="button" data-action="replay-next" ${round === 3 ? "disabled" : ""}>Next round →</button></div>
-	<p class="notice" aria-live="polite">${step.event}</p>
-	${round === 3 ? `<dl><dt>Your losses</dt><dd>6 Scout Fighters</dd><dt>Cargo taken</dt><dd>${resources(3200, 800)}</dd><dt>Salvage at 1:214:8</dt><dd>${resources(840, 210)}</dd></dl><p>Salvage requires a separate collection mission.</p>${button("Prepare salvage collection", "salvage")}` : ""}
-	<p class="note">Sample losses illustrate the replay. Playback speed does not set the proposed live battle window.</p>`;
-}
 function renderEmoji() {
 	// Match Telegram's resource glyph artwork, rather than the operating system's emoji font.
 	const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
@@ -234,9 +223,7 @@ function render() {
 						? renderDispatched()
 						: route === "incoming"
 							? renderIncoming()
-							: route === "replay"
-								? renderReplay()
-								: renderFleets();
+							: renderFleets();
 	for (const node of document.querySelectorAll<HTMLButtonElement>("nav [data-route]"))
 		node.setAttribute("aria-current", node.dataset.route === route ? "page" : "false");
 	element(".warning").innerHTML =
@@ -245,10 +232,6 @@ function render() {
 	document.body.dataset.ready = "true";
 }
 function go(next: string) {
-	if (timer) {
-		clearInterval(timer);
-		timer = undefined;
-	}
 	if (next === "salvage") {
 		mission = "Collect salvage";
 		target = 4;
@@ -322,44 +305,10 @@ document.addEventListener("click", async (event) => {
 			verification = "expired";
 			render();
 			break;
-		case "replay-start":
-			if (timer) clearInterval(timer);
-			timer = undefined;
-			round = 0;
-			render();
-			break;
-		case "replay-next":
-			round = Math.min(3, round + 1);
-			render();
-			break;
-		case "replay-toggle":
-			if (timer) {
-				clearInterval(timer);
-				timer = undefined;
-			} else {
-				if (round === 3) round = 0;
-				timer = setInterval(() => {
-					round = Math.min(3, round + 1);
-					if (round === 3) {
-						clearInterval(timer);
-						timer = undefined;
-					}
-					render();
-				}, 1100);
-			}
-			render();
-			break;
 	}
 });
 document.addEventListener("input", (event) => {
 	const input = event.target as HTMLInputElement;
-	if (input.id === "round") {
-		if (timer) clearInterval(timer);
-		timer = undefined;
-		round = Number(input.value);
-		render();
-		return;
-	}
 	if (input.id === "allied-consent") {
 		alliedConsent = input.checked;
 		element<HTMLButtonElement>("#confirm-dispatch").disabled = !alliedConsent || Boolean(invalid());
@@ -419,5 +368,3 @@ if (window.parent !== window) {
 	for (const eventType of ["web_app_ready", "web_app_expand"])
 		window.parent.postMessage(JSON.stringify({ eventType, eventData: {} }), location.origin);
 }
-
-export {};

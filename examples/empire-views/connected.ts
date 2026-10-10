@@ -65,7 +65,8 @@ for (const person of admirals) {
 				? message.reply_markup.inline_keyboard
 				: [];
 		const next = index < 11 ? `journey-${person.id}-${beats[index + 1].id}` : "preferences";
-		const action = beat.id === "departed" ? "command-center" : beat.id === "victory" ? "battle-report" : next;
+		const action =
+			beat.id === "departed" ? "command-center" : beat.id === "victory" ? "battle-tutorial" : next;
 		for (const row of rows)
 			for (const item of row) {
 				if (item.callback_data === `onboarding:${beat.id}`) item.callback_data = action;

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
 import { admirals, beats } from "../examples/admiral-onboarding/journey";
+import { battles } from "../examples/empire-views/battle-reports";
 import { scenes, views } from "../examples/empire-views/connected";
 import { buildStudy, studyDir } from "../src/empire-views";
 import { chatUrl, startServer } from "../src/server";
@@ -37,9 +38,61 @@ try {
 	}
 	await page.getByRole("button", { name: "Buildings", exact: true }).click();
 	await page.getByRole("button", { name: "Logistics Depot · Level 6", exact: true }).click();
-	await page.getByRole("button", { name: "Pay and queue · Level 7", exact: true }).click();
+	await page.getByRole("button", { name: "Queue upgrade · Level 7", exact: true }).click();
 	await page.getByRole("button", { name: "Cancel Logistics Depot → 7", exact: true }).click();
 	await page.locator(".Message").getByText("Logistics Depot upgrade cancelled", { exact: false }).waitFor();
+	await page.getByRole("button", { name: "All views", exact: true }).click();
+	// All report reading stays in native messages; only a collection order opens fleet controls.
+	for (const battle of battles) {
+		await page.getByRole("button", { name: "Battle Reports", exact: true }).click();
+		await page.getByRole("button", { name: battle.label, exact: true }).click();
+		await page.locator(".Message").getByText(battle.title, { exact: true }).waitFor();
+		assert.equal(await page.locator("iframe, .Message img.full-media").count(), 0);
+		await page.getByRole("button", { name: "Ship losses & stats", exact: true }).click();
+		for (let index = 0; index < battle.contingents.length; index++) {
+			await page
+				.locator(".Message")
+				.getByText(`${battle.planet} · ship losses ${index + 1}/${battle.contingents.length}`, {
+					exact: true,
+				})
+				.waitFor();
+			assert.match(await page.locator(".Message").innerText(), new RegExp(battle.contingents[index].owner));
+			if (battle.contingents[index].groups.length)
+				assert.match(await page.locator(".Message").innerText(), /Atk .*Hull/);
+			if (index + 1 < battle.contingents.length)
+				await page.getByRole("button", { name: "Next fleet →", exact: true }).click();
+		}
+		await page.getByRole("button", { name: "Battle summary", exact: true }).click();
+		await page.getByRole("button", { name: "Loot & loss value", exact: true }).click();
+		await page.locator(".Message").getByText(`${battle.planet} · resources`, { exact: true }).waitFor();
+		assert.equal(await page.locator("iframe").count(), 0);
+		if (battle.id === "battle-raid") {
+			await page.getByRole("button", { name: "Prepare salvage collection", exact: true }).click();
+			await page.waitForFunction(
+				() => document.querySelector(".Modal.confirm") || document.querySelector("iframe"),
+			);
+			const permission = page.locator(".Modal.confirm .confirm-dialog-button").first();
+			if (await permission.isVisible()) await permission.click();
+			const app = page.frameLocator("iframe");
+			await app.locator("[data-ready='true']").waitFor();
+			for (const [index, name] of ["sector", "system", "orbit"].entries())
+				assert.equal(
+					await app.locator(`[name="${name}"]`).inputValue(),
+					battle.coordinates.split(":")[index],
+				);
+			await app
+				.locator("body")
+				.evaluate(() =>
+					parent.postMessage(JSON.stringify({ eventType: "web_app_close", eventData: {} }), location.origin),
+				);
+			await page.locator("iframe").waitFor({ state: "detached" });
+		}
+		await page.getByRole("button", { name: "All views", exact: true }).click();
+		await page.getByRole("button", { name: "Start onboarding", exact: true }).waitFor();
+	}
+	await page.getByRole("button", { name: "Battle Rounds", exact: true }).click();
+	await page.locator(".Message").getByText("Round 3 · victory", { exact: true }).waitFor();
+	assert.equal(await page.locator("iframe").count(), 0);
 	await page.getByRole("button", { name: "All views", exact: true }).click();
 	for (const person of admirals) {
 		await page.getByRole("button", { name: "Start onboarding", exact: true }).click();

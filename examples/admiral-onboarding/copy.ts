@@ -184,14 +184,14 @@ export const beats: Beat[] = [
 		art: "victory",
 		milestone: true,
 		facts:
-			"Victory · Ash 1:214:8\n6 Scout Fighters sent · 5 survived\nCargo: 💠 400 · 🔥 120\nSalvage at Ash: 💠 90 · 🔥 30\nSalvage needs a separate collection mission.",
+			"Victory · Ash 1:214:8\n6 Scout Fighters sent · 5 survived\nCargo: 💠 80 · 🔥 20\nSalvage at Ash: 💠 120 · 🔥 30\nSalvage needs a separate collection mission.",
 		lines: {
 			calder:
 				"The survivors are coming home. Read what it cost as carefully as what it brought back. That's how the next order gets better.",
 			voss: "Five made it homeward. Look at the losses before the cargo. Then we'll know what to change next time.",
 		},
 		action: "Read battle report",
-		note: "Restrained pride fits a first success. The sample replay and losses do not define combat balance.",
+		note: "Restrained pride fits a first success. The detailed report is text in Telegram; sample losses do not define combat balance.",
 	},
 	{
 		id: "returned",
@@ -200,7 +200,7 @@ export const beats: Beat[] = [
 		art: "victory",
 		milestone: true,
 		facts:
-			"✓ Fleet returned to Nacre · 1:214:6\n5 Scout Fighters stationed\n💠 400 · 🔥 120 delivered\nFirst command challenge complete\nReward already claimed",
+			"✓ Fleet returned to Nacre · 1:214:6\n5 Scout Fighters stationed\n💠 80 · 🔥 20 delivered\nFirst command challenge complete\nReward already claimed",
 		lines: {
 			calder:
 				"You've built, launched and brought a fleet back. I'll remain on the relay if you need advice. The orders from here are yours.",

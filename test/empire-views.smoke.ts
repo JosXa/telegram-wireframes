@@ -106,13 +106,7 @@ try {
 		assert.equal(await frame.getByRole("button", { name: "Dispatch now" }).isDisabled(), true);
 		await frame.getByRole("checkbox", { name: "I intend to attack Mira" }).check();
 		assert.equal(await frame.getByRole("button", { name: "Dispatch now" }).isEnabled(), true);
-		await frame.getByRole("button", { name: "Replay", exact: true }).click();
-		await frame.getByRole("button", { name: "Play", exact: true }).click();
-		await frame.getByRole("button", { name: "Play again", exact: true }).waitFor();
-		assert.match(await frame.locator("#content").innerText(), /18 survivors/);
-		await frame.locator("#round").fill("1");
-		assert.match(await frame.locator("#content").innerText(), /Both sides fire simultaneously/);
-		await page.screenshot({ path: `wireframes/empire-views/replay-${width}.png` });
+		assert.equal(await frame.getByRole("button", { name: "Replay", exact: true }).count(), 0);
 		const overflow = await frame
 			.locator("body")
 			.evaluate(() => document.documentElement.scrollWidth > innerWidth);
@@ -140,7 +134,7 @@ try {
 		await context.close();
 	}
 	console.log(
-		`All ${views.length} views covered across ${scenes.length} states; dispatch, ownership, intelligence, replay and catalogue flows passed.`,
+		`All ${views.length} views covered across ${scenes.length} states; dispatch, ownership, intelligence and catalogue flows passed.`,
 	);
 } finally {
 	await browser.close();

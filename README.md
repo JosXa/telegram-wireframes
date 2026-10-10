@@ -34,7 +34,7 @@ Supported today:
 
 - Text and captions with entities (bold, italic, underline, code, links, spoilers, block quotes and more).
 - Photos, with paths relative to the fixture file.
-- Inline keyboards: callback, URL, Web App, login, switch-inline, copy, game and pay buttons, plus `style` and `disabled`.
+- Inline keyboards: callback, URL, Web App, login, switch-inline, copy, game and invoice buttons, plus `style` and `disabled`.
 - Reply keyboards, including contact, location, poll and Web App buttons.
 - Bot name, description, peer color and command menu.
 
