@@ -124,13 +124,24 @@ function createMiddleware(
 	const forwarded = new WeakSet<object>();
 	let messageId = fixture.messages.length;
 	let pts = 1;
+	let seq = 1;
 
-	async function navigate(client: TelegramClient, target: string, sent?: string) {
-		const root = `${self.location.origin}/__wireframes__/fixtures/${encodeURIComponent(target)}`;
-		const next = await fetchJson<Fixture>(`${root}/fixture.json`);
+	async function navigate(client: TelegramClient, target: string | undefined, sent?: string) {
+		const root = target
+			? `${self.location.origin}/__wireframes__/fixtures/${encodeURIComponent(target)}`
+			: fixtureRoot;
+		const next = target ? await fetchJson<Fixture>(`${root}/fixture.json`) : fixture;
 		const date = Math.floor(Date.now() / 1000);
 		const documents: MockDocument[] = [];
-		const source: FixtureMessage[] = sent ? [{ from: "user", text: sent }, ...next.messages] : next.messages;
+		const source: FixtureMessage[] = sent
+			? [
+					{ from: "user", text: sent },
+					...(!target
+						? [{ from: "bot" as const, text: "Use the buttons or listed commands to explore this preview." }]
+						: []),
+					...next.messages,
+				]
+			: next.messages;
 		const messages = await Promise.all(
 			source.map((message) => buildMessage(message, ++messageId, date, root, documents)),
 		);
@@ -183,23 +194,24 @@ function createMiddleware(
 			return new Api.messages.BotCallbackAnswer({ cacheTime: 0 });
 		}
 		if (request instanceof Api.messages.SendMessage && fixture.navigation) {
-			const target = fixture.navigation[request.message.trim()];
-			if (target) {
-				const updates = await navigate(client, target, request.message);
-				return new Api.Updates({
-					updates: [
-						new Api.UpdateMessageID({
-							id: client.mockData.messages[BOT_ID][0].id,
-							randomId: request.randomId,
-						}),
-						...updates,
-					],
-					users: [],
-					chats: [],
-					date: Math.floor(Date.now() / 1000),
-					seq: ++pts,
-				});
-			}
+			const command = request.message.trim();
+			const target = Object.hasOwn(fixture.navigation, command) ? fixture.navigation[command] : undefined;
+			const updates = await navigate(client, target, request.message);
+			return new Api.Updates({
+				updates: [
+					new Api.UpdateMessageID({
+						id: client.mockData.messages[BOT_ID][0].id,
+						randomId: request.randomId,
+					}),
+					...updates,
+				],
+				users: [],
+				chats: [],
+				date: Math.floor(Date.now() / 1000),
+				// Telegram tracks update envelopes separately from individual message changes.
+				// Sharing pts here creates a sequence gap and leaves subsequent updates queued forever.
+				seq: ++seq,
+			});
 		}
 
 		if (
@@ -238,9 +250,9 @@ function createMiddleware(
 		}
 		if (request instanceof Api.updates.GetState) {
 			return new Api.updates.State({
-				pts: 1,
+				pts,
 				qts: 1,
-				seq: 1,
+				seq,
 				date: Math.floor(Date.now() / 1000),
 				unreadCount: 0,
 			});
@@ -249,7 +261,7 @@ function createMiddleware(
 			return new Api.messages.DialogFilters({ filters: [new Api.DialogFilterDefault()] });
 		}
 		if (request instanceof Api.updates.GetDifference) {
-			return new Api.updates.DifferenceEmpty({ date: Math.floor(Date.now() / 1000), seq: 1 });
+			return new Api.updates.DifferenceEmpty({ date: Math.floor(Date.now() / 1000), seq });
 		}
 
 		if (!config.debug) return "pass";

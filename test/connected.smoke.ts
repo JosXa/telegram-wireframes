@@ -88,11 +88,33 @@ try {
 	}
 	// Commands use the same fixture routing as buttons, through Telegram's message composer.
 	const input = page.getByRole("textbox", { name: "Message", exact: true });
+	await input.fill("/advisor");
+	await input.press("Enter");
+	await page.getByRole("button", { name: "Renn Calder", exact: true }).waitFor();
+	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 2);
+	await page.getByRole("button", { name: "Renn Calder", exact: true }).click();
+	await page.getByText(beats[0].title, { exact: true }).waitFor();
+	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 1);
 	await input.fill("/colony");
 	await input.press("Enter");
 	await page.getByRole("button", { name: "Inspect incoming fleet", exact: true }).waitFor();
+	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 2);
+	await input.fill("hello");
+	await input.press("Enter");
+	await page
+		.locator(".Message")
+		.getByText("Use the buttons or listed commands to explore this preview.", { exact: false })
+		.waitFor();
+	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 3);
+	for (const text of ["/unknown", "constructor"]) {
+		await input.fill(text);
+		await input.press("Enter");
+		await page.locator(".Message").getByText(text, { exact: false }).waitFor();
+		await page.waitForFunction(() => document.querySelectorAll(".Message").length === 3);
+	}
 	await page.getByRole("button", { name: "All views", exact: true }).click();
 	await page.getByRole("button", { name: "Start onboarding", exact: true }).waitFor();
+	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 1);
 	await page.screenshot({ path: `${studyDir}/connected-phone.png` });
 	await page.setViewportSize({ width: 1280, height: 900 });
 	await page.screenshot({ path: `${studyDir}/connected-desktop.png` });
