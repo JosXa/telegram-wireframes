@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Emperors · Fleet wireframes</title>
+  <link rel="stylesheet" href="app.css">
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <header><span class="brand">SPACE EMPERORS</span><span class="draft">Draft · sample state</span></header>
+  <nav aria-label="Fleet navigation">
+    <button type="button" data-route="fleets">Movements</button>
+    <button type="button" data-route="stationed">Stationed</button>
+    <button type="button" data-route="dispatch">Dispatch</button>
+    <button type="button" data-route="replay">Replay</button>
+  </nav>
+  <button type="button" class="warning" data-route="incoming">⚠ Incoming fleet · Nacre 214:6 <span>20:40 →</span></button>
+  <main id="content"></main>
+  <p id="status" role="status" aria-live="polite"></p>
+</body>
+</html>

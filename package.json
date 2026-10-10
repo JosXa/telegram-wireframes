@@ -20,7 +20,11 @@
 		"check": "biome check . && tsc --noEmit",
 		"test": "bun test",
 		"test:mini-app": "bun test/mini-app.smoke.ts",
-		"perf:mini-app": "bun test/mini-app.perf.ts"
+		"perf:mini-app": "bun test/mini-app.perf.ts",
+		"views:build": "bun src/empire-views.ts build",
+		"views:serve": "bun src/empire-views.ts serve",
+		"views:render": "bun src/empire-views.ts render",
+		"test:views": "bun test/empire-views.smoke.ts"
 	},
 	"dependencies": {
 		"playwright": "^1.64.0"

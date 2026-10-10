@@ -63,6 +63,19 @@ serve <fixture.json...>    Serve fixtures for clicking around in a browser
 
 ## Mini Apps
 
+### Space Emperors: all views
+
+The [complete game study](examples/empire-views) covers the view shortlist, battle replay, and their action states. Browse chat screens rendered by Telegram, try fleet dispatch and replay controls, or follow a player journey. Each state links to its design source and marks proposals and later scope.
+
+```sh
+bun run views:render
+bun run views:serve
+```
+
+The serve command prints the catalogue URL. Use its light/dark selector, related states and coverage export when reviewing the designs.
+
+### Fixture format
+
 Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt and theme/event bridge. Put an HTML page next to your fixture and use its relative path in a `web_app` button:
 
 ```json

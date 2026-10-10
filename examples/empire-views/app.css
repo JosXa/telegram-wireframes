@@ -1,0 +1,354 @@
+/* A player checks a fleet from Telegram on a phone; quiet surfaces keep times, owners and actions readable. */
+:root {
+	color-scheme: dark;
+	--paper: oklch(19% 0.016 250);
+	--panel: oklch(23% 0.017 250);
+	--ink: oklch(94% 0.008 250);
+	--muted: oklch(74% 0.025 250);
+	--line: oklch(37% 0.021 250);
+	--accent: oklch(80% 0.1 180);
+	--warning: oklch(85% 0.11 85);
+	font:
+		15px / 1.5 system-ui,
+		sans-serif;
+}
+@media (prefers-color-scheme: light) {
+	:root {
+		color-scheme: light;
+		--paper: oklch(97% 0.006 250);
+		--panel: oklch(93% 0.008 250);
+		--ink: oklch(24% 0.022 250);
+		--muted: oklch(45% 0.025 250);
+		--line: oklch(80% 0.02 250);
+		--accent: oklch(42% 0.085 180);
+		--warning: oklch(40% 0.08 70);
+	}
+}
+* {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	background: var(--paper);
+	color: var(--ink);
+}
+header {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+	padding: 16px 20px 8px;
+}
+.brand {
+	font-size: 11px;
+	letter-spacing: 0.12em;
+	font-weight: 700;
+}
+.draft {
+	font-size: 11px;
+	color: var(--muted);
+}
+nav {
+	display: flex;
+	padding: 0 10px;
+	border-bottom: 1px solid var(--line);
+}
+button,
+input,
+select {
+	font: inherit;
+}
+button {
+	min-height: 44px;
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 10px 14px;
+	color: var(--ink);
+	background: var(--panel);
+	cursor: pointer;
+}
+button:hover:not(:disabled) {
+	filter: brightness(1.12);
+}
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+}
+nav button {
+	flex: 1;
+	background: none;
+	border: 0;
+	border-radius: 0;
+	padding: 12px 6px;
+	color: var(--muted);
+	font-size: 13px;
+}
+nav button[aria-current="page"] {
+	color: var(--accent);
+	box-shadow: inset 0 -2px var(--accent);
+}
+.warning {
+	display: flex;
+	justify-content: space-between;
+	width: 100%;
+	gap: 6px;
+	border: 0;
+	border-radius: 0;
+	background: var(--panel);
+	color: var(--warning);
+	padding: 12px 20px;
+	font-size: 12px;
+	text-align: left;
+}
+.warning span {
+	white-space: nowrap;
+}
+main {
+	padding: 24px 20px 32px;
+	max-width: 720px;
+	margin: auto;
+}
+h1 {
+	font-size: 26px;
+	letter-spacing: -0.035em;
+	line-height: 1.2;
+	margin: 4px 0 10px;
+}
+h2 {
+	font-size: 17px;
+	margin: 28px 0 8px;
+}
+p {
+	margin: 8px 0 16px;
+}
+.eyebrow {
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: 0.09em;
+	color: var(--muted);
+	margin: 0;
+}
+.muted,
+small,
+.note {
+	color: var(--muted);
+}
+.note {
+	font-size: 12px;
+}
+.row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 0;
+	border-bottom: 1px solid var(--line);
+}
+.row > div {
+	min-width: 0;
+}
+.row small {
+	display: block;
+	margin-top: 3px;
+}
+.row strong {
+	font-weight: 600;
+}
+.row button {
+	flex-shrink: 0;
+}
+.arrival {
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+	white-space: nowrap;
+}
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 22px;
+}
+.actions > * {
+	flex: 1;
+}
+.primary {
+	background: var(--accent);
+	color: var(--paper);
+	border-color: transparent;
+	font-weight: 650;
+}
+.danger {
+	color: oklch(76% 0.14 30);
+}
+.notice {
+	background: var(--panel);
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 14px 16px;
+	margin: 20px 0;
+}
+.notice p:last-child {
+	margin-bottom: 0;
+}
+.steps {
+	display: flex;
+	gap: 8px;
+	color: var(--muted);
+	font-size: 12px;
+	padding: 0;
+	list-style: none;
+	margin: 18px 0;
+}
+.steps li {
+	flex: 1;
+	border-top: 2px solid var(--line);
+	padding-top: 7px;
+}
+.steps .active {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+fieldset {
+	border: 0;
+	padding: 0;
+	margin: 24px 0;
+	min-width: 0;
+}
+legend {
+	font-size: 17px;
+	font-weight: 650;
+	padding: 0;
+	margin-bottom: 12px;
+}
+label {
+	display: block;
+	margin-bottom: 16px;
+}
+select,
+input[type="number"] {
+	display: block;
+	width: 100%;
+	min-height: 44px;
+	background: var(--panel);
+	color: var(--ink);
+	border: 1px solid var(--line);
+	padding: 10px;
+	border-radius: 6px;
+	margin-top: 6px;
+}
+.row input {
+	width: 84px;
+}
+.pair {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+input[type="range"] {
+	width: 100%;
+	accent-color: var(--accent);
+	min-height: 40px;
+}
+input[type="checkbox"] {
+	accent-color: var(--accent);
+	width: 20px;
+	height: 20px;
+	vertical-align: middle;
+	margin-right: 8px;
+}
+dl {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 10px;
+	margin: 20px 0;
+}
+dt {
+	color: var(--muted);
+}
+dd {
+	margin: 0;
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+.quote {
+	border-block: 1px solid var(--line);
+	padding-block: 12px;
+}
+.error {
+	color: var(--warning);
+}
+.battle {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	gap: 12px;
+	align-items: center;
+	padding: 28px 12px;
+	margin: 24px 0;
+	background: var(--panel);
+	border-radius: 8px;
+	text-align: center;
+}
+.battle strong {
+	font-size: 34px;
+	display: block;
+	font-variant-numeric: tabular-nums;
+}
+.battle small {
+	display: block;
+	font-size: 11px;
+}
+.ships {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 5px;
+	min-height: 48px;
+	align-content: center;
+	color: var(--accent);
+}
+.ships svg {
+	width: 16px;
+	height: 20px;
+}
+.battle .opponent {
+	color: var(--warning);
+}
+.rounds {
+	padding-left: 20px;
+}
+.rounds li {
+	padding: 7px 0;
+}
+.rounds li[aria-current="step"] {
+	color: var(--accent);
+}
+#status {
+	margin: 0;
+	padding: 0 20px 20px;
+	color: var(--accent);
+	font-size: 13px;
+}
+.telegram-emoji {
+	width: 1.2em;
+	height: 1.2em;
+	vertical-align: -0.2em;
+}
+@media (max-width: 360px) {
+	main {
+		padding-inline: 14px;
+	}
+	header {
+		padding-inline: 14px;
+	}
+	.warning {
+		padding-inline: 14px;
+		font-size: 11px;
+	}
+}

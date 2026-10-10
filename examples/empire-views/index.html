@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Emperors · All views</title>
+  <link rel="stylesheet" href="gallery.css">
+  <script type="module" src="gallery.js"></script>
+</head>
+<body>
+  <header class="top"><div><p>SPACE EMPERORS / WIREFRAMES</p><h1>A galaxy, one check-in at a time.</h1></div><div class="top-actions"><span id="coverage"></span><button type="button" id="export">Export coverage</button></div></header>
+  <section class="journeys" aria-label="Player journeys"><strong>Walk through</strong><div id="journeys"></div></section>
+  <div class="workspace">
+    <aside class="navigation"><label for="search">Find a view or state</label><input id="search" type="search" placeholder="Buildings, incoming, quiet hours…"><nav id="scene-list" aria-label="All views"></nav></aside>
+    <main>
+      <div class="scene-heading"><div><p id="scene-meta"></p><h2 id="scene-title">Choose a view</h2></div><div class="theme"><button type="button" data-theme="dark" aria-pressed="true">Dark</button><button type="button" data-theme="light" aria-pressed="false">Light</button></div></div>
+      <div id="journey-progress"></div>
+      <div class="preview"><img id="screenshot" alt=""><p id="pending" hidden>Rendering this state. Open the live preview below.</p></div>
+      <div class="preview-actions"><a id="open-chat" href="/#100?mockScenario=wireframe%3Acommand-center" target="_blank" rel="noreferrer">Open in Telegram ↗</a><a id="open-app" href="app.html" target="_blank" rel="noreferrer" hidden>Try interactive view ↗</a></div>
+      <p class="caption">Rendered with Telegram Web A. Chat actions are visual examples; use related states to follow them. Mini App controls are interactive.</p>
+    </main>
+    <aside class="annotation"><p class="eyebrow">DESIGN NOTES</p><h3 id="view-name">View notes</h3><span id="scope"></span><p id="note"></p><a id="source" href="https://github.com/JosXa/space-emperors/blob/main/docs/design-shortlist.md" target="_blank" rel="noreferrer">Read source document ↗</a><h3>Related states</h3><div id="related"></div><details><summary>About these wireframes</summary><p>Draft labels were approved for this design pass. Final naming holds remain in the glossary. Balance values are illustrative.</p><p>Buildings, research and resources stay in chat. Maps, fleet controls and replay use the Mini App.</p><p>Supply Routes is a later concept. Battle-window locks are a proposal. Energy has no invented stock or balance.</p><p>All chats and actions run locally with sample data. No Telegram account or game server is connected.</p></details></aside>
+  </div>
+</body>
+</html>
