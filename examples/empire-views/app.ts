@@ -384,7 +384,7 @@ document.addEventListener("input", (event) => {
 	target = targets.findIndex(
 		(item, index) =>
 			item.coordinates.every((value, part) => value === coordinates[part]) &&
-			(mission === "Collect salvage" ? index === 4 : index !== 4),
+			(mission === "Collect salvage" ? index !== 1 : index !== 4),
 	);
 	(form.querySelector('[name="target"]') as HTMLSelectElement).value = target < 0 ? "" : String(target);
 	freighters = Number(data.get("freighters"));

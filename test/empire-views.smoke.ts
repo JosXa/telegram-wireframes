@@ -40,6 +40,17 @@ try {
 				.locator("input")
 				.evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 		assert.deepEqual(await values(), ["1", "218", "2"]);
+		await frame.locator('[name="target"]').selectOption("4");
+		assert.deepEqual(await values(), ["1", "214", "8"]);
+		assert.equal(await frame.locator('[name="mission"]').inputValue(), "Collect salvage");
+		await frame.locator('[name="mission"]').selectOption("Attack");
+		assert.equal(await frame.locator('[name="target"]').inputValue(), "1");
+		await frame.locator('[name="mission"]').selectOption("Collect salvage");
+		assert.equal(await frame.locator('[name="target"]').inputValue(), "4");
+		await frame.locator('[name="target"]').selectOption("2");
+		assert.equal(await frame.locator('[name="target"]').inputValue(), "2");
+		assert.match(await frame.locator("#dispatch-error").innerText(), /Choose the salvage/);
+		await frame.locator('[name="mission"]').selectOption("Transport");
 		await frame.locator('[name="target"]').selectOption("2");
 		assert.deepEqual(await values(), ["1", "219", "3"]);
 		await coordinates.getByRole("textbox", { name: "Sector", exact: true }).fill("2");
