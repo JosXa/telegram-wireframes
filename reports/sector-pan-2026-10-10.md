@@ -21,7 +21,7 @@ Frame p95 is the 95th percentile of intervals between animation frames. Main-thr
 
 The phone viewport had no frames above 25 ms in the optimized run. The desktop regional workload used 94% less main-thread time, but desktop frame p95 still reached 33.4 ms.
 
-With 4× CPU slowdown and a 720 × 600 CSS-pixel drag path, the phone viewport recorded frame p95 of 16.7–16.8 ms across all three zoom levels, with occasional frames up to 66.7 ms. Desktop frame p95 was 33.4 ms. The [stress measurements](sector-pan-stress.json) include p99 and maximum frame intervals.
+With 4× CPU slowdown and drags spanning 720 × 600 CSS pixels, the phone viewport recorded frame p95 of 16.7–16.8 ms across all three zoom levels, with occasional frames up to 66.7 ms. Desktop frame p95 was 33.4 ms. The [stress measurements](sector-pan-stress.json) include p99 and maximum frame intervals.
 
 ## Cause and changes
 
