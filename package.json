@@ -24,7 +24,11 @@
 		"views:build": "bun src/empire-views.ts build",
 		"views:serve": "bun src/empire-views.ts serve",
 		"views:render": "bun src/empire-views.ts render",
-		"test:views": "bun test/empire-views.smoke.ts"
+		"test:views": "bun test/empire-views.smoke.ts",
+		"admirals:build": "bun src/admiral-onboarding.ts build",
+		"admirals:serve": "bun src/admiral-onboarding.ts serve",
+		"admirals:render": "bun src/admiral-onboarding.ts render",
+		"test:admirals": "bun test/admiral-onboarding.smoke.ts"
 	},
 	"dependencies": {
 		"playwright": "^1.64.0"

@@ -42,6 +42,7 @@ Renders Telegram bot chats from Bot API JSON with Telegram Web A's own renderer,
 - **Messages use exact Bot API names and shapes.** Add a new Telegram feature under its Bot API name, convert it in `inject/convert.ts`, and validate it in `src/validate.ts`; keep preview metadata such as `mini_app` outside the messages.
 - **`inject/` only compiles inside Web A.** Use `bun run typecheck:web-a` to check it with Web A's TypeScript setup because the root `tsc` skips it.
 - **License: GPL-3.0-only.** The project distributes a patch to GPL code.
+- **Space Emperors artwork:** before every image generation for this game, read its [Art style](../bots/gamebot/docs/ART-STYLE.md) and include the direction in the prompt. Reuse character or object references for continuity.
 
 ## Patch
 

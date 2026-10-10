@@ -74,6 +74,17 @@ bun run views:serve
 
 The serve command prints the catalogue URL. Use its light/dark selector, related states and coverage export when reviewing the designs.
 
+### Space Emperors: admirals in action
+
+The [admiral study](examples/admiral-onboarding) compares character guides across the shortlisted art styles. Follow onboarding and later situations inside Telegram, then compare frequent portraits with milestone appearances or a factual screen. Record where the guide helps and export your choices.
+
+```sh
+bun run admirals:render
+bun run admirals:serve
+```
+
+The fleet review also opens a working Mini App. Character references and scene sheets stay beside the fixture source. The game's art-style document governs every image prompt.
+
 ### Fixture format
 
 Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt and theme/event bridge. Put an HTML page next to your fixture and use its relative path in a `web_app` button:

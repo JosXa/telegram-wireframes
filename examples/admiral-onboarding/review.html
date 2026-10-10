@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Admirals in action · Space Emperors</title><link rel="stylesheet" href="review.css"><script type="module" src="review.js"></script></head>
+<body>
+  <header><p class="eyebrow">SPACE EMPERORS / ADMIRALS IN ACTION</p><h1>Find the guide who belongs here.</h1><p class="intro">Three styles, two admirals, the same journey. Compare their presence at a first launch, a loss, or an ordinary queue.</p></header>
+  <div class="controls">
+    <label>Guide<select id="guide"><option value="calder">Renn Calder</option><option value="voss">Mara Voss</option><option value="both">Both admirals</option></select></label>
+    <label>Style<select id="style"><option value="all">All shortlisted styles</option><option value="01">01 · Soft painted realism</option><option value="05">05 · Fine ink and paint</option><option value="07">07 · Painted animation</option></select></label>
+    <label>Character presence<select id="presence"><option value="frequent">Every screen</option><option value="milestones">Portraits at milestones</option><option value="none">No admiral</option></select></label>
+    <label>Telegram theme<select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+    <button type="button" id="export">Export my choices</button>
+  </div>
+  <div class="layout">
+    <aside><nav id="beats" aria-label="Journey steps"></nav><details><summary>Lore and continuity</summary><p>The Frontier Relay is a proposed network of independent colonies that shares navigation and emergency assistance.</p><p>Calder teaches through experience. Voss teaches through clear decisions under pressure. Both hand control back to the player.</p><p>Each style has a separate image anchor for each admiral. Every scene uses that anchor. The final art direction remains your choice.</p></details></aside>
+    <main>
+      <div class="step-heading"><div><p id="phase" class="eyebrow"></p><h2 id="title">First contact</h2></div><div class="step-actions"><button id="previous" type="button">← Previous</button><button id="next" type="button">Next →</button></div></div>
+      <p id="note" class="note"></p>
+      <div id="previews" class="previews"></div>
+      <p class="caption">Telegram Web A renders every screen. Use Next to follow the storyboard; Open Telegram gives you the native chat and working Mini App launch.</p>
+      <section class="decision"><h3>Does the admiral help here?</h3><div id="votes"><button type="button" data-vote="use">Use here</button><button type="button" data-vote="maybe">Maybe</button><button type="button" data-vote="skip">Skip here</button></div><label for="reason">What works, or what gets in the way?</label><textarea id="reason" rows="2" placeholder="The portrait helps at first contact, but I want a shorter greeting…"></textarea><p id="saved" role="status"></p></section>
+    </main>
+  </div>
+</body>
+</html>

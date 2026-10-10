@@ -1,0 +1,48 @@
+.guide {
+	display: grid;
+	grid-template-columns: 88px minmax(0, 1fr);
+	gap: 12px;
+	align-items: center;
+	margin: 8px 0 24px;
+	padding-bottom: 18px;
+	border-bottom: 1px solid var(--line);
+}
+.guide img {
+	width: 88px;
+	height: 88px;
+	object-fit: cover;
+	border-radius: 6px;
+}
+.guide p {
+	font-size: 12px;
+	line-height: 1.5;
+	margin: 4px 0 0;
+	color: var(--muted);
+}
+.guide strong {
+	font-size: 12px;
+}
+.guide.text-only {
+	display: block;
+}
+.guide.text-only p {
+	max-width: 58ch;
+}
+.route {
+	border-block: 1px solid var(--line);
+	padding: 14px 0;
+	margin: 20px 0;
+}
+.route strong {
+	display: block;
+	margin: 5px 0;
+}
+.resource {
+	display: inline;
+	width: 1.2em;
+	height: 1.2em;
+	vertical-align: -0.2em;
+}
+.receipt {
+	color: var(--accent);
+}

@@ -1,0 +1,62 @@
+[
+	{
+		"id": "01",
+		"name": "Soft painted realism",
+		"summary": "Believable forms, softer detail and visible brushwork.",
+		"style": "Soft painted realism. Deliberately painted, about halfway from the photographic references toward illustration. Large softly brushed color masses, selective crisp edges at eyes and silhouettes, simplified skin with no pores, broad cloth folds with no textile microtexture, gentle atmospheric depth, painterly light gradients. Keep natural adult anatomy. The image should read as a skilled digital painting at first glance, never a photo or realistic render."
+	},
+	{
+		"id": "02",
+		"name": "Clean game illustration",
+		"summary": "Crisp silhouettes, simplified materials and controlled detail.",
+		"style": "Clean premium strategy-game illustration. Confident precise silhouettes, smooth simplified volumes, limited purposeful edge accents, restrained cel-inspired shading with three or four values per local color, softly blended transitions only where needed. No visible ink outlines. Attractive adult realistic proportions but clearly drawn and painted facial features, clean colored surfaces instead of photographed material detail. Clear at small size, elegant, mature, sophisticated, explicitly not photographic."
+	},
+	{
+		"id": "03",
+		"name": "Sculpted color planes",
+		"summary": "Angular painted forms and strong, readable lighting.",
+		"style": "Sculptural planar illustration. Build faces, hulls and architecture out of broad deliberate color planes and angular painterly facets, with strong but plausible anatomy and perspective. Visible decisive planar brush marks, graphic separation of light and shadow, selectively softened edges, very little microdetail. Not a polygon mesh or low-poly 3D aesthetic: a dimensional hand-painted concept illustration with intelligent simplification. Adult proportions, no cartoon caricature."
+	},
+	{
+		"id": "04",
+		"name": "Opaque gouache",
+		"summary": "Matte pigment, broad brush shapes and tactile color.",
+		"style": "Mature science-fiction gouache illustration on fine paper. Opaque matte painted color shapes, gently dry brushed edges, restrained fine pigment grain, broad confident strokes and solid dimensional forms. Simplified surfaces, natural adult facial anatomy and convincing perspective. Controlled warm/cool values, tactile color, almost no specular shine, rich but restrained. Professional illustrated book art, not a watercolor wash, childish illustration, photo or CGI render."
+	},
+	{
+		"id": "05",
+		"name": "Fine ink and paint",
+		"summary": "Thin drawn contours with restrained painted shading.",
+		"style": "Sophisticated European science-fiction illustration using delicate variable-weight dark ink contours and muted painted colors. Fine confident line economy, small areas of hatching only at deep shadows, watercolor-gouache color laid under linework. Realistic adult anatomy simplified by drawing, clean perspective on machines and architecture. Mature, atmospheric and precise rather than comic caricature; no heavy black outlines, halftones, speech bubbles, cartoon faces or photographic rendering."
+	},
+	{
+		"id": "06",
+		"name": "Retro airbrush",
+		"summary": "Smooth painted gradients and restrained paperback-cover texture.",
+		"style": "Refined retro-futurist paperback-cover airbrush illustration. Simplified elegant forms, softly sprayed light gradients, velvety matte colors, limited sharp contour accents, subtle printed-paper grain, gentle luminous highlights. Realistic adult proportions rendered with plainly illustrated, smoothly idealized faces. Broad clean geometric silhouettes and restrained nostalgic color separation. More graphic and less detailed than a photograph, never plastic CGI, caricature, kitsch neon poster or cartoon."
+	},
+	{
+		"id": "07",
+		"name": "Painted animation",
+		"summary": "Expressive shapes with natural proportions and a painted finish.",
+		"style": "Mature feature-animation development painting, grounded rather than cartoony. Slightly designed facial and object shapes, natural-sized eyes and hands, adult proportions, expressive deliberate silhouettes, broad painted shadow shapes, soft atmospheric color, sparing detail. An elegant hand-painted visual-development frame, not the polished final 3D movie render. Friendly readability without cuteness; no giant eyes, childlike anatomy, rubbery faces or photorealism."
+	},
+	{
+		"id": "08",
+		"name": "Graphic light and shadow",
+		"summary": "Bold shadow shapes, fewer values and strong silhouettes.",
+		"style": "Graphic chiaroscuro science-fiction illustration. Compress light into a few large, carefully designed light and shadow shapes, subdued midtones, strong silhouette readability, restrained rich color, sparse brush texture. Keep dimensional perspective, realistic adult proportions and believable architecture, but boldly simplify skin, cloth, metal and rock into painted shapes. No contour outlines. Sophisticated dramatic editorial painting, not a photograph, noir black-and-white poster or cartoon."
+	},
+	{
+		"id": "09",
+		"name": "Textured concept painting",
+		"summary": "Loose brush edges, atmospheric depth and selective detail.",
+		"style": "Finished yet visibly hand-painted science-fiction concept art. Textured broad brush strokes, lost-and-found edges, atmospheric backgrounds, carefully resolved eyes and major design features, deliberately loose minor surfaces. Keep anatomy and perspective convincing, with readable mature expressions and practical designs. Simplify rather than reproduce pores, fabrics and individual mechanical greebles. Distinctly illustrative, no photographic collage or smooth CGI finish."
+	},
+	{
+		"id": "10",
+		"name": "Satin painted volumes",
+		"summary": "Soft sculpted forms with a smooth, illustrated surface.",
+		"style": "Smooth sculpted illustration with satin-painted volumes. Rounded and gently beveled dimensional forms, clean diffuse shading, carefully chosen soft highlights, broad untextured color fields, crisp silhouette, subtle ambient occlusion only. Natural adult facial anatomy with simplified planes and slightly designed shape language. Think a carefully painted small physical model translated into a sophisticated digital illustration, not a real photo, shiny 3D render, toy or caricature. Cohesive treatment of organic and mechanical forms."
+	}
+]
