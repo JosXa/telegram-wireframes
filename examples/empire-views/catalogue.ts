@@ -12,6 +12,8 @@ export type Scene = {
 	note: string;
 	related: string[];
 	fixture: Fixture;
+	assets?: "admirals";
+	preview?: string;
 };
 export const views = [
 	"Command Center",

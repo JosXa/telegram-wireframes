@@ -23,6 +23,12 @@ export async function registerFixtures(files: string[]) {
 		await validateFixture(fixture, path);
 		fixtures.set(name, { name, path, fixture });
 	}
+	for (const { name, fixture } of fixtures.values()) {
+		for (const [action, target] of Object.entries(fixture.navigation || {})) {
+			if (!fixtures.has(target))
+				throw new Error(`${name}: navigation ${action} targets missing fixture ${target}`);
+		}
+	}
 	return fixtures;
 }
 

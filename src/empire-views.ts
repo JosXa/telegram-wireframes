@@ -2,7 +2,8 @@
 import { cp, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
-import { scenes } from "../examples/empire-views/catalogue";
+import { scenes } from "../examples/empire-views/connected";
+import { buildOnboarding, onboardingDir } from "./admiral-onboarding";
 import { render } from "./render";
 import { registerFixtures, startServer } from "./server";
 import { paths, setup } from "./upstream";
@@ -47,6 +48,7 @@ async function systemImage() {
 }
 
 export async function buildStudy() {
+	const onboarding = await buildOnboarding();
 	await mkdir(studyDir, { recursive: true });
 	const result = await Bun.build({
 		entrypoints: ["examples/empire-views/app.ts", "examples/empire-views/gallery.ts"],
@@ -71,12 +73,16 @@ export async function buildStudy() {
 	await systemImage();
 	const files = await Promise.all(
 		scenes.map(async (scene) => {
-			const path = `${studyDir}/${scene.id}.json`;
+			const path = `${scene.assets === "admirals" ? onboardingDir : studyDir}/${scene.id}.json`;
 			await Bun.write(path, `${JSON.stringify(scene.fixture, null, 2)}\n`);
 			return path;
 		}),
 	);
-	return registerFixtures([...files, "examples/galaxy/fixture.json"]);
+	return registerFixtures([
+		...files,
+		...[...onboarding.values()].map((entry) => entry.path),
+		"examples/galaxy/fixture.json",
+	]);
 }
 
 if (import.meta.main) {
@@ -92,22 +98,32 @@ if (import.meta.main) {
 			port: command === "serve" ? Number(process.env.PORT || 4243) : 0,
 		});
 		if (command === "serve")
-			console.log(`Space Emperors · ${scenes.length} states\n${server.url.origin}${studyPath}`);
+			console.log(
+				`Space Emperors · ${scenes.length} states\nConnected bot: ${server.url.origin}/#100?mockScenario=wireframe%3Amenu\nCatalogue: ${server.url.origin}${studyPath}`,
+			);
 		else if (command === "render") {
 			try {
-				const selected = new Map([...fixtures].filter(([name]) => name !== "galaxy"));
-				const files = await render(selected, {
-					origin: server.url.origin,
-					outDir: `${studyDir}/screenshots`,
-					themes: ["dark", "light"],
-					width: 420,
-					height: 900,
-					scale: 1,
-					keyboard: false,
-					debug: false,
-					timeoutMs: 30000,
-				});
-				console.log(`Rendered ${files.length} images to ${studyDir}/screenshots`);
+				const files: string[] = [];
+				for (const assets of [undefined, "admirals"] as const) {
+					const names = new Set(
+						scenes.filter((scene) => scene.assets === assets).map((scene) => scene.preview || scene.id),
+					);
+					const selected = new Map([...fixtures].filter(([name]) => names.has(name)));
+					files.push(
+						...(await render(selected, {
+							origin: server.url.origin,
+							outDir: `${assets ? onboardingDir : studyDir}/screenshots`,
+							themes: ["dark", "light"],
+							width: 420,
+							height: 900,
+							scale: 1,
+							keyboard: false,
+							debug: false,
+							timeoutMs: 30000,
+						})),
+					);
+				}
+				console.log(`Rendered ${files.length} images across the game and onboarding studies.`);
 			} finally {
 				server.stop(true);
 			}

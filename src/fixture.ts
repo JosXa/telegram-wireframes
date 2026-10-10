@@ -7,6 +7,8 @@ export type Fixture = {
 	messages: FixtureMessage[];
 	/** Optional Mini App screenshot: click this button and wait for the app's ready element. */
 	mini_app?: { button_text: string; ready_selector?: string };
+	/** Local preview routes: callback data or a sent command maps to a registered fixture name. */
+	navigation?: Record<string, string>;
 };
 
 export type FixtureBot = {

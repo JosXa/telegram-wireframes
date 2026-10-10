@@ -9,15 +9,17 @@ bun run views:render
 bun run views:serve
 ```
 
-Open the URL printed by `views:serve`. Select a view, search for a state, or follow one of the player journeys. Each state has source notes and links to related states. **Open in Telegram** opens the fixture in Web A; **Try interactive view** opens its app content directly. Export coverage downloads a Markdown index.
+Open the connected bot URL printed by `views:serve`. Its menu links to every view and both admiral onboarding journeys. Native Telegram buttons load the next sample screen. Use **All views** to return to the menu, or send `/menu`, `/colony`, `/empire`, `/advisor` or `/start`. Close a Mini App with Telegram's header control to return to the chat.
 
-Chat buttons are visual examples. Use related states to follow a chat action. The fleet app supports dispatch preparation and confirmation, speed and gas previews, cargo limits, recall, reinforcement withdrawal, investigation outcomes, verification expiry, and replay playback and scrubbing.
+The catalogue URL provides searchable snapshots, source notes, related states and player journeys. **Open in Telegram** starts the connected prototype at that state; **Try interactive view** opens its app content directly. Export coverage downloads a Markdown index. Onboarding snapshots use the art comparison's images.
+
+Chat callbacks navigate between authored snapshots, so they do not simulate a persistent economy. The fleet app supports dispatch preparation and confirmation, speed and gas previews, cargo limits, recall, reinforcement withdrawal, investigation outcomes, verification expiry, and replay playback and scrubbing.
 
 `views:render` creates both light and dark screenshots under the ignored `wireframes/empire-views/` directory. `views:serve` rebuilds the fixtures and app assets. Rerun rendering after changing a source file so the catalogue images match it. `bun run test:views` checks the interactions inside Telegram at phone and desktop sizes.
 
 ## Source and scope
 
-`catalogue.ts` contains typed Bot API fixtures and review metadata. `app.ts` demonstrates fleet interactions. `gallery.ts` provides navigation and coverage export. `src/empire-views.ts` builds and serves them through the existing fixture tools.
+`catalogue.ts` contains typed Bot API fixtures and review metadata. `connected.ts` joins those states with the admiral journeys, a shared menu and preview navigation. `app.ts` demonstrates fleet interactions. `gallery.ts` provides navigation and coverage export. `src/empire-views.ts` builds and serves them through the existing fixture tools. `bun run test:connected` exercises chat navigation, commands, character continuity and the return from Mini Apps.
 
 Buildings, research and resource management stay in chat. Maps, fleet controls and battle replay open in the Mini App. The map states reuse the existing galaxy example. The system chat state uses a rendered hexagonal image.
 

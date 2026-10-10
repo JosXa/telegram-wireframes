@@ -1,4 +1,5 @@
-import { journeys, type Scene, scenes, views } from "./catalogue";
+import type { Scene } from "./catalogue";
+import { journeys, scenes, views } from "./connected";
 
 let theme = "dark";
 let journey: (typeof journeys)[number] | undefined;
@@ -27,11 +28,12 @@ function show() {
 		: undefined;
 	const appLink = element<HTMLAnchorElement>("open-app");
 	appLink.hidden = !miniApp;
-	if (miniApp) appLink.href = miniApp;
+	if (miniApp)
+		appLink.href = new URL(miniApp, `${location.origin}/__wireframes__/fixtures/${scene.id}/files/`).href;
 	image.hidden = false;
 	element("pending").hidden = true;
 	image.alt = `${scene.view}: ${scene.title}, rendered in Telegram's ${theme} theme`;
-	image.src = `screenshots/${scene.id}-${theme}${launch ? "-mini-app" : ""}.png`;
+	image.src = `/__wireframes__/fixtures/${scene.id}/files/screenshots/${scene.preview || scene.id}-${theme}${launch ? "-mini-app" : ""}.png`;
 	element("related").replaceChildren(
 		...scene.related.map((related) => {
 			const target = scenes.find((item) => item.id === related) as Scene;

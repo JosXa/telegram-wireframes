@@ -72,7 +72,7 @@ bun run views:render
 bun run views:serve
 ```
 
-The serve command prints the catalogue URL. Use its light/dark selector, related states and coverage export when reviewing the designs.
+The serve command prints the connected bot and catalogue URLs. The bot menu joins all views and both admiral onboarding journeys. Follow native Telegram buttons between sample states, launch Mini Apps, and return to the menu with **All views** or `/menu`. The catalogue provides light/dark snapshots, source notes and coverage export.
 
 ### Space Emperors: admirals in action
 
@@ -86,6 +86,17 @@ bun run admirals:serve
 The fleet review also opens a working Mini App. Character references and scene sheets stay beside the fixture source. The game's art-style document governs every image prompt.
 
 ### Fixture format
+
+To connect chat screens, add preview metadata outside `messages`:
+
+```json
+"navigation": {
+  "buildings": "building-list",
+  "/start": "welcome"
+}
+```
+
+Each entry maps `callback_data` or a sent command to a fixture registered with the same server. The mock replaces the current sample screen using Telegram updates and loads photos and Mini Apps from the destination fixture's directory. Pass every destination fixture to `serve` or `render` so registration can resolve the targets.
 
 Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt and theme/event bridge. Put an HTML page next to your fixture and use its relative path in a `web_app` button:
 

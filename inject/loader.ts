@@ -4,6 +4,7 @@
 
 import Api from "../../tl/api";
 import type TelegramClient from "../MockClient";
+import createMockedMessage from "../mockUtils/createMockedMessage";
 import createMockedUser from "../mockUtils/createMockedUser";
 import type { MockDocument, MockMessage, MockTypes } from "../mockUtils/MockTypes";
 import { buildEntities, buildReplyMarkup } from "./convert";
@@ -121,9 +122,85 @@ function createMiddleware(
 	// Requests handed back to the stock mock logic in debug mode. Tracked per request, because
 	// requests run concurrently.
 	const forwarded = new WeakSet<object>();
+	let messageId = fixture.messages.length;
+	let pts = 1;
+
+	async function navigate(client: TelegramClient, target: string, sent?: string) {
+		const root = `${self.location.origin}/__wireframes__/fixtures/${encodeURIComponent(target)}`;
+		const next = await fetchJson<Fixture>(`${root}/fixture.json`);
+		const date = Math.floor(Date.now() / 1000);
+		const documents: MockDocument[] = [];
+		const source: FixtureMessage[] = sent ? [{ from: "user", text: sent }, ...next.messages] : next.messages;
+		const messages = await Promise.all(
+			source.map((message) => buildMessage(message, ++messageId, date, root, documents)),
+		);
+		const previous = client.mockData.messages[BOT_ID];
+		const edit = previous.length === 1 && messages.length === 1 && !previous[0].out && !messages[0].out;
+		// Edit a single bot screen in place; conversation examples replace the complete sample.
+		// Media retain their newly allocated IDs so Telegram cannot reuse a previous scene's photo.
+		if (edit) messages[0].id = previous[0].id;
+		client.mockData.messages[BOT_ID] = messages;
+		client.mockData.documents.push(...documents);
+		client.mockData.dialogs.active[0].topMessage = messages[messages.length - 1].id;
+		fixture = next;
+		fixtureRoot = root;
+		if (edit)
+			return [
+				new Api.UpdateEditMessage({
+					message: createMockedMessage(BOT_ID, messages[0].id, client.mockData),
+					pts: ++pts,
+					ptsCount: 1,
+				}),
+			];
+		pts += previous.length;
+		return [
+			new Api.UpdateDeleteMessages({
+				messages: previous.map((message) => message.id),
+				pts,
+				ptsCount: previous.length,
+			}),
+			...messages.map(
+				(message) =>
+					new Api.UpdateNewMessage({
+						message: createMockedMessage(BOT_ID, message.id, client.mockData),
+						pts: ++pts,
+						ptsCount: 1,
+					}),
+			),
+		];
+	}
 
 	return async (client, request) => {
 		if (forwarded.has(request)) return "pass";
+		if (request instanceof Api.messages.GetBotCallbackAnswer && fixture.navigation) {
+			const target = fixture.navigation[new TextDecoder().decode(request.data)];
+			if (!target)
+				return new Api.messages.BotCallbackAnswer({
+					cacheTime: 0,
+					message: "This action is a sample preview.",
+				});
+			for (const update of await navigate(client, target)) client.fireUpdate(update);
+			return new Api.messages.BotCallbackAnswer({ cacheTime: 0 });
+		}
+		if (request instanceof Api.messages.SendMessage && fixture.navigation) {
+			const target = fixture.navigation[request.message.trim()];
+			if (target) {
+				const updates = await navigate(client, target, request.message);
+				return new Api.Updates({
+					updates: [
+						new Api.UpdateMessageID({
+							id: client.mockData.messages[BOT_ID][0].id,
+							randomId: request.randomId,
+						}),
+						...updates,
+					],
+					users: [],
+					chats: [],
+					date: Math.floor(Date.now() / 1000),
+					seq: ++pts,
+				});
+			}
+		}
 
 		if (
 			request instanceof Api.messages.RequestWebView ||
