@@ -1,4 +1,9 @@
-import { admirals, beats, styles } from "./journey";
+import { admirals, beats, format, styles, words } from "./journey";
+
+const copy = words.miniApp;
+document.title = words.appTitle;
+(document.querySelector("#brand") as HTMLElement).textContent = words.game.toUpperCase();
+(document.querySelector("#badge") as HTMLElement).textContent = words.appBadge;
 
 const query = new URLSearchParams(location.search);
 const person = admirals.find((item) => item.id === query.get("admiral")) || admirals[0];
@@ -21,35 +26,34 @@ const quote = () => {
 	};
 };
 function guide() {
-	if (mode === "plain") return "";
-	const beat = beats.find(
-		(item) => item.id === (stage === "incoming" ? "incoming" : stage === "sent" ? "departed" : "review"),
-	);
+	if (mode === "plain" || stage === "sent") return "";
+	const beat = beats.find((item) => item.id === (stage === "incoming" ? "incoming" : "review"));
 	if (!beat) throw new Error("Missing guidance");
-	return `<section class="guide ${mode === "art" ? "" : "text-only"}">${mode === "art" ? `<img src="art/${style.id}-${person.id}-${beat.art}.jpg" alt="Admiral ${person.name}">` : ""}<div><strong>Admiral ${person.name}</strong><p>${beat.lines[person.id]}</p></div></section>`;
+	const name = format(words.admiral, { name: person.name });
+	return `<section class="guide ${mode === "art" ? "" : "text-only"}">${mode === "art" ? `<img src="art/${style.id}-${person.id}-${beat.art}.jpg" alt="${name}">` : ""}<div><strong>${name}</strong><p>${beat.lines[person.id]}</p></div></section>`;
 }
 function render() {
 	const q = quote();
 	const title =
 		stage === "incoming"
-			? "Incoming fleet"
+			? copy.incoming
 			: stage === "sent"
-				? "Fleet dispatched"
+				? copy.sent
 				: stage === "review"
-					? "Review dispatch"
-					: "Prepare your first fleet";
-	content.innerHTML = `<p class="eyebrow">Nacre · 214:6</p><h1>${title}</h1>${guide()}${
+					? copy.review
+					: copy.prepare;
+	content.innerHTML = `<p class="eyebrow">${words.origin}</p><h1>${title}</h1>${guide()}${
 		stage === "incoming"
 			? `
-		<div class="notice"><strong>⚠ Mission unverified</strong><p>Mira · Beacon 219:3 → Nacre 214:6<br>Arrival: 20:40</p><p>Ship composition and cargo unknown.</p></div><p class="note">Alliance membership does not establish a friendly mission. Investigation rules remain under design.</p>`
+		<div class="notice"><strong>${copy.unknown}</strong><p>${copy.incomingRoute}<br>${copy.incomingTime}</p><p>${copy.unknownCargo}</p></div><p class="note">${copy.investigationNote}</p>`
 			: stage === "sent"
 				? `
-		<p class="receipt">✓ ${count} Scout Fighters are outbound</p><div class="route"><strong>Nacre 214:6 → Ash 214:8</strong><span>Attack · Arrival ${q.arrival}</span></div><p>Travel gas reserved: ${gas(q.gas)}</p><p>Your colony keeps producing. You can return to Telegram while the fleet travels.</p>`
+		<p class="receipt">${format(copy.outbound, { count })}</p><div class="route"><strong>${copy.route}</strong><span>${format(copy.attackArrival, { arrival: q.arrival })}</span></div><p>${copy.reservedGas}: ${gas(q.gas)}</p><p>${copy.sentNote}</p>`
 				: `
-		<div class="route"><span class="muted">Attack mission</span><strong>Nacre 214:6 → Ash 214:8</strong><span class="note">Abandoned world · home system</span></div>
-		${stage === "prepare" ? `<form id="fleet-form"><label>Scout Fighters · 6 available<input name="count" type="number" min="1" max="6" step="1" value="${count}" required></label><label>Travel speed <output id="speed-value">${speed}%</output><input type="range" name="speed" min="50" max="100" step="10" value="${speed}"></label><p class="note">A slower arrival uses less gas. Departure is immediate when you confirm.</p><div id="quote"></div><div class="actions"><button type="submit" class="primary">Review dispatch</button></div></form>` : `<dl><dt>Ships</dt><dd>${count} Scout Fighters</dd><dt>Travel time</dt><dd>${q.minutes} min</dd><dt>Arrival</dt><dd>${q.arrival}</dd><dt>Travel gas · both legs</dt><dd>${gas(q.gas)}</dd></dl><p>Ships leave immediately. Their arrival time is fixed after dispatch.</p><div class="actions"><button type="button" data-action="edit">Edit</button><button type="button" class="primary" data-action="send">Dispatch now</button></div>`}`
+		<div class="route"><span class="muted">${copy.attackMission}</span><strong>${copy.route}</strong><span class="note">${copy.abandoned}</span></div>
+		${stage === "prepare" ? `<form id="fleet-form"><label>${copy.availableShips}<input name="count" type="number" min="1" max="6" step="1" value="${count}" required></label><label>${copy.speed} <output id="speed-value">${speed}%</output><input type="range" name="speed" min="50" max="100" step="10" value="${speed}"></label><p class="note">${copy.slowerNote}</p><div id="quote"></div><div class="actions"><button type="submit" class="primary">${copy.review}</button></div></form>` : `<dl><dt>${copy.ships}</dt><dd>${format(copy.shipCount, { count })}</dd><dt>${copy.travelTime}</dt><dd>${format(copy.minutes, { minutes: q.minutes })}</dd><dt>${copy.arrival}</dt><dd>${q.arrival}</dd><dt>${copy.bothLegs}</dt><dd>${gas(q.gas)}</dd></dl><p>${copy.departureNote}</p><div class="actions"><button type="button" data-action="edit">${copy.edit}</button><button type="button" class="primary" data-action="send">${copy.dispatch}</button></div>`}`
 	}
-		<p class="note">Local wireframe · fixed 18:20 sample clock · illustrative balance.</p>`;
+		<p class="note">${copy.sampleNote}</p>`;
 	updateQuote();
 	document.body.dataset.ready = "true";
 }
@@ -57,7 +61,7 @@ function updateQuote() {
 	const node = document.querySelector("#quote");
 	if (node) {
 		const q = quote();
-		node.innerHTML = `<dl><dt>Arrival</dt><dd>${q.arrival} · ${q.minutes} min</dd><dt>Travel gas reserved</dt><dd>${gas(q.gas)}</dd></dl>`;
+		node.innerHTML = `<dl><dt>${copy.arrival}</dt><dd>${q.arrival} · ${format(copy.minutes, { minutes: q.minutes })}</dd><dt>${copy.reservedGas}</dt><dd>${gas(q.gas)}</dd></dl>`;
 	}
 }
 document.addEventListener("input", () => {

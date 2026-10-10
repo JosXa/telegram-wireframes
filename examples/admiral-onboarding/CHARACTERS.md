@@ -30,12 +30,15 @@ Before every image generation, read the game's [Art style](../../../bots/gamebot
 
 For each admiral, use the matching `permutations/<style>-<admiral>-reference.png` as the image reference in every prompt. Match the face and uniform to that image. Change only the requested pose, expression or setting. Keep scars and insignia on their original sides.
 
+The `07c` refinement uses the `07` identity anchors and painted animation treatment. The `01` scene sheets supply color and lighting references only. Preserve this distinction when extending the refinement.
+
 Inspect each generated image against its anchor before use. Establish a new anchor explicitly if the character design changes. Reuse the anchor for later scenes rather than treating the most recently generated pose as the new identity.
 
 ## Presence
 
-The comparison offers three treatments:
+The comparison offers these treatments:
 
+- Apply the imported scene ratings: Use includes the admiral, Skip removes art and dialogue, and Maybe keeps the guide visible for further review. Dispatch guidance appears during the first few launches, with the exact cutoff still open.
 - Every screen includes the admiral's portrait and guidance.
 - Milestones use portraits at first contact, the first fleet, dispatch, a battle outcome and the end of onboarding. Other screens use a brief line without a portrait.
 - No admiral shows the same game facts and controls without character dialogue.

@@ -1,0 +1,22 @@
+{
+	"welcome": { "vote": "use", "note": "fine ink and paint is out. Still deciding between the other two." },
+	"nickname": { "vote": "maybe", "note": "" },
+	"home": { "vote": "use", "note": "painted animation was better here." },
+	"mine": { "vote": "skip", "note": "" },
+	"mine-ready": { "vote": "skip", "note": "" },
+	"shipyard": {
+		"vote": "use",
+		"note": "The dialog and copy is absolutely terrible. We will have to get all strings in one place and batch analyze it together later."
+	},
+	"ships": { "vote": "maybe", "note": "" },
+	"target": { "vote": "maybe", "note": "Painted animation wins." },
+	"review": { "vote": "use", "note": "only the first few times" },
+	"departed": { "vote": "skip", "note": "" },
+	"victory": { "vote": "use", "note": "" },
+	"returned": { "vote": "use", "note": "oh, soft painted realism actually wins in this one" },
+	"incoming": { "vote": "maybe", "note": "" },
+	"loss": { "vote": "use", "note": "" },
+	"return": { "vote": "use", "note": "" },
+	"queue": { "vote": "skip", "note": "" },
+	"preferences": { "vote": "maybe", "note": "" }
+}

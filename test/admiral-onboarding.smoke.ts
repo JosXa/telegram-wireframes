@@ -9,7 +9,7 @@ const fixtures = await buildOnboarding();
 for (const beat of beats)
 	for (const admiral of admirals)
 		for (const style of styles)
-			for (const presence of ["frequent", "milestones", "none"] as const) {
+			for (const presence of ["frequent", "milestones", "none", "reviewed"] as const) {
 				assert.ok(
 					fixtures.has(variantName(style.id, admiral.id, beat, presence)),
 					`Missing ${style.id}/${admiral.id}/${beat.id}/${presence}`,
@@ -50,6 +50,7 @@ try {
 			await app.getByRole("button", { name: "Review dispatch", exact: true }).click();
 			await app.getByRole("button", { name: "Dispatch now", exact: true }).click();
 			assert.match(await app.locator("#content").innerText(), /6 Scout Fighters are outbound/);
+			assert.equal(await app.locator(".guide").count(), 0);
 			assert.equal(await app.getByRole("button", { name: "Dispatch now", exact: true }).count(), 0);
 			assert.equal(
 				await app.locator("body").evaluate(() => document.documentElement.scrollWidth > innerWidth),
@@ -64,6 +65,33 @@ try {
 	assert.equal(await page.locator(".preview").count(), 3);
 	await page.getByRole("combobox", { name: "Guide", exact: true }).selectOption("both");
 	assert.equal(await page.locator(".preview").count(), 6);
+	assert.equal(await page.locator('#style option[value="05"]').count(), 0);
+	assert.equal(
+		await page.getByRole("button", { name: "Use here", exact: true }).getAttribute("aria-pressed"),
+		"true",
+	);
+	for (const title of [
+		"Your first upgrade",
+		"Work completes",
+		"The fleet is away",
+		"An ordinary paid queue",
+	]) {
+		await page.getByRole("link", { name: title, exact: true }).click();
+		await page.getByRole("heading", { name: title, exact: true }).waitFor();
+		assert.equal(await page.locator(".preview").count(), 1);
+		assert.match((await page.locator(".preview img").getAttribute("src")) || "", /plain-/);
+	}
+	await page.getByRole("link", { name: "Review the dispatch", exact: true }).click();
+	await page.getByRole("heading", { name: "Review the dispatch", exact: true }).waitFor();
+	assert.equal(await page.locator(".preview").count(), 6);
+	await page.getByRole("combobox", { name: "Dispatch experience", exact: true }).selectOption("experienced");
+	assert.equal(await page.locator(".preview").count(), 1);
+	assert.match((await page.locator(".preview img").getAttribute("src")) || "", /plain-review/);
+	await page.getByRole("combobox", { name: "Dispatch experience", exact: true }).selectOption("first");
+	assert.equal(await page.locator(".preview").count(), 6);
+	const copyDownload = page.waitForEvent("download");
+	await page.getByRole("link", { name: "Download all onboarding copy", exact: true }).click();
+	assert.equal((await copyDownload).suggestedFilename(), "copy-review.md");
 	await page.getByRole("link", { name: "An ordinary paid queue", exact: true }).click();
 	await page.getByRole("combobox", { name: "Character presence", exact: true }).selectOption("milestones");
 	assert.equal(await page.locator(".preview").count(), 2);

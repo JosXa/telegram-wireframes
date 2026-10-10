@@ -1,5 +1,8 @@
 {
-	"status": "shortlisted",
-	"shortlist": ["01", "05", "07"],
-	"selectedStyle": null
+	"status": "refining",
+	"shortlist": ["01", "07"],
+	"rejected": ["05"],
+	"selectedStyle": "07",
+	"refinement": "Painted animation forms with the richer colors and stronger contrast of soft painted realism.",
+	"copyStatus": "Needs a separate batch review before rewriting."
 }

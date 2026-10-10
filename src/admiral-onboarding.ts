@@ -1,7 +1,7 @@
 import { cp, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
-import { admirals, beats, makeFixture, styles } from "../examples/admiral-onboarding/journey";
+import { admirals, beats, makeFixture, styles, words } from "../examples/admiral-onboarding/journey";
 import { render } from "./render";
 import { registerFixtures, startServer } from "./server";
 import { paths, setup } from "./upstream";
@@ -83,6 +83,14 @@ export async function buildOnboarding() {
 		),
 	);
 	await cp("examples/empire-views/app.css", `${onboardingDir}/app.css`);
+	const copySections = beats.map(
+		(beat) =>
+			`## ${beat.id}: ${beat.title}\n\n### Facts\n\n${beat.facts}\n\n### Calder\n\n${beat.lines.calder}\n\n### Voss\n\n${beat.lines.voss}\n\n### Action\n\n${beat.action}`,
+	);
+	await Bun.write(
+		`${onboardingDir}/copy-review.md`,
+		`# Onboarding copy for review\n\nGenerated from examples/admiral-onboarding/copy.ts. Edit that source to change the wireframes. Current wording is pending a batch writing review.\n\n${copySections.join("\n\n")}\n\n## Shared labels and Mini App copy\n\n\`\`\`json\n${JSON.stringify(words, null, 2)}\n\`\`\`\n`,
+	);
 	await cropArt();
 	const files: string[] = [];
 	for (const beat of beats)

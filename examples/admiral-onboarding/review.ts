@@ -1,4 +1,4 @@
-import { admirals, beats, type Presence, styles, variantName } from "./journey";
+import { admirals, beats, displayMode, feedback, type Presence, styles, variantName } from "./journey";
 
 type Choice = { vote?: string; note?: string };
 const storageKey = "space-emperors-admiral-review-v1";
@@ -9,7 +9,16 @@ function activeBeat() {
 	return beats.find((beat) => beat.id === location.hash.slice(1)) || beats[0];
 }
 function key() {
-	return [activeBeat().id, select("guide"), select("style"), select("presence")].join(":");
+	return [
+		activeBeat().id,
+		select("guide"),
+		select("style"),
+		select("presence"),
+		...(select("presence") === "reviewed" ? [select("experience")] : []),
+	].join(":");
+}
+function currentChoice(): Choice {
+	return choices[key()] || feedback[activeBeat().id] || {};
 }
 function persist() {
 	localStorage.setItem(storageKey, JSON.stringify(choices));
@@ -26,30 +35,36 @@ function render() {
 	for (const link of document.querySelectorAll<HTMLAnchorElement>("#beats a"))
 		link.setAttribute("aria-current", link.hash === `#${beat.id}` ? "step" : "false");
 	const presence = select("presence") as Presence;
+	const experienced = select("experience") === "experienced";
+	const mode = displayMode(beat, presence, experienced);
+	element("experience-control").hidden = presence !== "reviewed" || beat.id !== "review";
+	const imported = feedback[beat.id];
+	element("feedback").textContent =
+		`Imported rating: ${imported.vote}.${imported.note ? ` ${imported.note}` : ""}${presence === "reviewed" && imported.vote === "maybe" ? " The admiral stays visible here for further comparison." : ""}${presence === "reviewed" && beat.id === "review" ? " Dispatch guidance appears only for the first few launches; the exact cutoff is still open." : ""}`;
 	const people = admirals.filter((admiral) => select("guide") === "both" || admiral.id === select("guide"));
 	const directions = styles.filter((style) => select("style") === "all" || style.id === select("style"));
 	const seen = new Set<string>();
 	const cards: HTMLElement[] = [];
 	for (const person of people)
 		for (const style of directions) {
-			const name = variantName(style.id, person.id, beat, presence);
+			const name = variantName(style.id, person.id, beat, presence, experienced);
 			if (seen.has(name)) continue;
 			seen.add(name);
 			const card = document.createElement("article");
 			card.className = "preview";
 			const title = document.createElement("h3");
 			title.textContent =
-				presence === "none"
+				mode === "plain"
 					? "Factual screen · no admiral"
-					: presence === "milestones" && !beat.milestone
+					: mode === "voice"
 						? `${person.name} · text only`
 						: `${person.name} · ${style.id}`;
 			const sub = document.createElement("p");
 			sub.className = "sub";
 			sub.textContent =
-				presence === "none"
+				mode === "plain"
 					? "Same controls and game facts"
-					: presence === "milestones" && !beat.milestone
+					: mode === "voice"
 						? "Brief guidance · portrait omitted"
 						: style.name;
 			const image = document.createElement("img");
@@ -72,13 +87,14 @@ function render() {
 			cards.push(card);
 		}
 	element("previews").replaceChildren(...cards);
-	const choice = choices[key()] || {};
+	const choice = currentChoice();
 	for (const button of document.querySelectorAll<HTMLButtonElement>("[data-vote]"))
 		button.setAttribute("aria-pressed", String(button.dataset.vote === choice.vote));
 	element<HTMLTextAreaElement>("reason").value = choice.note || "";
 	element("saved").textContent = "";
 	const url = new URL(location.href);
-	for (const id of ["guide", "style", "presence", "theme"]) url.searchParams.set(id, select(id));
+	for (const id of ["guide", "style", "presence", "theme", "experience"])
+		url.searchParams.set(id, select(id));
 	history.replaceState(null, "", url);
 }
 for (const phase of new Set(beats.map((beat) => beat.phase))) {
@@ -93,7 +109,7 @@ for (const phase of new Set(beats.map((beat) => beat.phase))) {
 	}
 }
 const query = new URLSearchParams(location.search);
-for (const id of ["guide", "style", "presence", "theme"]) {
+for (const id of ["guide", "style", "presence", "theme", "experience"]) {
 	const control = element<HTMLSelectElement>(id),
 		value = query.get(id);
 	if (value && [...control.options].some((option) => option.value === value)) control.value = value;
@@ -108,19 +124,22 @@ for (const [id, delta] of [
 	});
 for (const button of document.querySelectorAll<HTMLButtonElement>("[data-vote]"))
 	button.addEventListener("click", () => {
-		choices[key()] = { ...choices[key()], vote: button.dataset.vote };
+		choices[key()] = { ...currentChoice(), vote: button.dataset.vote };
 		render();
 		persist();
 	});
 element<HTMLTextAreaElement>("reason").addEventListener("input", () => {
-	choices[key()] = { ...choices[key()], note: element<HTMLTextAreaElement>("reason").value };
+	choices[key()] = { ...currentChoice(), note: element<HTMLTextAreaElement>("reason").value };
 	persist();
 });
 element("export").addEventListener("click", () => {
+	const imported = Object.entries(feedback).map(
+		([beat, choice]) => `## ${beat}:imported\n\n${choice.vote}\n\n${choice.note}`,
+	);
 	const rows = Object.entries(choices).map(
 		([variant, choice]) => `## ${variant}\n\n${choice.vote || "Unrated"}\n\n${choice.note || ""}`,
 	);
-	const text = `# Space Emperors: admirals in action\n\nCurrent comparison: ${select("guide")} / ${select("style")} / ${select("presence")}\n\n${rows.join("\n\n")}`;
+	const text = `# Space Emperors: admirals in action\n\nCurrent comparison: ${select("guide")} / ${select("style")} / ${select("presence")} / ${select("experience")}\n\n# Imported scene ratings\n\n${imported.join("\n\n")}\n\n# Further choices\n\n${rows.join("\n\n")}`;
 	const url = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
 	const link = document.createElement("a");
 	link.href = url;
