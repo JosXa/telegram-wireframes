@@ -10,6 +10,7 @@ const world = $("#world");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 const galaxyRadius = 40;
 const galaxyHexSize = 146;
+const sector = 1;
 const biomes = {
 	tropical: { label: "Tropical", icon: "🏝", sea: "#245c82", land: "#70ad83", light: "#afd6ac" },
 	snowy: { label: "Snowy", icon: "🏔", sea: "#759bb4", land: "#c8e3e5", light: "#e2edf0" },
@@ -397,7 +398,7 @@ function drawSystem(system) {
 			role: "button",
 			tabindex: 0,
 			"aria-pressed": String(active),
-			"aria-label": `${system.name}, system ${system.id}, ${multiplicity(system.components)}, ${system.components.map(classify).join(" and ")}, ${system.count} planets`,
+			"aria-label": `${system.name}, sector ${sector}, system ${system.id}, ${multiplicity(system.components)}, ${system.components.map(classify).join(" and ")}, ${system.count} planets`,
 			"data-system": system.id,
 			"data-axial": `${system.q},${system.r}`,
 			"data-components": system.components.length,
@@ -412,7 +413,7 @@ function drawSystem(system) {
 		"text",
 		{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
 		node,
-		`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
+		`Sector ${sector} · System ${system.id}`,
 	);
 	const hitbox = element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, node);
 	bindSelect(node, () => selectSystem(system));
@@ -508,7 +509,8 @@ function systemScene() {
 		const radius = 112 * (i + 1),
 			angle = (scene.angles[i] * Math.PI) / 180;
 		return {
-			id: `${scene.id}:${i + 1}`,
+			id: `${sector}:${scene.id}:${i + 1}`,
+			orbit: i + 1,
 			name,
 			radius,
 			x: Math.cos(angle) * radius,
@@ -540,12 +542,7 @@ function systemScene() {
 		element("circle", { r: 34, class: "selected-ring" }, art);
 		planetArt(art, planet, index);
 		element("text", { x: 0, y: 32, "text-anchor": "middle", class: "planet-label" }, group, planet.name);
-		element(
-			"text",
-			{ x: 0, y: 46, "text-anchor": "middle", class: "coordinate" },
-			group,
-			`${index + 1} · ${biomes[planet.biome].label}${planet.home ? " · HOME" : ""}`,
-		);
+		element("text", { x: 0, y: 46, "text-anchor": "middle", class: "coordinate" }, group, planet.id);
 		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
 		bindSelect(group, () => selectPlanet(planet));
 		if (planet.owner === "own") {
@@ -566,7 +563,7 @@ function systemScene() {
 		}
 		const button = document.createElement("button");
 		button.type = "button";
-		button.innerHTML = `${biomes[planet.biome].icon} ${index + 1}<small>${planet.home ? "HOME" : planet.owner === "own" ? "COLONY" : "OPEN"}</small>`;
+		button.innerHTML = `${biomes[planet.biome].icon} ${index + 1}<small>${planet.id}</small>`;
 		button.setAttribute("aria-label", `Orbit ${index + 1}: ${planet.name}`);
 		button.dataset.orbitSelect = planet.id;
 		button.addEventListener("click", () => selectPlanet(planet, true));
@@ -593,8 +590,8 @@ function systemScene() {
 	selectPlanet(planets[0], false, false);
 }
 function addFleet(from, to, index, cargo, duration, incoming) {
-	if (typeof from.id === "number") from = { ...from, id: `${from.id}:1` };
-	if (typeof to.id === "number") to = { ...to, id: `${to.id}:1` };
+	if (typeof from.id === "number") from = { ...from, id: `${sector}:${from.id}:1` };
+	if (typeof to.id === "number") to = { ...to, id: `${sector}:${to.id}:1` };
 	const id = incoming?.id || (index === 0 ? "transport" : `freight-${index}`);
 	const key = incoming ? `${to.id}:${id}` : `${view}:${id}`;
 	if (!movementState.has(key))
@@ -641,7 +638,7 @@ function addIncoming(target) {
 		{
 			id: "incoming-ally",
 			sender: "Mira · your alliance",
-			origin: "62:3",
+			origin: "1:62:3",
 			inScanRange: true,
 			hours: 10,
 			remaining: 2,
@@ -649,7 +646,7 @@ function addIncoming(target) {
 		{
 			id: "incoming-attack",
 			sender: "Kael",
-			origin: "13:2",
+			origin: "1:13:2",
 			inScanRange: true,
 			hours: 9,
 			remaining: 2.4,
@@ -660,11 +657,11 @@ function addIncoming(target) {
 				verifiedAt: scenarioTime - 5 * 60000,
 			},
 		},
-		{ id: "incoming-distant", sender: "Orin", origin: "17:4", inScanRange: false, hours: 12, remaining: 7 },
+		{ id: "incoming-distant", sender: "Orin", origin: "1:17:4", inScanRange: false, hours: 12, remaining: 7 },
 	];
 	for (const [i, sample] of samples.entries()) {
 		const source =
-			view === "galaxy" ? systems.find((system) => system.id === Number(sample.origin.split(":")[0])) : null;
+			view === "galaxy" ? systems.find((system) => system.id === Number(sample.origin.split(":")[1])) : null;
 		const from = {
 			x: source ? source.x : target.x + [-480, 400, -320][i],
 			y: source ? source.y : target.y + [-400, -500, 500][i],
@@ -775,6 +772,8 @@ function paintFleet(fleet) {
 }
 function selectSystem(system, inspect = true) {
 	selected = system;
+	$("#coordinate-system").textContent = system.id;
+	$("#coordinate-orbit").textContent = "—";
 	updateCamera();
 	for (const node of document.querySelectorAll(".system")) {
 		const active = node.dataset.system === String(system.id);
@@ -782,7 +781,8 @@ function selectSystem(system, inspect = true) {
 		node.setAttribute("aria-pressed", String(active));
 	}
 	$("#planet-name").textContent = system.name;
-	$("#planet-meta").textContent = `SYSTEM ${system.id} · ${multiplicity(system.components).toUpperCase()}`;
+	$("#planet-meta").textContent =
+		`SECTOR ${sector} · SYSTEM ${system.id} · ${multiplicity(system.components).toUpperCase()}`;
 	$("#stellar-classification").textContent = system.components.map(classify).join(" / ");
 	for (const cell of document.querySelectorAll("[data-cell]"))
 		cell.classList.toggle("selected", cell.dataset.cell === String(system.id));
@@ -795,6 +795,8 @@ function selectSystem(system, inspect = true) {
 }
 function selectPlanet(planet, approach = false, inspect = true) {
 	selected = planet;
+	$("#coordinate-system").textContent = scenes[view].id;
+	$("#coordinate-orbit").textContent = planet.orbit;
 	for (const node of document.querySelectorAll(".planet, [data-orbit], [data-orbit-select]")) {
 		const active = (node.dataset.planet || node.dataset.orbit || node.dataset.orbitSelect) === planet.id;
 		node.classList.toggle("selected", active);

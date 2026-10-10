@@ -5,12 +5,16 @@ if (!root) throw new Error("Missing app content");
 const content = root;
 const element = <T extends HTMLElement>(selector: string) => document.querySelector(selector) as T;
 const targets = [
-	"Rime · 218:2 · yours",
-	"Ash · 214:8 · abandoned",
-	"Beacon · 219:3 · Mira, allied",
-	"Free planet · 222:4",
-	"Salvage · 214:8",
+	{ name: "Rime", coordinates: ["1", "218", "2"], detail: "yours" },
+	{ name: "Ash", coordinates: ["1", "214", "8"], detail: "abandoned" },
+	{ name: "Beacon", coordinates: ["1", "219", "3"], detail: "Mira, allied" },
+	{ name: "Free planet", coordinates: ["1", "222", "4"], detail: "unclaimed" },
+	{ name: "Salvage", coordinates: ["1", "214", "8"], detail: "collection" },
 ];
+const targetLabel = (index: number) => {
+	const item = targets[index];
+	return `${item.name} · ${item.coordinates.join(":")} · ${item.detail}`;
+};
 let route = new URLSearchParams(location.search).get("view") || "fleets";
 let mission: Mission =
 	route === "attack" || route === "ally-attack"
@@ -22,6 +26,7 @@ let mission: Mission =
 				: "Transport";
 let target =
 	route === "ally-attack" || route === "reinforce" ? 2 : route === "attack" ? 1 : route === "salvage" ? 4 : 0;
+let coordinates = [...targets[target].coordinates];
 let freighters = 2;
 let fighters = mission === "Attack" || mission === "Reinforce" ? 12 : 0;
 let colonyShips = 0;
@@ -75,6 +80,9 @@ function quote() {
 	};
 }
 function invalid(): string {
+	if (!coordinates.every((value) => /^[1-9]\d*$/.test(value)))
+		return "Enter a positive whole number for Sector, System and Orbit.";
+	if (target < 0) return "No charted target at these coordinates in this preview.";
 	if (freighters + fighters + colonyShips === 0) return "Select at least one ship.";
 	if (fighters > availableFighters || freighters > availableFreighters || colonyShips > availableColonyShips)
 		return "Only your available stationed ships can be dispatched.";
@@ -86,7 +94,7 @@ function invalid(): string {
 		return "Choose a colony to receive this transport.";
 	if (mission === "Colonize" && (target !== 3 || colonyShips < 1))
 		return "Colonization needs a free planet and a Colony Ship.";
-	if (mission === "Collect salvage" && target !== 4) return "Choose the salvage at 214:8.";
+	if (mission === "Collect salvage" && target !== 4) return "Choose the salvage at 1:214:8.";
 	if (cargoMinerals + cargoGas > quote().capacity) return "Cargo exceeds the selected ships' capacity.";
 	if (cargoMinerals > minerals) return "Not enough 💠 minerals at Nacre.";
 	if (cargoGas + quote().travelGas > gas) return "Not enough 🔥 gas for cargo and both travel legs.";
@@ -96,32 +104,34 @@ function steps(review: boolean) {
 	return `<ol class="steps"><li class="${review ? "" : "active"}">1 · Prepare</li><li class="${review ? "active" : ""}">2 · Review</li><li>3 · Dispatched</li></ol>`;
 }
 function renderFleets() {
-	return `${heading("Fleet Command", "Nacre · 214:6")}
+	return `${heading("Fleet Command", "Nacre · 1:214:6")}
 	<p class="muted">Movements you own and fleets approaching your colonies.</p>
 	<h2>Incoming</h2><div class="row"><div><strong>${verification === "verified" ? "Reinforcements incoming" : "Mission unverified"}</strong><small>Mira · Beacon → Nacre</small></div>${button("20:40 ↗", "incoming")}</div>
 	<h2>Your fleets</h2><div class="row"><div><strong>${returning ? "Returning transport" : "Transport"}</strong><small>${returning ? "Returning to Nacre" : "Nacre → Rime"} · 2 Resource Transports</small></div><div class="arrival">${returning ? "19:05" : "19:35"}<small>${returning ? "returning" : "outbound"}</small></div></div>
 	<div class="actions">${returning ? '<button type="button" disabled>Already returning</button>' : '<button type="button" data-action="recall-review">Recall transport</button>'}</div>
 	<div id="recall-review"></div>
 	<div class="row"><div><strong>Returning from Ash</strong><small>18 Scout Fighters · ${resources(3200, 800)}</small></div><div class="arrival">19:10<small>returning</small></div></div>
-	${sent ? `<div class="row"><div><strong>${sentMission} dispatched in this preview</strong><small>Nacre → ${targets[sentTarget]}</small></div><span>${sentQuote?.arrival}</span></div>` : ""}
+	${sent ? `<div class="row"><div><strong>${sentMission} dispatched in this preview</strong><small>Nacre → ${targetLabel(sentTarget)}</small></div><span>${sentQuote?.arrival}</span></div>` : ""}
 	${withdrawn ? '<div class="row"><div><strong>Reinforcements returning</strong><small>Your 8 Scout Fighters · Beacon → Nacre</small></div><span>19:50</span></div>' : ""}
 	<div class="actions">${button("Prepare dispatch", "dispatch", true)}</div><p class="note">Times use a fixed 18:20 sample clock. Returning fleets cannot be recalled.</p>`;
 }
 function renderStationed() {
 	return `${heading("Stationed ships", "Ownership stays with the sender")}
-	<h2>Nacre · 214:6 · your colony</h2>
+	<h2>Nacre · 1:214:6 · your colony</h2>
 	<div class="row"><div><strong>Your ships</strong><small>${availableFighters} Scout Fighters · ${availableFreighters} Resource Transports<br>${availableColonyShips} Colony Ship</small></div></div>
 	<div class="actions">${button("Dispatch your ships", "dispatch", true)}</div>
 	<div class="row"><div><strong>Mira's reinforcements</strong><small>12 Scout Fighters · stationed at Nacre</small></div><span class="muted">Mira owns them</span></div>
 	<p class="note">These ships defend Nacre. Only Mira can withdraw or command them.</p>
-	<h2>Beacon · 219:3 · Mira's colony</h2><div class="row"><div><strong>Your reinforcements</strong><small>${withdrawn ? "8 Scout Fighters returning to Nacre" : "8 Scout Fighters · stationed at Beacon"}</small></div></div>
+	<h2>Beacon · 1:219:3 · Mira's colony</h2><div class="row"><div><strong>Your reinforcements</strong><small>${withdrawn ? "8 Scout Fighters returning to Nacre" : "8 Scout Fighters · stationed at Beacon"}</small></div></div>
 	<div class="actions"><button type="button" data-action="withdraw-review" ${withdrawn ? "disabled" : ""}>${withdrawn ? "Withdrawal started" : "Withdraw your 8 ships"}</button></div><div id="withdraw-review"></div>`;
 }
 function renderDispatch() {
 	return `${heading("Prepare dispatch", "Your ships leave when you confirm")}${steps(false)}
-	<p>Nacre · 214:6<br><span class="muted">${resources(minerals, gas)}</span></p>
+	<p>Nacre · 1:214:6<br><span class="muted">${resources(minerals, gas)}</span></p>
 	<form id="dispatch-form"><fieldset><legend>Target and mission</legend>
-	<label>Target<select name="target">${targets.map((name, i) => `<option value="${i}" ${i === target ? "selected" : ""}>${name}</option>`).join("")}</select></label>
+	<label>Find target<select name="target"><option value="" ${target < 0 ? "selected" : ""}>Enter coordinates below</option>${targets.map((_, i) => `<option value="${i}" ${i === target ? "selected" : ""}>${targetLabel(i)}</option>`).join("")}</select></label>
+	<div class="coordinates" role="group" aria-label="Target coordinates">${["Sector", "System", "Orbit"].map((label, index) => `<label>${label}<input type="text" inputmode="numeric" pattern="[1-9][0-9]*" name="${label.toLowerCase()}" value="${coordinates[index].replaceAll("&", "&amp;").replaceAll('"', "&quot;")}" required autocomplete="off"></label>`).join('<span class="coordinate-separator" aria-hidden="true">:</span>')}</div>
+	<p class="note">Sector : System : Orbit · Choose a target to fill all three coordinates, or enter them directly.</p>
 	<label>Mission<select name="mission">${(["Transport", "Attack", "Reinforce", "Colonize", "Collect salvage"] as Mission[]).map((name) => `<option ${mission === name ? "selected" : ""}>${name}</option>`).join("")}</select></label></fieldset>
 	<fieldset><legend>Owned ships at Nacre</legend>
 	<label class="row"><span>Resource Transport<small>${availableFreighters} available · cargo 1 500 each</small></span><input name="freighters" aria-label="Resource Transports" type="number" min="0" max="${availableFreighters}" step="1" value="${freighters}" required></label>
@@ -147,8 +157,8 @@ function updateQuote() {
 function renderConfirm() {
 	const q = quote();
 	const alliedAttack = mission === "Attack" && target === 2;
-	return `${heading("Review dispatch", "Nacre · 214:6")}${steps(true)}
-	<dl><dt>Mission</dt><dd>${mission}</dd><dt>Target</dt><dd>${targets[target]}</dd><dt>Scout Fighters</dt><dd>${fighters}</dd><dt>Resource Transports</dt><dd>${freighters}</dd><dt>Colony Ships</dt><dd>${colonyShips}</dd><dt>Cargo</dt><dd>${resources(cargoMinerals, cargoGas)}</dd><dt>Arrival</dt><dd>${q.arrival} · ${q.minutes} min</dd><dt>Travel gas reserved</dt><dd>🔥 ${number(q.travelGas)}</dd><dt>Remaining at Nacre</dt><dd>${resources(minerals - cargoMinerals, gas - cargoGas - q.travelGas)}</dd></dl>
+	return `${heading("Review dispatch", "Nacre · 1:214:6")}${steps(true)}
+	<dl><dt>Mission</dt><dd>${mission}</dd><dt>Target</dt><dd>${targetLabel(target)}</dd><dt>Scout Fighters</dt><dd>${fighters}</dd><dt>Resource Transports</dt><dd>${freighters}</dd><dt>Colony Ships</dt><dd>${colonyShips}</dd><dt>Cargo</dt><dd>${resources(cargoMinerals, cargoGas)}</dd><dt>Arrival</dt><dd>${q.arrival} · ${q.minutes} min</dd><dt>Travel gas reserved</dt><dd>🔥 ${number(q.travelGas)}</dd><dt>Remaining at Nacre</dt><dd>${resources(minerals - cargoMinerals, gas - cargoGas - q.travelGas)}</dd></dl>
 	${alliedAttack ? `<section class="notice"><h2>Attack your ally?</h2><p>Beacon belongs to Mira, a member of your alliance. This fleet will attack.</p><label><input type="checkbox" id="allied-consent" ${alliedConsent ? "checked" : ""}>I intend to attack Mira</label></section>` : ""}
 	<p class="note">Sample quote. A real dispatch is quoted and validated by the server. The fleet leaves immediately and its arrival time is fixed.</p>
 	<p class="error">${invalid()}</p><div class="actions">${button("Edit", "dispatch")}<button type="button" id="confirm-dispatch" class="primary" data-action="dispatch" ${invalid() || (alliedAttack && !alliedConsent) ? "disabled" : ""}>Dispatch now</button></div>`;
@@ -156,13 +166,13 @@ function renderConfirm() {
 function renderDispatched() {
 	const q = sentQuote || quote();
 	return `${heading("Fleet dispatched", "Local preview complete")}
-	<div class="notice"><strong>${sent ? sentMission : "Transport"} · outbound</strong><p>Nacre 214:6 → ${targets[sent ? sentTarget : 0]}<br>Arrival ${q.arrival}</p></div>
+	<div class="notice"><strong>${sent ? sentMission : "Transport"} · outbound</strong><p>Nacre 1:214:6 → ${targetLabel(sent ? sentTarget : 0)}<br>Arrival ${q.arrival}</p></div>
 	<p>Ships and cargo have left Nacre. Travel gas is reserved for both legs.</p><p>${resources(minerals, gas)} remaining at Nacre</p>
 	<div class="actions">${button("Fleet movements", "fleets", true)}${button("Stationed ships", "stationed")}</div>`;
 }
 function renderIncoming() {
 	return `${heading(verification === "verified" ? "Reinforcements incoming" : "Incoming fleet", "Mira · member of Meridian")}
-	<dl><dt>Origin</dt><dd>Beacon · 219:3</dd><dt>Target</dt><dd>Nacre · 214:6</dd><dt>Arrival</dt><dd>20:40 · 2h 20m</dd></dl>
+	<dl><dt>Origin</dt><dd>Beacon · 1:219:3</dd><dt>Target</dt><dd>Nacre · 1:214:6</dd><dt>Arrival</dt><dd>20:40 · 2h 20m</dd></dl>
 	${
 		verification === "verified" && report
 			? `<div class="notice"><strong>👁 Mission verified at ${report.verifiedAt}</strong><p>${report.mission} · ${Object.entries(
@@ -183,13 +193,13 @@ function renderReplay() {
 	const step = rounds[round];
 	const ships = (count: number) =>
 		`<div class="ships" aria-hidden="true">${Array.from({ length: count }, () => '<svg viewBox="0 0 16 20"><path d="M8 1 14 17 8 13 2 17Z" fill="currentColor"/></svg>').join("")}</div>`;
-	return `${heading("Battle Replay", "Ash · 214:8 · 10 Oct · 18:04")}
+	return `${heading("Battle Replay", "Ash · 1:214:8 · 10 Oct · 18:04")}
 	<p class="muted">Recorded outcome · ${round ? `Round ${round} of 3` : "Initial forces"}</p>
 	<div class="battle"><div><small>JOSCHA · ATTACKER</small><strong>${step.own}</strong>${ships(step.own)}<small>Scout Fighters</small></div><span>⚔</span><div class="opponent"><small>DEFENDERS</small><strong>${step.enemy}</strong>${ships(step.enemy)}<small>Scout Fighters</small></div></div>
 	<label>Round <output>${round}</output><input type="range" id="round" min="0" max="3" step="1" value="${round}"></label>
 	<div class="actions"><button type="button" data-action="replay-start">↤ Start</button><button type="button" data-action="replay-toggle" class="primary">${timer ? "Pause" : round === 3 ? "Play again" : "Play"}</button><button type="button" data-action="replay-next" ${round === 3 ? "disabled" : ""}>Next round →</button></div>
 	<p class="notice" aria-live="polite">${step.event}</p>
-	${round === 3 ? `<dl><dt>Your losses</dt><dd>6 Scout Fighters</dd><dt>Cargo taken</dt><dd>${resources(3200, 800)}</dd><dt>Salvage at 214:8</dt><dd>${resources(840, 210)}</dd></dl><p>Salvage requires a separate collection mission.</p>${button("Prepare salvage collection", "salvage")}` : ""}
+	${round === 3 ? `<dl><dt>Your losses</dt><dd>6 Scout Fighters</dd><dt>Cargo taken</dt><dd>${resources(3200, 800)}</dd><dt>Salvage at 1:214:8</dt><dd>${resources(840, 210)}</dd></dl><p>Salvage requires a separate collection mission.</p>${button("Prepare salvage collection", "salvage")}` : ""}
 	<p class="note">Sample losses illustrate the replay. Playback speed does not set the proposed live battle window.</p>`;
 }
 function renderEmoji() {
@@ -230,7 +240,7 @@ function render() {
 	for (const node of document.querySelectorAll<HTMLButtonElement>("nav [data-route]"))
 		node.setAttribute("aria-current", node.dataset.route === route ? "page" : "false");
 	element(".warning").innerHTML =
-		`${verification === "verified" ? "🛡 Reinforcements incoming" : "⚠ Incoming fleet"} · Nacre 214:6 <span>20:40 →</span>`;
+		`${verification === "verified" ? "🛡 Reinforcements incoming" : "⚠ Incoming fleet"} · Nacre 1:214:6 <span>20:40 →</span>`;
 	updateQuote();
 	document.body.dataset.ready = "true";
 }
@@ -242,6 +252,7 @@ function go(next: string) {
 	if (next === "salvage") {
 		mission = "Collect salvage";
 		target = 4;
+		coordinates = [...targets[target].coordinates];
 		cargoMinerals = cargoGas = 0;
 		next = "dispatch";
 	}
@@ -357,8 +368,25 @@ document.addEventListener("input", (event) => {
 	const form = document.querySelector<HTMLFormElement>("#dispatch-form");
 	if (!form) return;
 	const data = new FormData(form);
-	target = Number(data.get("target"));
 	mission = String(data.get("mission")) as Mission;
+	if (input.name === "target" && input.value !== "") {
+		const selected = Number(input.value);
+		coordinates = [...targets[selected].coordinates];
+		form.querySelectorAll<HTMLInputElement>(".coordinates input").forEach((input, index) => {
+			input.value = coordinates[index];
+		});
+		if (selected === 4) {
+			mission = "Collect salvage";
+			(form.querySelector('[name="mission"]') as HTMLSelectElement).value = mission;
+		}
+	} else coordinates = ["sector", "system", "orbit"].map((name) => String(data.get(name)));
+	// Typed coordinates are authoritative; the suggestion must not retain a different target.
+	target = targets.findIndex(
+		(item, index) =>
+			item.coordinates.every((value, part) => value === coordinates[part]) &&
+			(mission === "Collect salvage" ? index === 4 : index !== 4),
+	);
+	(form.querySelector('[name="target"]') as HTMLSelectElement).value = target < 0 ? "" : String(target);
 	freighters = Number(data.get("freighters"));
 	fighters = Number(data.get("fighters"));
 	colonyShips = Number(data.get("colonies"));

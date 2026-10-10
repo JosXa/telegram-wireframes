@@ -13,6 +13,11 @@
     <button type="button" data-view="young">First colonies <small>4 planets</small></button>
     <button type="button" data-view="developed">High empire <small>8 planets</small></button>
   </nav>
+  <dl class="map-coordinates" aria-label="Selected coordinates">
+    <div><dt>Sector</dt><dd id="coordinate-sector">1</dd></div>
+    <div><dt>System</dt><dd id="coordinate-system">—</dd></div>
+    <div><dt>Orbit</dt><dd id="coordinate-orbit">—</dd></div>
+  </dl>
   <main id="map-panel">
     <img id="backdrop" alt="" aria-hidden="true">
     <canvas id="sector-map" aria-hidden="true"></canvas>

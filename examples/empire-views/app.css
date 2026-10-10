@@ -232,6 +232,7 @@ label {
 	margin-bottom: 16px;
 }
 select,
+input[type="text"],
 input[type="number"] {
 	display: block;
 	width: 100%;
@@ -250,6 +251,24 @@ input[type="number"] {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 12px;
+}
+.coordinates {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
+	gap: 8px;
+	align-items: end;
+}
+.coordinates label {
+	min-width: 0;
+	margin-bottom: 0;
+}
+.coordinates input {
+	min-width: 0;
+	font-variant-numeric: tabular-nums;
+}
+.coordinate-separator {
+	padding-bottom: 11px;
+	color: var(--muted);
 }
 input[type="range"] {
 	width: 100%;

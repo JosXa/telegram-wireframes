@@ -26,7 +26,7 @@ export const beats: Beat[] = [
 		phase: "First command",
 		art: "welcome",
 		milestone: true,
-		facts: "Nacre · 214:6 · Your home planet\nStarter protection: 5 days",
+		facts: "Nacre · 1:214:6 · Your home planet\nStarter protection: 5 days",
 		lines: {
 			calder:
 				"Commander. Renn Calder, Frontier Relay. Nacre is yours to build. I'll help you get its first ships into orbit. What should the crews call you?",
@@ -56,7 +56,7 @@ export const beats: Beat[] = [
 		art: "construction",
 		milestone: false,
 		facts:
-			"Command Center · Nacre 214:6\n🏝 Tropical · Home planet\n💠 500 · 🔥 250\nMineral Mine · Level 1\nBuildings: 0 / 2 running",
+			"Command Center · Nacre 1:214:6\n🏝 Tropical · Home planet\n💠 500 · 🔥 250\nMineral Mine · Level 1\nBuildings: 0 / 2 running",
 		lines: {
 			calder:
 				"The ledgers here belong to Nacre. When you found another colony, you'll carry supplies between them. First, let's give this mine a better cutting head.",
@@ -72,7 +72,7 @@ export const beats: Beat[] = [
 		art: "construction",
 		milestone: false,
 		facts:
-			"Mineral Mine · 1 → 2\nNacre · 214:6\nCost: 💠 50 · 🔥 0\nDuration: 3 seconds\nChallenge reward: 💠 150 · 🔥 50",
+			"Mineral Mine · 1 → 2\nNacre · 1:214:6\nCost: 💠 50 · 🔥 0\nDuration: 3 seconds\nChallenge reward: 💠 150 · 🔥 50",
 		lines: {
 			calder: "A fleet begins with a mine. Authorize the upgrade. This first crew is already standing by.",
 			voss: "Ships need hulls. Hulls need minerals. Give the crew the order; this first upgrade takes three seconds.",
@@ -87,7 +87,7 @@ export const beats: Beat[] = [
 		art: "construction",
 		milestone: false,
 		facts:
-			"✓ Mineral Mine reached level 2\nNacre · 214:6\nChallenge reward claimed once\n💠 150 · 🔥 50 added to Nacre",
+			"✓ Mineral Mine reached level 2\nNacre · 1:214:6\nChallenge reward claimed once\n💠 150 · 🔥 50 added to Nacre",
 		lines: {
 			calder: "Good. The mine will keep working while you're elsewhere. Next, the orbital yard.",
 			voss: "The crew has it from here. Let's turn those minerals into ships.",
@@ -134,7 +134,7 @@ export const beats: Beat[] = [
 		art: "planning",
 		milestone: false,
 		facts:
-			"Ash · 214:8 · Abandoned world\nIn your home system\nA few minutes later: all 6 fighters are ready.\nThis is an attack target, not a free colony.\nPrepare ships, target and mission in the Mini App.",
+			"Ash · 1:214:8 · Abandoned world\nIn your home system\nA few minutes later: all 6 fighters are ready.\nThis is an attack target, not a free colony.\nPrepare ships, target and mission in the Mini App.",
 		lines: {
 			calder:
 				"Ash's owner is gone. Its old defense ships aren't. We'll plan an attack, read the report, then bring our survivors home.",
@@ -151,7 +151,7 @@ export const beats: Beat[] = [
 		art: "dispatch",
 		milestone: false,
 		facts:
-			"Attack · Nacre 214:6 → Ash 214:8\nScout Fighter × 6\nTravel time: 45 min\nArrival: 19:05\nReserved travel gas: 🔥 80\nDeparture is immediate when confirmed.",
+			"Attack · Nacre 1:214:6 → Ash 1:214:8\nScout Fighter × 6\nTravel time: 45 min\nArrival: 19:05\nReserved travel gas: 🔥 80\nDeparture is immediate when confirmed.",
 		lines: {
 			calder:
 				"Read the destination once more. Slower travel can save gas, but once this fleet leaves, its arrival time is fixed.",
@@ -168,7 +168,7 @@ export const beats: Beat[] = [
 		art: "dispatch",
 		milestone: true,
 		facts:
-			"✓ Attack dispatched\nNacre 214:6 → Ash 214:8\nArrival: 19:05\nOutbound fleets can be recalled.\nYour colony keeps producing.",
+			"✓ Attack dispatched\nNacre 1:214:6 → Ash 1:214:8\nArrival: 19:05\nOutbound fleets can be recalled.\nYour colony keeps producing.",
 		lines: {
 			calder:
 				"They're away. There's no need to watch the clock. Leave the crews to their work; the report will be here when you return.",
@@ -184,7 +184,7 @@ export const beats: Beat[] = [
 		art: "victory",
 		milestone: true,
 		facts:
-			"Victory · Ash 214:8\n6 Scout Fighters sent · 5 survived\nCargo: 💠 400 · 🔥 120\nSalvage at Ash: 💠 90 · 🔥 30\nSalvage needs a separate collection mission.",
+			"Victory · Ash 1:214:8\n6 Scout Fighters sent · 5 survived\nCargo: 💠 400 · 🔥 120\nSalvage at Ash: 💠 90 · 🔥 30\nSalvage needs a separate collection mission.",
 		lines: {
 			calder:
 				"The survivors are coming home. Read what it cost as carefully as what it brought back. That's how the next order gets better.",
@@ -200,7 +200,7 @@ export const beats: Beat[] = [
 		art: "victory",
 		milestone: true,
 		facts:
-			"✓ Fleet returned to Nacre · 214:6\n5 Scout Fighters stationed\n💠 400 · 🔥 120 delivered\nFirst command challenge complete\nReward already claimed",
+			"✓ Fleet returned to Nacre · 1:214:6\n5 Scout Fighters stationed\n💠 400 · 🔥 120 delivered\nFirst command challenge complete\nReward already claimed",
 		lines: {
 			calder:
 				"You've built, launched and brought a fleet back. I'll remain on the relay if you need advice. The orders from here are yours.",
@@ -216,7 +216,7 @@ export const beats: Beat[] = [
 		art: "incoming",
 		milestone: false,
 		facts:
-			"⚠ Incoming fleet · Nacre 214:6\nSender: Mira · alliance member\nArrival: 20:40\nMission and ship composition unknown",
+			"⚠ Incoming fleet · Nacre 1:214:6\nSender: Mira · alliance member\nArrival: 20:40\nMission and ship composition unknown",
 		lines: {
 			calder:
 				"Mira's name is on the signal. Her orders aren't. Inspect the movement before you decide what it means.",
@@ -233,7 +233,7 @@ export const beats: Beat[] = [
 		art: "loss",
 		milestone: true,
 		facts:
-			"Defeat · Cairn 228:5\n6 Scout Fighters lost\nNo cargo taken\nYour colonies and research remain intact.",
+			"Defeat · Cairn 1:228:5\n6 Scout Fighters lost\nNo cargo taken\nYour colonies and research remain intact.",
 		lines: {
 			calder:
 				"That was a hard report. Let's understand it before placing another order. You can rebuild when you're ready.",
@@ -264,7 +264,7 @@ export const beats: Beat[] = [
 		art: "planning",
 		milestone: false,
 		facts:
-			"Buildings · Nacre 214:6\n💠 12 400 · 🔥 6 100\n\nRUNNING · 2 / 2\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\n\nWAITING · already paid\nResearch Lab → 5",
+			"Buildings · Nacre 1:214:6\n💠 12 400 · 🔥 6 100\n\nRUNNING · 2 / 2\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\n\nWAITING · already paid\nResearch Lab → 5",
 		lines: {
 			calder: "The next eligible job starts when a slot opens. You've already paid for the waiting work.",
 			voss: "Two crews working, one job waiting. The queue can look after itself.",
@@ -296,7 +296,7 @@ export const words = {
 	admiral: "Admiral {name}",
 	commandCenter: "Command Center",
 	advisor: "Advisor",
-	origin: "Nacre · 214:6",
+	origin: "Nacre · 1:214:6",
 	chooseAdmiral: "Choose your admiral",
 	chooseAdmiralNote: "Follow the first colony through its first launch, then explore the full bot.",
 	continueOnboarding: "Continue onboarding",
@@ -306,13 +306,19 @@ export const words = {
 		review: "Review dispatch",
 		prepare: "Prepare your first fleet",
 		unknown: "⚠ Mission unverified",
-		incomingRoute: "Mira · Beacon 219:3 → Nacre 214:6",
+		incomingRoute: "Mira · Beacon 1:219:3 → Nacre 1:214:6",
 		incomingTime: "Arrival: 20:40",
 		unknownCargo: "Ship composition and cargo unknown.",
 		investigationNote:
 			"Alliance membership does not establish a friendly mission. Investigation rules remain under design.",
 		outbound: "✓ {count} Scout Fighters are outbound",
-		route: "Nacre 214:6 → Ash 214:8",
+		route: "Nacre 1:214:6 → Ash 1:214:8",
+		sector: "Sector",
+		system: "System",
+		orbit: "Orbit",
+		targetCoordinates: "Target coordinates",
+		coordinateNote: "First launch target: Ash · 1:214:8",
+		coordinateError: "Use sector 1, system 214, orbit 8 for this first launch.",
 		attackArrival: "Attack · Arrival {arrival}",
 		reservedGas: "Travel gas reserved",
 		sentNote: "Your colony keeps producing. You can return to Telegram while the fleet travels.",

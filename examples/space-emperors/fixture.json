@@ -20,14 +20,14 @@
 		{
 			"from": "bot",
 			"photo": "system-map.jpg",
-			"caption": "🪐 System 2:14 · Vega Cluster\n7 planets · 2 unclaimed · 👁 1 scouted",
-			"caption_entities": [{ "type": "bold", "offset": 3, "length": 26 }],
+			"caption": "🪐 Sector 2 · System 14 · Vega Cluster\n7 planets · 2 unclaimed · 👁 1 scouted",
+			"caption_entities": [{ "type": "bold", "offset": 3, "length": 35 }],
 			"reply_markup": {
 				"inline_keyboard": [
 					[
-						{ "text": "◀ 2:13", "callback_data": "sys:2:13" },
+						{ "text": "◀ System 13", "callback_data": "sys:2:13" },
 						{ "text": "🏠 Home", "callback_data": "home" },
-						{ "text": "2:15 ▶", "callback_data": "sys:2:15" }
+						{ "text": "System 15 ▶", "callback_data": "sys:2:15" }
 					],
 					[
 						{

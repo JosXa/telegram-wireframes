@@ -38,7 +38,7 @@ export const views = [
 ];
 export const resource = (minerals: string | number, gas: string | number) => `💠 ${minerals}  ·  🔥 ${gas}`;
 const stock = resource("12 400", "6 100");
-const warning = "⚠ Incoming fleet · Nacre 214:6 · 20:40\nMission unverified · inspect before acting.";
+const warning = "⚠ Incoming fleet · Nacre 1:214:6 · 20:40\nMission unverified · inspect before acting.";
 const cb = (text: string, id: string, style?: InlineKeyboardButton["style"]): InlineKeyboardButton => ({
 	text,
 	callback_data: id,
@@ -118,7 +118,7 @@ export const scenes: Scene[] = [
 		"Settled name. A compact check-in with local stocks and independent work tracks; 2 building slots is the playtest default.",
 		[
 			message(
-				`🪐 Nacre · 214:6\nCommand Center · 🏝 Tropical · Home planet\n\n${stock}\n💠 +720/h · storage 20 000\n🔥 +240/h · storage 10 000\n\n2 building upgrades running\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\nResearch: Combustion Engine → 5 · 46 min\nShipyard: 4 / 10 Scout Fighters ready\n\n${warning}`,
+				`🪐 Nacre · 1:214:6\nCommand Center · 🏝 Tropical · Home planet\n\n${stock}\n💠 +720/h · storage 20 000\n🔥 +240/h · storage 10 000\n\n2 building upgrades running\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\nResearch: Combustion Engine → 5 · 46 min\nShipyard: 4 / 10 Scout Fighters ready\n\n${warning}`,
 				[
 					[cb("Buildings", "buildings"), cb("Research", "research")],
 					[cb("Shipyard", "shipyard"), cb("Empire", "empire")],
@@ -138,11 +138,11 @@ export const scenes: Scene[] = [
 		"Changing the selected colony changes its stock and work queues. Resources are never pooled.",
 		[
 			message(
-				"🪐 Choose a colony\n\n🏝 Nacre · 214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n\n🏔 Rime · 218:2\n💠 8 200  ·  🔥 1 800\n\n🌋 Cinder · 231:4\n💠 2 100  ·  🔥 9 300",
+				"🪐 Choose a colony\n\n🏝 Nacre · 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n\n🏔 Rime · 1:218:2\n💠 8 200  ·  🔥 1 800\n\n🌋 Cinder · 1:231:4\n💠 2 100  ·  🔥 9 300",
 				[
-					[cb("Nacre · 214:6", "command-center")],
-					[cb("Rime · 218:2", "storage-full")],
-					[cb("Cinder · 231:4", "empire")],
+					[cb("Nacre · 1:214:6", "command-center")],
+					[cb("Rime · 1:218:2", "storage-full")],
+					[cb("Cinder · 1:231:4", "empire")],
 				],
 			),
 		],
@@ -157,7 +157,7 @@ export const scenes: Scene[] = [
 		"Production pauses at capacity in the provisional storage model. Deliveries and cancellation may exceed it; no energy amount is invented.",
 		[
 			message(
-				"🏔 Rime · 218:2\nCommand Center · Snowy\n\n💠 20 000 / 20 000\nMineral production paused: storage is full.\n🔥 1 800 / 10 000 · +180/h\n\nBuilding upgrades: 1 / 2 active\nResearch Lab → 4 · 27 min\nShipyard is available",
+				"🏔 Rime · 1:218:2\nCommand Center · Snowy\n\n💠 20 000 / 20 000\nMineral production paused: storage is full.\n🔥 1 800 / 10 000 · +180/h\n\nBuilding upgrades: 1 / 2 active\nResearch Lab → 4 · 27 min\nShipyard is available",
 				[
 					[cb("Review storage", "buildings")],
 					[app("Transport resources", "dispatch")],
@@ -176,7 +176,7 @@ export const scenes: Scene[] = [
 		"Mineral Mine and Atmospheric Harvester are settled. Storage uses a draft unified Logistics Depot. All values are sample balance.",
 		[
 			message(
-				`🏗 Buildings · Nacre 214:6\n${stock}\n\nRUNNING · 2 / 2\nMineral Mine 12 → 13 · 18 min\nAtmospheric Harvester 8 → 9 · 32 min\n\nWAITING · already paid\nResearch Lab 4 → 5\n\nAVAILABLE\nLogistics Depot · Level 6\nOrbital Shipyard · Level 4\n\n${warning}`,
+				`🏗 Buildings · Nacre 1:214:6\n${stock}\n\nRUNNING · 2 / 2\nMineral Mine 12 → 13 · 18 min\nAtmospheric Harvester 8 → 9 · 32 min\n\nWAITING · already paid\nResearch Lab 4 → 5\n\nAVAILABLE\nLogistics Depot · Level 6\nOrbital Shipyard · Level 4\n\n${warning}`,
 				[
 					[cb("Mineral Mine · 12 → 13", "building-detail")],
 					[cb("Logistics Depot · Level 6", "building-detail")],
@@ -196,7 +196,7 @@ export const scenes: Scene[] = [
 		"Queueing pays immediately. Example effects and prices are illustrative, and storage remains a design choice.",
 		[
 			message(
-				`🏗 Logistics Depot · 6 → 7\nNacre · 214:6\n\nStorage capacity\n💠 20 000 → 26 000\n🔥 10 000 → 13 000\n\nCost: ${resource("2 400", "800")}\nAfter payment: ${resource("10 000", "5 300")}\nDuration: 24 min once started\n\nBoth building slots are occupied.\nJoins the paid waiting queue.`,
+				`🏗 Logistics Depot · 6 → 7\nNacre · 1:214:6\n\nStorage capacity\n💠 20 000 → 26 000\n🔥 10 000 → 13 000\n\nCost: ${resource("2 400", "800")}\nAfter payment: ${resource("10 000", "5 300")}\nDuration: 24 min once started\n\nBoth building slots are occupied.\nJoins the paid waiting queue.`,
 				[
 					[cb("Pay and queue · Level 7", "building-queue", "success")],
 					[cb("Back to buildings", "buildings")],
@@ -233,7 +233,7 @@ export const scenes: Scene[] = [
 		"The cancelled paid amount returns to this colony. This snapshot follows cancelling Logistics Depot level 7.",
 		[
 			message(
-				`✓ Logistics Depot upgrade cancelled\nNacre · 214:6\n\n${stock}\n\nResearch Lab → 5 is still waiting.\n2 building upgrades continue.`,
+				`✓ Logistics Depot upgrade cancelled\nNacre · 1:214:6\n\n${stock}\n\nResearch Lab → 5 is still waiting.\n2 building upgrades continue.`,
 				[[cb("Buildings", "buildings"), cb("Paid queue", "building-queue")]],
 			),
 		],
@@ -248,7 +248,7 @@ export const scenes: Scene[] = [
 		"Example dependency only, not an approved tech tree. Ineligible work stays paid and cancellable while eligible work can start.",
 		[
 			message(
-				"⏸ Research Lab → 5 is waiting\nNacre · 214:6\n\nMissing prerequisite in this example:\nHeadquarters level 5\n\nIts prerequisite upgrade was cancelled.\nThis work stays in your paid queue.\nOther eligible work can start.",
+				"⏸ Research Lab → 5 is waiting\nNacre · 1:214:6\n\nMissing prerequisite in this example:\nHeadquarters level 5\n\nIts prerequisite upgrade was cancelled.\nThis work stays in your paid queue.\nOther eligible work can start.",
 				[
 					[cb("View prerequisite", "building-detail")],
 					[cb("Cancel Research Lab → 5", "queue-cancelled")],
@@ -268,7 +268,7 @@ export const scenes: Scene[] = [
 		"Draft view label. One player-wide research track is the provisional default; Nacre pays for this queue.",
 		[
 			message(
-				`🔬 Research\nApplies across your colonies this season\n\nRUNNING AT NACRE\nCombustion Engine 4 → 5 · 46 min\nPaid from Nacre · 214:6\n\nWAITING · already paid\nLaser Cannon 2 → 3\n\nCOMPLETED\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\n${warning}`,
+				`🔬 Research\nApplies across your colonies this season\n\nRUNNING AT NACRE\nCombustion Engine 4 → 5 · 46 min\nPaid from Nacre · 1:214:6\n\nWAITING · already paid\nLaser Cannon 2 → 3\n\nCOMPLETED\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\n${warning}`,
 				[
 					[cb("Combustion Engine · Level 4", "research-detail")],
 					[cb("Cancel Laser Cannon → 3", "research-empty")],
@@ -288,7 +288,7 @@ export const scenes: Scene[] = [
 		"Example research benefit, cost and duration. No dependency or balance curve is approved by this wireframe.",
 		[
 			message(
-				`🔬 Solar Sails · 1 → 2\nApplies across all your colonies\n\nExample effect: greater travel speed\nNew speeds apply to future dispatches.\nFleets already in flight keep their arrival times.\n\nPaid from Nacre · 214:6\n${stock}\nCost: ${resource("3 600", "1 800")}\nDuration: 1h 20m once started\n\nJoins your research queue.`,
+				`🔬 Solar Sails · 1 → 2\nApplies across all your colonies\n\nExample effect: greater travel speed\nNew speeds apply to future dispatches.\nFleets already in flight keep their arrival times.\n\nPaid from Nacre · 1:214:6\n${stock}\nCost: ${resource("3 600", "1 800")}\nDuration: 1h 20m once started\n\nJoins your research queue.`,
 				[
 					[cb("Pay and queue · Level 2", "research")],
 					[cb("Change paying colony", "colony-picker")],
@@ -307,7 +307,7 @@ export const scenes: Scene[] = [
 		"An empty track gives a useful action without idle reminders or pressure to return.",
 		[
 			message(
-				`🔬 Research\nNo research running or waiting\n\nYour completed research still applies:\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\nNacre · 214:6\n${stock}`,
+				`🔬 Research\nNo research running or waiting\n\nYour completed research still applies:\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\nNacre · 1:214:6\n${stock}`,
 				[[cb("Choose research", "research-detail")], [cb("Tech tree", "tech-tree")]],
 			),
 		],
@@ -342,7 +342,7 @@ export const scenes: Scene[] = [
 		"Orbital Shipyard and Scout Fighter are draft labels. Four finished ships are already available; the unfinished six remain cancellable.",
 		[
 			message(
-				`🛠 Shipyard · Nacre 214:6\nOrbital Shipyard · Level 4\n${stock}\n\nRUNNING\nScout Fighter · 4 / 10 complete\nNext ship: 2 min · batch: 12 min\nCompleted ships are already stationed.\n\nWAITING · already paid\nResource Transport × 2\n\nYOUR STATIONED SHIPS\nScout Fighter × 24\nResource Transport × 6`,
+				`🛠 Shipyard · Nacre 1:214:6\nOrbital Shipyard · Level 4\n${stock}\n\nRUNNING\nScout Fighter · 4 / 10 complete\nNext ship: 2 min · batch: 12 min\nCompleted ships are already stationed.\n\nWAITING · already paid\nResource Transport × 2\n\nYOUR STATIONED SHIPS\nScout Fighter × 24\nResource Transport × 6`,
 				[
 					[cb("Build ships", "ship-batch")],
 					[cb("Cancel 6 unfinished ships", "ship-batch-cancelled")],
@@ -381,7 +381,7 @@ export const scenes: Scene[] = [
 		"Unaffordable actions use Telegram's disabled button support. Another colony's resources cannot pay silently.",
 		[
 			message(
-				`🛠 Scout Fighter × 100\nNacre · 214:6\n\nCost: ${resource("20 000", "5 000")}\nAvailable: ${stock}\n\nNeed 💠 7 600 more at Nacre.\nChoose a smaller batch or transport resources.`,
+				`🛠 Scout Fighter × 100\nNacre · 1:214:6\n\nCost: ${resource("20 000", "5 000")}\nAvailable: ${stock}\n\nNeed 💠 7 600 more at Nacre.\nChoose a smaller batch or transport resources.`,
 				[
 					[off("Build 100 · insufficient 💠 minerals")],
 					[cb("Choose 10 ships", "ship-batch")],
@@ -400,7 +400,7 @@ export const scenes: Scene[] = [
 		"Only the six unfinished ships are cancelled; four completed ships remain usable. No full-refund wording appears.",
 		[
 			message(
-				"✓ 6 unfinished Scout Fighters cancelled\nNacre · 214:6\n\n4 completed ships remain stationed.\nResource Transport × 2 has started.\n\n💠 13 600  ·  🔥 6 400",
+				"✓ 6 unfinished Scout Fighters cancelled\nNacre · 1:214:6\n\n4 completed ships remain stationed.\nResource Transport × 2 has started.\n\n💠 13 600  ·  🔥 6 400",
 				[[cb("Shipyard", "shipyard")], [app("Stationed ships", "stationed")]],
 			),
 		],
@@ -435,7 +435,7 @@ export const scenes: Scene[] = [
 		"Each colony keeps its resource pool. Biome affects gas production; the example rates do not select multipliers.",
 		[
 			message(
-				"🏛 Empire · 3 colonies\n\n🏝 Nacre · 214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n💠 +720/h  ·  🔥 +240/h\nBuildings 2 / 2 · Shipyard 4 / 10\n⚠ 1 incoming fleet · 20:40\n\n🏔 Rime · 218:2\n💠 8 200  ·  🔥 1 800\n💠 +540/h  ·  🔥 +180/h\nBuildings 1 / 2 · Shipyard available\n\n🌋 Cinder · 231:4\n💠 2 100  ·  🔥 9 300\n💠 +360/h  ·  🔥 +410/h\nBuildings 1 / 2 · Shipyard 1 / 4",
+				"🏛 Empire · 3 colonies\n\n🏝 Nacre · 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n💠 +720/h  ·  🔥 +240/h\nBuildings 2 / 2 · Shipyard 4 / 10\n⚠ 1 incoming fleet · 20:40\n\n🏔 Rime · 1:218:2\n💠 8 200  ·  🔥 1 800\n💠 +540/h  ·  🔥 +180/h\nBuildings 1 / 2 · Shipyard available\n\n🌋 Cinder · 1:231:4\n💠 2 100  ·  🔥 9 300\n💠 +360/h  ·  🔥 +410/h\nBuildings 1 / 2 · Shipyard 1 / 4",
 				[
 					[cb("Nacre", "command-center"), cb("Rime", "storage-full")],
 					[app("Move resources", "dispatch")],
@@ -454,7 +454,7 @@ export const scenes: Scene[] = [
 		"Draft label and later concept only. Automatic routes are explicitly outside V1; this wireframe directs the player to manual dispatch.",
 		[
 			message(
-				"📦 Supply Routes · later concept\n\nAutomatic transfers are outside V1.\nFor now, dispatch ships with cargo.\n\nNacre · 214:6 → Rime · 218:2\nChoose ships, cargo and arrival time\nfor each transport.",
+				"📦 Supply Routes · later concept\n\nAutomatic transfers are outside V1.\nFor now, dispatch ships with cargo.\n\nNacre · 1:214:6 → Rime · 1:218:2\nChoose ships, cargo and arrival time\nfor each transport.",
 				[[app("Prepare a manual transport", "dispatch")], [cb("Empire", "empire")]],
 			),
 		],
@@ -470,7 +470,7 @@ export const scenes: Scene[] = [
 		"Draft view label. Own missions are visible; others' incoming missions stay unknown. Recall is available only outbound.",
 		[
 			message(
-				`🚀 Fleet Command\nNacre · 214:6\n\n1 outbound · 1 returning\n1 unverified incoming fleet\n\n${warning}`,
+				`🚀 Fleet Command\nNacre · 1:214:6\n\n1 outbound · 1 returning\n1 unverified incoming fleet\n\n${warning}`,
 				[[app("Open Fleet Command", "fleets")]],
 			),
 		],
@@ -486,7 +486,7 @@ export const scenes: Scene[] = [
 		"Interactive manual dispatch. Departure is immediate. Speed changes arrival and illustrative gas cost; the minimum speed and curve remain proposals.",
 		[
 			message(
-				`🚀 Prepare a fleet\nOrigin: Nacre · 214:6\n${stock}\n\nChoose owned ships, target, mission and cargo.\nPick an arrival time within the fleet's speed bounds.`,
+				`🚀 Prepare a fleet\nOrigin: Nacre · 1:214:6\n${stock}\n\nChoose owned ships, target, mission and cargo.\nPick an arrival time within the fleet's speed bounds.`,
 				[[app("Prepare dispatch", "dispatch")]],
 			),
 		],
@@ -518,7 +518,7 @@ export const scenes: Scene[] = [
 		"Deliberate betrayal is possible under the arrival defaults. This confirmation never certifies someone else's unknown mission.",
 		[
 			message(
-				"⚠ Attack an alliance member\nTarget: Beacon · 219:3\nOwner: Mira · your alliance\n\nThis is an attack mission.",
+				"⚠ Attack an alliance member\nTarget: Beacon · 1:219:3\nOwner: Mira · your alliance\n\nThis is an attack mission.",
 				[[app("Review allied target", "ally-attack")]],
 			),
 		],
@@ -534,7 +534,7 @@ export const scenes: Scene[] = [
 		"A completed local preview updates ships and resources once. It does not contact a game server.",
 		[
 			message(
-				"✓ Transport dispatched\nNacre 214:6 → Rime 218:2\n\nResource Transport × 2\nCargo: 💠 2 000  ·  🔥 500\nArrival: 19:35 · Return: 20:50\nTravel gas reserved: 🔥 180",
+				"✓ Transport dispatched\nNacre 1:214:6 → Rime 1:218:2\n\nResource Transport × 2\nCargo: 💠 2 000  ·  🔥 500\nArrival: 19:35 · Return: 20:50\nTravel gas reserved: 🔥 180",
 				[[app("View movement", "dispatched")]],
 			),
 		],
@@ -550,7 +550,7 @@ export const scenes: Scene[] = [
 		"Returning fleets cannot be recalled. Withdrawing stationed ships is a separate action from recall.",
 		[
 			message(
-				"↙ Fleet returning\nAsh 214:8 → Nacre 214:6\n\nScout Fighter × 18\nCargo: 💠 3 200  ·  🔥 800\nArrival: 19:10\n\nThis fleet is already returning.",
+				"↙ Fleet returning\nAsh 1:214:8 → Nacre 1:214:6\n\nScout Fighter × 18\nCargo: 💠 3 200  ·  🔥 800\nArrival: 19:10\n\nThis fleet is already returning.",
 				[[off("Recall unavailable on return")], [app("Fleet movements", "fleets")]],
 			),
 		],
@@ -580,7 +580,7 @@ export const scenes: Scene[] = [
 		"An allied sender is not evidence of a friendly mission. Investigation is a sample response, with no approved drone count, range or success formula.",
 		[
 			message(
-				`⚠ Incoming fleet\nMira · Beacon 219:3 → Nacre 214:6\nArrival: 20:40\n\nMission and ship composition unknown.\nMira is in your alliance.`,
+				`⚠ Incoming fleet\nMira · Beacon 1:219:3 → Nacre 1:214:6\nArrival: 20:40\n\nMission and ship composition unknown.\nMira is in your alliance.`,
 				[[app("Inspect fleet", "incoming")]],
 			),
 		],
@@ -596,7 +596,7 @@ export const scenes: Scene[] = [
 		"Verification is attached to the current leg, not a 14-day fleet guarantee. The app includes a preview control for recall or arrival expiry.",
 		[
 			message(
-				"👁 Reinforcements incoming\nMira → Nacre 214:6\nVerified at 18:12 · current leg only\n\nScout Fighter × 12\nCargo unknown\nArrival: 20:40\n\nRecall, arrival or a replacement leg ends this verification.",
+				"👁 Reinforcements incoming\nMira → Nacre 1:214:6\nVerified at 18:12 · current leg only\n\nScout Fighter × 12\nCargo unknown\nArrival: 20:40\n\nRecall, arrival or a replacement leg ends this verification.",
 				[[app("Inspect verification", "verified")]],
 			),
 		],
@@ -612,7 +612,7 @@ export const scenes: Scene[] = [
 		"A failed scan leaves mission and composition unknown. It never turns the fleet into a reinforcement.",
 		[
 			message(
-				"👁 No new information\nMira → Nacre 214:6\nInvestigation at 18:12\n\n⚠ Incoming fleet · 20:40\nMission unverified\nShip composition unknown",
+				"👁 No new information\nMira → Nacre 1:214:6\nInvestigation at 18:12\n\n⚠ Incoming fleet · 20:40\nMission unverified\nShip composition unknown",
 				[[app("Inspect incoming fleet", "scan-failed")], [cb("Intelligence", "intelligence")]],
 			),
 		],
@@ -628,7 +628,7 @@ export const scenes: Scene[] = [
 		"The historical snapshot remains readable, but cannot verify a replacement movement.",
 		[
 			message(
-				"👁 Fleet report · historical\nMira → Nacre 214:6\nVerified 10 Oct · 18:12\n\nSnapshot: Reinforcement mission\nScout Fighter × 12\n\nThis movement was recalled at 18:26.\nIts verification is no longer current.",
+				"👁 Fleet report · historical\nMira → Nacre 1:214:6\nVerified 10 Oct · 18:12\n\nSnapshot: Reinforcement mission\nScout Fighter × 12\n\nThis movement was recalled at 18:26.\nIts verification is no longer current.",
 				[[app("Current movements", "fleets")], [cb("Intelligence", "intelligence")]],
 			),
 		],
@@ -693,10 +693,10 @@ export const scenes: Scene[] = [
 				from: "bot",
 				photo: "system.png",
 				caption:
-					"🪐 Solara · System 214\n8 orbits · Nacre at 214:6\n⚠ Incoming fleet to Nacre · 20:40\n👁 Ash · report valid until 23 Oct",
+					"🪐 Solara · Sector 1 · System 214\n8 orbits · Nacre at 1:214:6\n⚠ Incoming fleet to Nacre · 20:40\n👁 Ash · report valid until 23 Oct",
 				reply_markup: {
 					inline_keyboard: [
-						[cb("Nacre · 214:6", "command-center"), cb("Ash · 214:8", "planet-report")],
+						[cb("Nacre · 1:214:6", "command-center"), cb("Ash · 1:214:8", "planet-report")],
 						[map("Explore system", "young")],
 					],
 				},
@@ -713,7 +713,7 @@ export const scenes: Scene[] = [
 		"Draft archive label. Planet snapshots and movement-leg verification have different lifetimes.",
 		[
 			message(
-				"👁 Intelligence\n\nPLANET REPORTS\nAsh · 214:8\n9 Oct · 18:12 · valid until 23 Oct\n\nCairn · 228:5\n21 Sep · 10:04 · expired\n\nFLEET REPORTS\nMira → Nacre · 10 Oct · 18:12\nReinforcements · current leg\n\nOrin → Nacre · 9 Oct · 09:10\nHistorical · fleet arrived",
+				"👁 Intelligence\n\nPLANET REPORTS\nAsh · 1:214:8\n9 Oct · 18:12 · valid until 23 Oct\n\nCairn · 1:228:5\n21 Sep · 10:04 · expired\n\nFLEET REPORTS\nMira → Nacre · 10 Oct · 18:12\nReinforcements · current leg\n\nOrin → Nacre · 9 Oct · 09:10\nHistorical · fleet arrived",
 				[
 					[cb("Ash · current snapshot", "planet-report")],
 					[cb("Cairn · expired snapshot", "planet-report-expired")],
@@ -732,7 +732,7 @@ export const scenes: Scene[] = [
 		"The 14-day marker is not a live feed. Share publishes only this dated report.",
 		[
 			message(
-				"👁 Ash · 214:8\nSnapshot: 9 Oct · 18:12\nValid until 23 Oct · 18:12\n\n🏜 Wasteland · Abandoned world\n💠 6 400  ·  🔥 1 600\nStationed ships: Scout Fighter × 8\nBuildings and queued work: unknown\n\nThese values may have changed.",
+				"👁 Ash · 1:214:8\nSnapshot: 9 Oct · 18:12\nValid until 23 Oct · 18:12\n\n🏜 Wasteland · Abandoned world\n💠 6 400  ·  🔥 1 600\nStationed ships: Scout Fighter × 8\nBuildings and queued work: unknown\n\nThese values may have changed.",
 				[
 					[app("Prepare an attack", "attack")],
 					[{ text: "Share this snapshot", switch_inline_query: "report:ash-20261009" }],
@@ -751,7 +751,7 @@ export const scenes: Scene[] = [
 		"Expired reports lose their current map marker. Their old values remain historical, without claiming current access.",
 		[
 			message(
-				"👁 Cairn · 228:5 · expired\nSnapshot: 21 Sep · 10:04\nExpired: 5 Oct · 10:04\n\nHistorical resources\n💠 4 200  ·  🔥 900\n\nCurrent resources and stationed ships unknown.\nNo current 👁 marker on this planet.",
+				"👁 Cairn · 1:228:5 · expired\nSnapshot: 21 Sep · 10:04\nExpired: 5 Oct · 10:04\n\nHistorical resources\n💠 4 200  ·  🔥 900\n\nCurrent resources and stationed ships unknown.\nNo current 👁 marker on this planet.",
 				[[off("Investigation unavailable · outside sample range")], [cb("Intelligence", "intelligence")]],
 			),
 		],
@@ -766,8 +766,11 @@ export const scenes: Scene[] = [
 		"A selected snapshot intended for inline sharing. This preview sends nothing to a real chat.",
 		[
 			message(
-				"🪐 Nacre · 214:6\n🏝 Tropical · Colony of Joscha\nAlliance: Meridian\n\nShared 10 Oct · 18:20\nResource stocks and queues are private.",
-				[[{ text: "Share planet card", switch_inline_query: "planet:214:6" }], [map("View system", "young")]],
+				"🪐 Nacre · 1:214:6\n🏝 Tropical · Colony of Joscha\nAlliance: Meridian\n\nShared 10 Oct · 18:20\nResource stocks and queues are private.",
+				[
+					[{ text: "Share planet card", switch_inline_query: "planet:1:214:6" }],
+					[map("View system", "young")],
+				],
 			),
 		],
 		["system-view", "alliance"],
@@ -800,7 +803,7 @@ export const scenes: Scene[] = [
 		"Content proposal shown in a private fixture because the renderer does not yet support group peers. Aggregate events and avoid repeated mentions.",
 		[
 			message(
-				"🛡 Meridian · fleet summary\n\nNacre · 214:6\n1 incoming fleet · arrival 20:40\nMira · mission unverified\n\n12 allied ships already stationed\nInspect the movement before coordinating.",
+				"🛡 Meridian · fleet summary\n\nNacre · 1:214:6\n1 incoming fleet · arrival 20:40\nMira · mission unverified\n\n12 allied ships already stationed\nInspect the movement before coordinating.",
 				[[app("Inspect movement", "incoming")], [app("Prepare reinforcements", "reinforce")]],
 			),
 		],
@@ -905,7 +908,7 @@ export const scenes: Scene[] = [
 		"Reports distinguish outcomes and preserve per-player loss attribution. Replay uses an illustrative round sequence.",
 		[
 			message(
-				"⚔ Battle Reports\n\n10 Oct · 18:04 · Ash 214:8\nAttack won · Joscha\nCargo: 💠 3 200  ·  🔥 800\n\n9 Oct · 07:30 · Nacre 214:6\nDefense held · Joscha + Mira\n\n8 Oct · 21:18 · Cairn 228:5\nDraw · surviving attackers returned",
+				"⚔ Battle Reports\n\n10 Oct · 18:04 · Ash 1:214:8\nAttack won · Joscha\nCargo: 💠 3 200  ·  🔥 800\n\n9 Oct · 07:30 · Nacre 1:214:6\nDefense held · Joscha + Mira\n\n8 Oct · 21:18 · Cairn 1:228:5\nDraw · surviving attackers returned",
 				[
 					[cb("Ash · attack won", "battle-report")],
 					[cb("Nacre · defense held", "battle-defense")],
@@ -924,7 +927,7 @@ export const scenes: Scene[] = [
 		"Sample losses and resources, not a simulation. Salvage remains at the orbit and is collected on a separate mission.",
 		[
 			message(
-				"⚔ Victory at Ash · 214:8\n10 Oct · 18:04 · 3 rounds\n\nATTACKER · JOSCHA\n24 Scout Fighters → 18 survived\n\nDEFENDERS · ABANDONED WORLD\n8 Scout Fighters → 0 survived\n\nCargo taken: 💠 3 200  ·  🔥 800\nSalvage at 214:8: 💠 840  ·  🔥 210\nYour survivors return at 19:10.\nAsh remains an abandoned world.",
+				"⚔ Victory at Ash · 1:214:8\n10 Oct · 18:04 · 3 rounds\n\nATTACKER · JOSCHA\n24 Scout Fighters → 18 survived\n\nDEFENDERS · ABANDONED WORLD\n8 Scout Fighters → 0 survived\n\nCargo taken: 💠 3 200  ·  🔥 800\nSalvage at 1:214:8: 💠 840  ·  🔥 210\nYour survivors return at 19:10.\nAsh remains an abandoned world.",
 				[
 					[app("Watch Battle Replay", "replay")],
 					[app("Collect salvage", "salvage")],
@@ -943,7 +946,7 @@ export const scenes: Scene[] = [
 		"Each contingent keeps ownership. The host cannot command surviving visiting ships.",
 		[
 			message(
-				"🛡 Defense held · Nacre 214:6\n9 Oct · 07:30\n\nDEFENDERS\nJoscha · 20 → 15 Scout Fighters\nMira · 12 → 9 Scout Fighters\n\nATTACKER\nOrin · 18 → 0 Scout Fighters\n\nMira's 9 survivors remain stationed.\nMira decides when to withdraw them.\nSalvage remains at Nacre's orbit.",
+				"🛡 Defense held · Nacre 1:214:6\n9 Oct · 07:30\n\nDEFENDERS\nJoscha · 20 → 15 Scout Fighters\nMira · 12 → 9 Scout Fighters\n\nATTACKER\nOrin · 18 → 0 Scout Fighters\n\nMira's 9 survivors remain stationed.\nMira decides when to withdraw them.\nSalvage remains at Nacre's orbit.",
 				[[app("Stationed reinforcements", "stationed")], [cb("Battle Reports", "battle-reports")]],
 			),
 		],
@@ -958,7 +961,7 @@ export const scenes: Scene[] = [
 		"Default draw outcome: surviving attackers return with no loot. Exact battle timing and round balance remain undecided.",
 		[
 			message(
-				"⚔ Draw at Cairn · 228:5\n8 Oct · 21:18 · 6 rounds\n\nBoth sides have surviving ships.\nYour survivors are returning.\nNo resources taken.\n\nSalvage remains at 228:5.",
+				"⚔ Draw at Cairn · 1:228:5\n8 Oct · 21:18 · 6 rounds\n\nBoth sides have surviving ships.\nYour survivors are returning.\nNo resources taken.\n\nSalvage remains at 1:228:5.",
 				[[cb("Battle Reports", "battle-reports")], [app("Fleet movements", "fleets")]],
 			),
 		],
@@ -972,7 +975,7 @@ export const scenes: Scene[] = [
 		warfare,
 		"Interactive play, pause and scrubbing through three recorded sample rounds. Replay time does not choose the unresolved live battle-window duration.",
 		[
-			message("⚔ Battle Replay\nAsh · 214:8 · 10 Oct · 18:04\nJoscha against an abandoned world", [
+			message("⚔ Battle Replay\nAsh · 1:214:8 · 10 Oct · 18:04\nJoscha against an abandoned world", [
 				[app("Open Battle Replay", "replay")],
 			]),
 		],
@@ -988,7 +991,7 @@ export const scenes: Scene[] = [
 		"Leading proposal, not settled behavior: 6 rounds across a 5-minute window. Only this planet's spending, cancellation and stationed ships are locked.",
 		[
 			message(
-				"⚔ Battle at Nacre · 214:6\nPROPOSED TIMED-BATTLE STATE\nRound 3 / 6 · ends in 2m 30s\n\nProduction and paid work continue.\nNewly completed ships join next round.\nSpending, cancelling and stationed ships\nare locked here until the battle ends.\n\nYour other colonies remain available.",
+				"⚔ Battle at Nacre · 1:214:6\nPROPOSED TIMED-BATTLE STATE\nRound 3 / 6 · ends in 2m 30s\n\nProduction and paid work continue.\nNewly completed ships join next round.\nSpending, cancelling and stationed ships\nare locked here until the battle ends.\n\nYour other colonies remain available.",
 				[
 					[off("Buildings · locked during battle")],
 					[off("Dispatch from Nacre · ships in battle")],
@@ -1074,7 +1077,7 @@ export const scenes: Scene[] = [
 			message("Nova is already taken.\nChoose another nickname."),
 			{ from: "user", text: "Joscha" },
 			message(
-				"✓ Welcome, Joscha\nYour home planet is Nacre · 214:6\n\nChallenge complete\n💠 100  ·  🔥 50 added to Nacre",
+				"✓ Welcome, Joscha\nYour home planet is Nacre · 1:214:6\n\nChallenge complete\n💠 100  ·  🔥 50 added to Nacre",
 				[[cb("Next challenge", "advisor-mine")]],
 			),
 		],
@@ -1089,7 +1092,7 @@ export const scenes: Scene[] = [
 		"The active screen changes during the first upgrade rather than sending an unsolicited message at each completion.",
 		[
 			message(
-				"🧭 Advisor · 2 / 6\nUpgrade your Mineral Mine\n\nNacre · 214:6\nMineral Mine · Level 1 → 2\nDuration: 3 seconds\nCost: 💠 50  ·  🔥 0\n\nReward to Nacre: 💠 150  ·  🔥 50",
+				"🧭 Advisor · 2 / 6\nUpgrade your Mineral Mine\n\nNacre · 1:214:6\nMineral Mine · Level 1 → 2\nDuration: 3 seconds\nCost: 💠 50  ·  🔥 0\n\nReward to Nacre: 💠 150  ·  🔥 50",
 				[[cb("Upgrade Mineral Mine", "advisor-ships", "success")], [cb("Command Center", "command-center")]],
 			),
 		],
@@ -1123,7 +1126,7 @@ export const scenes: Scene[] = [
 		"The target is an abandoned world in the home system. Founding a second colony is a later milestone, not a tutorial task.",
 		[
 			message(
-				"🧭 Advisor · 6 / 6\nAttack an abandoned world\n\n✓ Starter ships built\n✓ Fleet Command opened\n\nAsh · 214:8 · Abandoned world\nChoose ships and review your arrival time.\nYour survivors return after the battle.\n\nReward to Nacre: 💠 500  ·  🔥 200",
+				"🧭 Advisor · 6 / 6\nAttack an abandoned world\n\n✓ Starter ships built\n✓ Fleet Command opened\n\nAsh · 1:214:8 · Abandoned world\nChoose ships and review your arrival time.\nYour survivors return after the battle.\n\nReward to Nacre: 💠 500  ·  🔥 200",
 				[[app("Prepare first attack", "attack")], [cb("Preview battle report", "battle-report")]],
 			),
 		],
@@ -1138,7 +1141,7 @@ export const scenes: Scene[] = [
 		"A completed challenge is claimable once; the next snapshot shows the reward already claimed.",
 		[
 			message(
-				"✓ First attack completed\nYour fleet is returning to Nacre.\n\nReward claimed at Nacre · 214:6\n💠 500  ·  🔥 200\n\nYou can plan upgrades or inspect the battle.\nThe galaxy is yours to explore at your pace.",
+				"✓ First attack completed\nYour fleet is returning to Nacre.\n\nReward claimed at Nacre · 1:214:6\n💠 500  ·  🔥 200\n\nYou can plan upgrades or inspect the battle.\nThe galaxy is yours to explore at your pace.",
 				[
 					[off("Reward already claimed")],
 					[cb("Battle report", "battle-report")],
@@ -1293,7 +1296,7 @@ export const scenes: Scene[] = [
 		design,
 		"Example failed redemption with a clear recovery path; no actual code is consumed.",
 		[
-			message("🎁 Bonus code\nResources will go to Nacre · 214:6\nReply with your code."),
+			message("🎁 Bonus code\nResources will go to Nacre · 1:214:6\nReply with your code."),
 			{ from: "user", text: "DEMO-EXPIRED" },
 			message("This code has expired.\nNo resources were added.", [
 				[cb("Try another code", "invite")],

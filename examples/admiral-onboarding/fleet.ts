@@ -13,6 +13,9 @@ let stage =
 	query.get("view") === "review" ? "review" : query.get("view") === "incoming" ? "incoming" : "prepare";
 let count = 6,
 	speed = 100;
+const coordinateNames = ["sector", "system", "orbit"] as const;
+let coordinates = ["1", "214", "8"];
+const validCoordinates = () => coordinates.join(":") === "1:214:8";
 const content = document.querySelector("#content") as HTMLElement;
 const icon = (emoji: string, code: string) =>
 	`<img class="resource" src="/img-apple-64/${code}.png" alt="${emoji}">`;
@@ -54,10 +57,24 @@ function render() {
 		${stage === "prepare" ? `<form id="fleet-form"><label>${copy.availableShips}<input name="count" type="number" min="1" max="6" step="1" value="${count}" required></label><label>${copy.speed} <output id="speed-value">${speed}%</output><input type="range" name="speed" min="50" max="100" step="10" value="${speed}"></label><p class="note">${copy.slowerNote}</p><div id="quote"></div><div class="actions"><button type="submit" class="primary">${copy.review}</button></div></form>` : `<dl><dt>${copy.ships}</dt><dd>${format(copy.shipCount, { count })}</dd><dt>${copy.travelTime}</dt><dd>${format(copy.minutes, { minutes: q.minutes })}</dd><dt>${copy.arrival}</dt><dd>${q.arrival}</dd><dt>${copy.bothLegs}</dt><dd>${gas(q.gas)}</dd></dl><p>${copy.departureNote}</p><div class="actions"><button type="button" data-action="edit">${copy.edit}</button><button type="button" class="primary" data-action="send">${copy.dispatch}</button></div>`}`
 	}
 		<p class="note">${copy.sampleNote}</p>`;
+	const form = document.querySelector("#fleet-form");
+	if (form) {
+		form.insertAdjacentHTML(
+			"afterbegin",
+			`<fieldset><legend>${copy.targetCoordinates}</legend><div class="coordinates">${coordinateNames.map((name) => `<label>${copy[name]}<input type="text" inputmode="numeric" pattern="[1-9][0-9]*" name="${name}" required autocomplete="off"></label>`).join('<span class="coordinate-separator" aria-hidden="true">:</span>')}</div><p class="note">${copy.coordinateNote}</p><p id="coordinate-error" class="error" role="status"></p></fieldset>`,
+		);
+		form.querySelectorAll<HTMLInputElement>(".coordinates input").forEach((input, index) => {
+			input.value = coordinates[index];
+		});
+	}
 	updateQuote();
 	document.body.dataset.ready = "true";
 }
 function updateQuote() {
+	const error = document.querySelector("#coordinate-error");
+	if (error) error.textContent = validCoordinates() ? "" : copy.coordinateError;
+	const review = document.querySelector<HTMLButtonElement>('#fleet-form button[type="submit"]');
+	if (review) review.disabled = !validCoordinates();
 	const node = document.querySelector("#quote");
 	if (node) {
 		const q = quote();
@@ -68,6 +85,7 @@ document.addEventListener("input", () => {
 	const form = document.querySelector<HTMLFormElement>("#fleet-form");
 	if (!form) return;
 	const data = new FormData(form);
+	coordinates = coordinateNames.map((name) => String(data.get(name)));
 	count = Number(data.get("count"));
 	speed = Number(data.get("speed"));
 	(document.querySelector("#speed-value") as HTMLElement).textContent = `${speed}%`;
@@ -75,6 +93,7 @@ document.addEventListener("input", () => {
 });
 document.addEventListener("submit", (event) => {
 	event.preventDefault();
+	if (!validCoordinates()) return;
 	stage = "review";
 	render();
 });

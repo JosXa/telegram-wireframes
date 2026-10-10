@@ -34,6 +34,26 @@ try {
 		await frame.locator("[data-ready='true']").waitFor();
 		await page.waitForTimeout(800);
 		assert.equal(await frame.getByRole("heading", { name: "Prepare dispatch" }).count(), 1);
+		const coordinates = frame.getByRole("group", { name: "Target coordinates", exact: true });
+		const values = () =>
+			coordinates
+				.locator("input")
+				.evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
+		assert.deepEqual(await values(), ["1", "218", "2"]);
+		await frame.locator('[name="target"]').selectOption("2");
+		assert.deepEqual(await values(), ["1", "219", "3"]);
+		await coordinates.getByRole("textbox", { name: "Sector", exact: true }).fill("2");
+		assert.equal(await frame.locator('[name="target"]').inputValue(), "");
+		assert.equal(await frame.getByRole("button", { name: "Review dispatch" }).isDisabled(), true);
+		await coordinates.getByRole("textbox", { name: "Sector", exact: true }).fill("1");
+		await coordinates.getByRole("textbox", { name: "System", exact: true }).fill("218");
+		await coordinates.getByRole("textbox", { name: "Orbit", exact: true }).fill("2");
+		assert.equal(await frame.locator('[name="target"]').inputValue(), "0");
+		await coordinates.getByRole("textbox", { name: "Orbit", exact: true }).fill("");
+		assert.match(await frame.locator("#dispatch-error").innerText(), /positive whole number/);
+		await frame.locator('[name="target"]').selectOption("0");
+		assert.deepEqual(await values(), ["1", "218", "2"]);
+		await page.screenshot({ path: `wireframes/empire-views/coordinates-${width}.png` });
 		assert.match(await frame.locator("#quote").innerText(), /19:35/);
 		const speed = frame.locator('[name="speed"]');
 		await speed.fill("100");
@@ -43,6 +63,7 @@ try {
 		assert.match(await frame.locator("#dispatch-error").innerText(), /capacity/);
 		await frame.locator('[name="minerals"]').fill("2000");
 		await frame.getByRole("button", { name: "Review dispatch" }).click();
+		assert.match(await frame.locator("#content").innerText(), /Rime · 1:218:2/);
 		await frame.getByRole("button", { name: "Dispatch now" }).click();
 		assert.equal(await frame.getByRole("heading", { name: "Fleet dispatched" }).count(), 1);
 		await frame.getByRole("button", { name: "Stationed", exact: true }).click();

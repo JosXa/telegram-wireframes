@@ -44,6 +44,14 @@ try {
 					),
 			);
 			await app.getByRole("button", { name: "Edit", exact: true }).click();
+			assert.equal(await app.getByRole("textbox", { name: "Sector", exact: true }).inputValue(), "1");
+			assert.equal(await app.getByRole("textbox", { name: "System", exact: true }).inputValue(), "214");
+			await app.getByRole("textbox", { name: "Orbit", exact: true }).fill("7");
+			assert.equal(
+				await app.getByRole("button", { name: "Review dispatch", exact: true }).isDisabled(),
+				true,
+			);
+			await app.getByRole("textbox", { name: "Orbit", exact: true }).fill("8");
 			await app.locator('[name="speed"]').focus();
 			await app.locator('[name="speed"]').press("Home");
 			assert.match(await app.locator("#quote").innerText(), /19:50/);

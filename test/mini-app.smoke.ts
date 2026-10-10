@@ -69,10 +69,12 @@ try {
 			);
 			assert.equal(await app.locator(".heading, footer, .map-caption, .drag-hint").count(), 0);
 			const tabs = await app.locator(".view-switcher").boundingBox();
-			assert.ok(tabs && Math.abs(box.y - (tabs.y + tabs.height)) < 1);
+			const coordinates = await app.locator(".map-coordinates").boundingBox();
+			assert.ok(tabs && coordinates && Math.abs(coordinates.y - (tabs.y + tabs.height)) < 1);
+			assert.ok(coordinates && Math.abs(box.y - (coordinates.y + coordinates.height)) < 1);
 			assert.ok(
 				await map.evaluate((node) => Math.abs(node.getBoundingClientRect().bottom - innerHeight) < 1),
-				"the map fills all space below the tabs",
+				"the map fills all space below the coordinates",
 			);
 			const x = box.x + box.width * 0.2;
 			const y = box.y + box.height * 0.2;
@@ -215,6 +217,9 @@ try {
 				await page.touchscreen.tap(homeStar.x + homeStar.width / 2, homeStar.y + homeStar.height / 2);
 			else await page.mouse.click(homeStar.x + homeStar.width / 2, homeStar.y + homeStar.height / 2);
 			await app.getByRole("button", { name: "Enter system ↗" }).click();
+			assert.equal(await app.locator("#coordinate-sector").textContent(), "1");
+			assert.equal(await app.locator("#coordinate-system").textContent(), "14");
+			assert.equal(await app.locator("#coordinate-orbit").textContent(), "1");
 			assert.equal(await app.locator(".planet").count(), 4);
 			assert.equal(await app.locator(".planet.own").count(), 2);
 			assert.equal(await app.locator(".station").count(), 2);
@@ -237,14 +242,16 @@ try {
 			assert.deepEqual(JSON.parse((await map.getAttribute("data-camera")) ?? "{}"), systemCamera);
 			await app.getByRole("button", { name: "Orbit 2: Kepler", exact: true }).click();
 			// Animated SVGs confuse Playwright's locator stability check; send real pointer input at the hit target.
-			const target = await app.locator("[data-planet='14:2'] .planet-hitbox").boundingBox();
+			assert.equal(await app.locator("#coordinate-orbit").textContent(), "2");
+			assert.equal(await app.locator("[data-planet='1:14:2'] .coordinate").textContent(), "1:14:2");
+			const target = await app.locator("[data-planet='1:14:2'] .planet-hitbox").boundingBox();
 			assert.ok(target);
 			assert.ok(target.width >= 63 && target.height >= 63, "planet targets must remain finger-sized");
 			if (touch) await page.touchscreen.tap(target.x + target.width / 2, target.y + target.height / 2);
 			else await page.mouse.click(target.x + target.width / 2, target.y + target.height / 2);
 			assert.equal(await app.locator("#planet-name").textContent(), "Kepler");
 			assert.match((await app.locator("#planet-meta").textContent()) ?? "", /YOUR COLONY/);
-			const planetDisk = app.locator("[data-planet='14:2'] circle[fill='url(#terminator)']");
+			const planetDisk = app.locator("[data-planet='1:14:2'] circle[fill='url(#terminator)']");
 			const initialDisk = await planetDisk.boundingBox();
 			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
 			await app.getByRole("button", { name: "Zoom in", exact: true }).click();
@@ -355,10 +362,12 @@ try {
 			);
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-developed.png` });
 			for (let orbit = 1; orbit <= 8; orbit++) {
-				const button = app.locator(`[data-orbit-select='28:${orbit}']`);
+				const button = app.locator(`[data-orbit-select='1:28:${orbit}']`);
 				await button.click();
-				assert.match((await app.locator("#planet-meta").textContent()) ?? "", new RegExp(`28:${orbit}$`));
-				const hit = await app.locator(`[data-planet='28:${orbit}'] .planet-hitbox`).boundingBox();
+				assert.match((await app.locator("#planet-meta").textContent()) ?? "", new RegExp(`1:28:${orbit}$`));
+				assert.equal(await app.locator("#coordinate-system").textContent(), "28");
+				assert.equal(await app.locator("#coordinate-orbit").textContent(), String(orbit));
+				const hit = await app.locator(`[data-planet='1:28:${orbit}'] .planet-hitbox`).boundingBox();
 				assert.ok(hit && hit.width >= 63 && hit.height >= 63);
 			}
 			await app.getByRole("button", { name: "Overview ↗", exact: true }).click();

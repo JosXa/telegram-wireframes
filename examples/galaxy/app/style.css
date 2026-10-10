@@ -227,12 +227,35 @@ h2 {
 	pointer-events: none;
 }
 .coordinate {
-	fill: var(--muted);
-	font-size: 9px;
+	fill: var(--ink);
+	font-size: 11px;
+	font-variant-numeric: tabular-nums;
 	paint-order: stroke;
 	stroke: oklch(12% 0.021 260);
 	stroke-width: 3px;
 	pointer-events: none;
+}
+.map-coordinates {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	flex-shrink: 0;
+	margin: 0;
+	padding: 8px 16px;
+	border-bottom: 1px solid var(--line);
+	font-variant-numeric: tabular-nums;
+}
+:where(.map-coordinates) div + div {
+	border-left: 1px solid var(--line);
+	padding-left: 16px;
+}
+.map-coordinates dt {
+	font-size: 10px;
+	color: var(--muted);
+}
+.map-coordinates dd {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
 }
 .ownership-ring {
 	fill: none;
@@ -610,7 +633,7 @@ h2 {
 }
 .orbit-picker button {
 	background: var(--surface);
-	flex: 0 0 56px;
+	flex: 0 0 68px;
 	min-height: 50px;
 	padding: 4px;
 	border: 1px solid var(--line);
@@ -620,8 +643,8 @@ h2 {
 }
 .orbit-picker small {
 	display: block;
-	font-size: 8px;
-	letter-spacing: 0.04em;
+	font-size: 10px;
+	font-variant-numeric: tabular-nums;
 }
 .orbit-picker [aria-pressed="true"] {
 	color: var(--own);
