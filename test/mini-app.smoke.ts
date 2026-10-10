@@ -43,15 +43,8 @@ try {
 				systems,
 				"each hex must have its own system",
 			);
-			assert.ok(
-				await app
-					.locator(".stellar-core")
-					.evaluateAll((nodes) => nodes.every((node) => Number(node.getAttribute("r")) <= 2.8)),
-			);
-			assert.ok(
-				(await app.locator(".system.open").count()) > systems * 0.8,
-				"most systems must be unclaimed",
-			);
+			assert.ok(systems > 0 && systems < 12, "only ownership and selection need live SVG overlays");
+			assert.ok(Number(await app.locator("#sector-map").getAttribute("data-systems")) > 4000);
 			const frame = page.frames().find((frame) => frame.url().includes("/app/index.html"));
 			assert.ok(frame);
 			// The Mini App must request the exact same artwork as the surrounding Telegram message.
@@ -138,10 +131,9 @@ try {
 			);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
 			// Tap empty space within Merope's hex, away from the tiny binary-star symbol.
-			const merope = await app.locator("[data-cell='18']").boundingBox();
-			assert.ok(merope);
-			const hexX = merope.x + merope.width / 2 + 38;
-			const hexY = merope.y + merope.height / 2;
+			const homeCamera = JSON.parse((await map.getAttribute("data-camera")) ?? "{}");
+			const hexX = box.x + homeCamera.x + 38;
+			const hexY = box.y + homeCamera.y + 146 * Math.sqrt(3) * homeCamera.scale;
 			const cameraBeforeSelection = await map.getAttribute("data-camera");
 			if (touch) await page.touchscreen.tap(hexX, hexY);
 			else await page.mouse.click(hexX, hexY);
@@ -170,29 +162,7 @@ try {
 			await app.getByRole("button", { name: "Zoom out", exact: true }).click({ clickCount: 14, delay: 30 });
 			const wideCamera = JSON.parse((await map.getAttribute("data-camera")) ?? "{}");
 			assert.ok(wideCamera.scale < 0.025);
-			const census = await frame.evaluate(() => ({
-				cells: document.querySelector("#distant-cells")?.getAttribute("d")?.match(/M/g)?.length,
-				kinds: [
-					...new Set(
-						[...document.querySelectorAll("#distant-stars path")].map((node) =>
-							node.getAttribute("data-kind"),
-						),
-					),
-				].sort(),
-				multiplicities: [
-					...new Set(
-						[...document.querySelectorAll("#distant-stars path")].map((node) =>
-							node.getAttribute("data-components"),
-						),
-					),
-				].sort(),
-			}));
-			assert.ok(
-				census.cells && census.cells > 4000,
-				"the galaxy must extend well beyond the home neighbourhood",
-			);
-			assert.deepEqual(census.kinds, ["black-hole", "neutron-star", "star", "white-dwarf"]);
-			assert.deepEqual(census.multiplicities, ["1", "2", "3"]);
+			assert.ok((await app.locator(".system").count()) < 12, "sector overview must keep the DOM bounded");
 			await page.screenshot({ path: `wireframes/interaction/${touch ? "touch" : "desktop"}-wide.png` });
 			// Select a hex far beyond the original radius-ten galaxy (axial coordinates 30, -15).
 			const distantX = box.x + wideCamera.x + 30 * 146 * 1.5 * wideCamera.scale;
@@ -204,6 +174,38 @@ try {
 			assert.ok(
 				distantHitbox && distantHitbox.width < 5,
 				"distant system targets must not cover neighbouring hexes",
+			);
+			await page.keyboard.press("Escape");
+			await map.focus();
+			await page.keyboard.press("ArrowRight");
+			assert.equal(await app.locator(".system.selected").getAttribute("data-axial"), "31,-15");
+			await page.keyboard.press("Enter");
+			assert.equal(await popover.isVisible(), true, "raster stars remain accessible from the keyboard");
+			await page.keyboard.press("Escape");
+			await app.locator("#zoom-in").click({ clickCount: 9, delay: 30 });
+			await map.focus();
+			await page.keyboard.press("ArrowRight");
+			// A large pan crosses the cached bitmap's margin and must repaint the newly exposed area.
+			await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.35);
+			await page.mouse.down();
+			await page.mouse.move(box.x + box.width * 0.8 - 240, box.y + box.height * 0.35, { steps: 12 });
+			await page.mouse.up();
+			await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+			assert.ok(
+				await frame.evaluate(() => {
+					const canvas = document.querySelector<HTMLCanvasElement>("#sector-map");
+					const target = document.querySelector(".system.selected .planet-hitbox")?.getBoundingClientRect();
+					if (!canvas || !target) return false;
+					const bounds = canvas.getBoundingClientRect();
+					const ratio = canvas.width / bounds.width;
+					const x = (target.x + target.width / 2 - bounds.x) * ratio;
+					const y = (target.y + target.height / 2 - bounds.y) * ratio;
+					const pixels = canvas
+						.getContext("2d")
+						?.getImageData(Math.floor(x - 8), Math.floor(y - 8), 16, 16).data;
+					return pixels?.some((alpha, i) => i % 4 === 3 && alpha > 40);
+				}),
+				"the selected star's bitmap stays aligned after zoom, keyboard navigation and cache replacement",
 			);
 			await app.getByRole("button", { name: "Return to home planet" }).click();
 			assert.equal(await popover.isVisible(), false, "map controls dismiss the selection popover");

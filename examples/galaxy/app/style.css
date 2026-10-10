@@ -43,10 +43,12 @@ button {
 button:hover {
 	background: oklch(85% 0.02 245 / 0.07);
 }
-[role="button"]:focus:not(:focus-visible) {
+[role="button"]:focus:not(:focus-visible),
+#galaxy:focus:not(:focus-visible) {
 	outline: none;
 }
 button:focus-visible,
+#galaxy:focus-visible,
 [role="button"]:focus-visible {
 	outline: 2px solid var(--own);
 	outline-offset: -2px;
@@ -106,6 +108,7 @@ h2 {
 	background: oklch(12% 0.021 260);
 }
 #galaxy {
+	position: relative;
 	width: 100%;
 	height: 100%;
 	display: block;
@@ -113,6 +116,22 @@ h2 {
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
 	cursor: grab;
+}
+#backdrop,
+#sector-map {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	/* Isolate the cached sky and star field from live SVG paint invalidation. */
+	transform: translateZ(0);
+}
+#backdrop {
+	width: 100%;
+	height: 100%;
+}
+#sector-map[hidden] {
+	display: none;
 }
 #galaxy.dragging {
 	cursor: grabbing;
@@ -147,8 +166,7 @@ h2 {
 .zoom :where(button + button) {
 	border-top: 1px solid var(--line);
 }
-.cell,
-.distant-cells {
+.cell {
 	fill: oklch(30% 0.035 245 / 0.015);
 	stroke: oklch(68% 0.035 245 / 0.09);
 	stroke-width: 1;

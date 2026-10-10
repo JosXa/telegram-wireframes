@@ -14,7 +14,10 @@
     <button type="button" data-view="developed">High empire <small>8 planets</small></button>
   </nav>
   <main id="map-panel">
-    <svg id="galaxy" aria-label="Space map. Drag to pan, pinch or use controls to zoom.">
+    <img id="backdrop" alt="" aria-hidden="true">
+    <canvas id="sector-map" aria-hidden="true"></canvas>
+    <!-- biome-ignore lint/a11y/noNoninteractiveTabindex: The map implements arrow-key navigation and Enter selection for rasterized systems. -->
+    <svg id="galaxy" role="application" tabindex="0" aria-label="Space map. Drag to pan, pinch or use controls to zoom. In the galaxy, arrow keys select adjacent systems and Enter opens details.">
       <defs>
         <radialGradient id="sun-halo"><stop stop-color="#ffbe63" stop-opacity=".55"/><stop offset=".3" stop-color="#ef8833" stop-opacity=".16"/><stop offset="1" stop-color="#e88739" stop-opacity="0"/></radialGradient>
         <radialGradient id="sun"><stop stop-color="#fff0bd"/><stop offset=".55" stop-color="#ffd475"/><stop offset=".9" stop-color="#e98738"/><stop offset="1" stop-color="#ffcb79"/></radialGradient>
@@ -44,7 +47,6 @@
           <path d="M-10,-4H-2V4H-10Z" fill="#3e5362"/><path d="M-7,-3H-3V3H-7Z" fill="#93d3e5"/>
         </symbol>
       </defs>
-      <g id="backdrop"></g>
       <g id="world"><g id="cells"></g><g id="orbits"></g><g id="routes"></g><g id="stars"></g><g id="ships"></g><g id="planets"></g></g>
     </svg>
     <button type="button" id="overview" hidden>Overview ↗</button>

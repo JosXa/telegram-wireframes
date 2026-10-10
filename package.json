@@ -19,7 +19,8 @@
 		"examples": "bun src/cli.ts render examples/*/fixture.json --keyboard --out wireframes/examples",
 		"check": "biome check . && tsc --noEmit",
 		"test": "bun test",
-		"test:mini-app": "bun test/mini-app.smoke.ts"
+		"test:mini-app": "bun test/mini-app.smoke.ts",
+		"perf:mini-app": "bun test/mini-app.perf.ts"
 	},
 	"dependencies": {
 		"playwright": "^1.64.0"

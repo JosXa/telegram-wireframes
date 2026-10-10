@@ -1,6 +1,7 @@
 // Throwaway map study: galaxy, four-planet frontier and eight-planet empire on one route.
 // ?variant=galaxy|young|developed selects the scene. All traffic and settlements are sample state.
-import { classify, multiplicity, spectralClasses, stellarSystem } from "./astronomy.js";
+import { classify, multiplicity, stellarSystem } from "./astronomy.js";
+import { createSectorMap } from "./sector-map.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const $ = (selector) => document.querySelector(selector);
@@ -153,7 +154,11 @@ let fleets = [];
 let patrols = [];
 let markers = [];
 const galaxyNodes = new Map();
-let distantScale;
+const sectorCanvas = $("#sector-map");
+const sectorMap = createSectorMap(sectorCanvas, systems, galaxyHexSize);
+const settlements = systems.filter((system) => system.settled);
+let skyKey;
+let cameraFrame;
 let camera = { x: 0, y: 0, scale: 1 };
 let width = 420;
 let height = 520;
@@ -226,8 +231,16 @@ function bindSelect(node, action) {
 	});
 }
 function sky() {
-	const root = $("#backdrop");
-	root.replaceChildren();
+	const key = `${width}:${height}:${view === "galaxy"}`;
+	if (skyKey === key) return;
+	skyKey = key;
+	// SVG-as-image rasterizes the existing nebula once; fleet motion cannot repaint its filters.
+	const root = document.createElementNS(NS, "svg");
+	root.setAttribute("xmlns", NS);
+	root.setAttribute("width", width);
+	root.setAttribute("height", height);
+	const defs = element("defs", {}, root);
+	for (const id of ["nebula-blue", "nebula-rose", "dust"]) defs.append($(`#${id}`).cloneNode(true));
 	const rand = random(581);
 	const nebula = element("g", { opacity: view === "galaxy" ? 1 : 0.42 }, root);
 	for (let i = 0; i < 14; i++) {
@@ -267,6 +280,8 @@ function sky() {
 				root,
 			);
 	}
+	$("#backdrop").src =
+		`data:image/svg+xml,${encodeURIComponent(new XMLSerializer().serializeToString(root))}`;
 }
 function addStar(x, y, radius, parent, blue = false) {
 	const g = element("g", { transform: `translate(${x} ${y})` }, parent);
@@ -297,48 +312,35 @@ function addStar(x, y, radius, parent, blue = false) {
 }
 function galaxy() {
 	const size = galaxyHexSize;
-	distantScale = undefined;
 	for (const system of systems) {
 		const jitter = random(system.id * 1987);
 		system.x = size * 1.5 * system.q + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
 		system.y =
 			size * Math.sqrt(3) * (system.r + system.q / 2) + (system.id === 14 ? 0 : (jitter() - 0.5) * 48);
 	}
-	const cells = element(
-		"path",
-		{
-			id: "distant-cells",
-			class: "distant-cells",
-			d: systems.map((system) => `M${hexPoints(system).join("L")}Z`).join(""),
-		},
-		$("#cells"),
-	);
-	cells.addEventListener("click", selectDistantSystem);
-	element("g", { id: "distant-stars", "pointer-events": "none" }, $("#planets"));
 	addFleet(systems[0], systems[1], 0, "💠 240", 10 * 3600000);
 	addFleet(systems[1], systems[0], 1, "🔥 80", 70 * 60000);
 	addIncoming(systems[0]);
 	selectSystem(systems[0], false);
 }
 function renderGalaxy() {
-	const wide = camera.scale < 0.12;
 	const margin = Math.max(100, (galaxyHexSize + 24) * camera.scale);
-	$("#distant-cells").style.display = wide ? "" : "none";
-	$("#distant-stars").style.display = wide ? "" : "none";
-	if (wide) renderDistantStars();
+	sectorMap.render(camera, width, height);
 	markers = [];
-	for (const system of systems) {
+	const overlays = new Set(settlements);
+	if (selected) overlays.add(selected);
+	for (const [id, marker] of galaxyNodes) {
+		if (overlays.has(marker.item)) continue;
+		marker.node.remove();
+		marker.cell.remove();
+		galaxyNodes.delete(id);
+	}
+	for (const system of overlays) {
 		const x = camera.x + system.x * camera.scale;
 		const y = camera.y + system.y * camera.scale;
-		const visible =
-			x > -margin &&
-			x < width + margin &&
-			y > -margin &&
-			y < height + margin &&
-			(!wide || system.settled || selected === system);
-		const labelled = !wide || !!system.settled || selected === system;
+		const visible = x > -margin && x < width + margin && y > -margin && y < height + margin;
 		let marker = galaxyNodes.get(system.id);
-		if (marker && (!visible || marker.wide !== wide || marker.labelled !== labelled)) {
+		if (marker && !visible) {
 			marker.node.remove();
 			marker.cell.remove();
 			galaxyNodes.delete(system.id);
@@ -346,7 +348,7 @@ function renderGalaxy() {
 		}
 		if (!visible) continue;
 		if (!marker) {
-			marker = drawSystem(system, wide, labelled);
+			marker = drawSystem(system);
 			galaxyNodes.set(system.id, marker);
 		}
 		markers.push(marker);
@@ -361,7 +363,7 @@ function hexPoints(system) {
 			`${x + Math.cos((i * Math.PI) / 3) * galaxyHexSize},${y + Math.sin((i * Math.PI) / 3) * galaxyHexSize}`,
 	);
 }
-function selectDistantSystem(event) {
+function selectGalaxySystem(event) {
 	const point = svgPoint(event.clientX, event.clientY);
 	const x = (point.x - camera.x) / camera.scale / galaxyHexSize;
 	const y = (point.y - camera.y) / camera.scale / galaxyHexSize;
@@ -373,48 +375,10 @@ function selectDistantSystem(event) {
 	const rs = Math.round(s);
 	if (Math.abs(rq - q) > Math.abs(rr - r) && Math.abs(rq - q) > Math.abs(rs - s)) rq = -rr - rs;
 	else if (Math.abs(rr - r) > Math.abs(rs - s)) rr = -rq - rs;
-	const system = systems.find((system) => system.q === rq && system.r === rr);
+	const system = sectorMap.getSystem(rq, rr);
 	if (system) selectSystem(system);
 }
-function renderDistantStars() {
-	if (distantScale === camera.scale) return;
-	distantScale = camera.scale;
-	const root = $("#distant-stars");
-	root.replaceChildren();
-	const scale = (1.3 * galaxySymbolScale()) / camera.scale;
-	const batches = new Map();
-	// One SVG path per colour/type keeps thousands of distant stars cheap to pan and zoom.
-	for (const system of systems) {
-		const positions = componentPositions(system);
-		for (const [index, component] of system.components.entries()) {
-			const { color, radius } = stellarAppearance(component);
-			const key = `${component.kind}:${color}:${system.components.length}`;
-			if (!batches.has(key))
-				batches.set(key, { kind: component.kind, color, count: system.components.length, paths: [] });
-			const [dx, dy] = positions[index];
-			const x = system.x + dx * scale,
-				y = system.y + dy * scale,
-				r = radius * scale;
-			batches.get(key).paths.push(`M${x - r},${y}a${r},${r} 0 1 0 ${r * 2},0a${r},${r} 0 1 0 ${-r * 2},0Z`);
-		}
-	}
-	for (const { kind, color, count, paths } of batches.values()) {
-		element(
-			"path",
-			{
-				d: paths.join(""),
-				"data-kind": kind,
-				"data-components": count,
-				opacity: 0.65,
-				...(kind === "black-hole"
-					? { fill: "none", stroke: color, "stroke-width": 0.3, "vector-effect": "non-scaling-stroke" }
-					: { fill: color }),
-			},
-			root,
-		);
-	}
-}
-function drawSystem(system, wide, labelled) {
+function drawSystem(system) {
 	const active = selected === system;
 	const cell = element(
 		"polygon",
@@ -441,91 +405,18 @@ function drawSystem(system, wide, labelled) {
 		$("#planets"),
 	);
 	const art = element("g", { class: "map-art" }, node);
-	galacticObject(system, art, wide);
 	if (system.settled) element("circle", { r: 11, class: "ownership-ring" }, art);
-	if (labelled) {
-		element("circle", { r: 17, class: "selected-ring" }, art);
-		element("text", { x: 0, y: 30, "text-anchor": "middle", class: "planet-label" }, node, system.name);
-		element(
-			"text",
-			{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
-			node,
-			`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
-		);
-	}
+	element("circle", { r: 17, class: "selected-ring" }, art);
+	element("text", { x: 0, y: 30, "text-anchor": "middle", class: "planet-label" }, node, system.name);
+	element(
+		"text",
+		{ x: 0, y: 43, "text-anchor": "middle", class: "coordinate" },
+		node,
+		`${system.id}${system.settled ? ` · ${system.settled} colonies` : " · unclaimed"}`,
+	);
 	const hitbox = element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, node);
 	bindSelect(node, () => selectSystem(system));
-	return { node, item: system, art, hitbox, cell, wide, labelled };
-}
-function componentPositions(system) {
-	return system.components.length === 1
-		? [[0, 0]]
-		: system.components.length === 2
-			? [
-					[-3, 0],
-					[3, 1.5],
-				]
-			: [
-					[-3, -1],
-					[3, 1],
-					[0, 5],
-				];
-}
-function stellarAppearance(component) {
-	if (component.kind === "black-hole") return { color: "#dca774", radius: 1.8 };
-	const spectral = component.kind === "star" ? spectralClasses[component.spectral] : null;
-	return {
-		color: spectral?.color || "#b1d6e8",
-		radius: spectral
-			? component.luminosity === "I"
-				? 2.8
-				: component.luminosity === "III"
-					? 2.2
-					: spectral.radius
-			: 0.9,
-	};
-}
-function galacticObject(system, parent, wide) {
-	const positions = componentPositions(system);
-	for (const [index, component] of system.components.entries()) {
-		const [x, y] = positions[index];
-		const group = element(
-			"g",
-			{
-				transform: `scale(1.3) translate(${x} ${y})`,
-				class: "stellar-object",
-				"data-kind": component.kind,
-			},
-			parent,
-		);
-		if (component.kind === "black-hole") {
-			// Accretion light belongs to the surrounding gas; the hole itself emits no light.
-			element(
-				"ellipse",
-				{
-					rx: 4,
-					ry: 1.8,
-					fill: "none",
-					stroke: "#dca774",
-					"stroke-width": 0.8,
-					opacity: 0.55,
-					transform: "rotate(-28)",
-				},
-				group,
-			);
-			element("circle", { r: 1.8, fill: "#050911" }, group);
-		} else {
-			const { color, radius } = stellarAppearance(component);
-			if (!wide) {
-				element("circle", { r: radius * 2.8, fill: color, opacity: 0.065 }, group);
-				element("circle", { r: radius * 1.65, fill: color, opacity: 0.12 }, group);
-			}
-			element("circle", { r: radius, fill: color, opacity: 0.65, class: "stellar-core" }, group);
-			if (component.pulsar)
-				element("path", { d: "M-2,5 2,-5", stroke: color, "stroke-width": 0.7, opacity: 0.4 }, group);
-		}
-		if (!wide) element("title", {}, group, classify(component));
-	}
+	return { node, item: system, art, hitbox, cell };
 }
 function station(parent, advanced) {
 	const g = element("g", { transform: "translate(27 -26) rotate(-25)", class: "station" }, parent);
@@ -968,8 +859,10 @@ function home() {
 	updateCamera();
 }
 function updateCamera() {
+	cancelAnimationFrame(cameraFrame);
+	cameraFrame = undefined;
 	world.setAttribute("transform", `translate(${camera.x} ${camera.y}) scale(${camera.scale})`);
-	// Keep offscreen systems out of the SVG; distant stars need neither halos nor hidden labels.
+	// Static geography is a cached bitmap; only visible ownership and selection need SVG nodes.
 	if (view === "galaxy") renderGalaxy();
 	svg.dataset.wide = String(view === "galaxy" && camera.scale < 0.12);
 	const size =
@@ -997,10 +890,15 @@ function updateCamera() {
 		$("#planet-action").textContent = camera.scale >= 0.75 ? "System overview ↗" : "Orbit detail ↗";
 	positionSelection();
 }
+function scheduleCamera() {
+	if (cameraFrame === undefined) cameraFrame = requestAnimationFrame(updateCamera);
+}
 function showView(next) {
 	$("#selection-popover").hidePopover();
 	closeMovements();
 	view = next;
+	selected = undefined;
+	sectorCanvas.hidden = view !== "galaxy";
 	cameraReady = false;
 	const url = new URL(location.href);
 	url.searchParams.set("variant", view);
@@ -1048,11 +946,12 @@ function resize() {
 		updateCamera();
 	}
 }
-function zoom(factor, point = { x: width / 2, y: height / 2 }) {
+function zoom(factor, point = { x: width / 2, y: height / 2 }, defer = false) {
 	const scale = Math.max(minimumScale(), Math.min(2.4, camera.scale * factor)),
 		ratio = scale / camera.scale;
 	camera = { x: point.x - (point.x - camera.x) * ratio, y: point.y - (point.y - camera.y) * ratio, scale };
-	updateCamera();
+	if (defer) scheduleCamera();
+	else updateCamera();
 }
 function minimumScale() {
 	if (view === "galaxy") return 0.015;
@@ -1091,17 +990,20 @@ svg.addEventListener("pointermove", (event) => {
 		const beforeDistance = Math.hypot(before.x - other.x, before.y - other.y);
 		const distance = Math.hypot(current.x - other.x, current.y - other.y);
 		if (beforeDistance > 0)
-			zoom(distance / beforeDistance, { x: (current.x + other.x) / 2, y: (current.y + other.y) / 2 });
+			zoom(distance / beforeDistance, { x: (current.x + other.x) / 2, y: (current.y + other.y) / 2 }, true);
 	} else {
 		camera.x += dx;
 		camera.y += dy;
-		updateCamera();
+		scheduleCamera();
 	}
 	pointers.set(event.pointerId, current);
 });
 function endPointer(event) {
 	pointers.delete(event.pointerId);
-	if (!pointers.size) svg.classList.remove("dragging");
+	if (!pointers.size) {
+		svg.classList.remove("dragging");
+		if (cameraFrame !== undefined) updateCamera();
+	}
 }
 svg.addEventListener("pointerup", endPointer);
 svg.addEventListener("pointercancel", endPointer);
@@ -1119,18 +1021,39 @@ svg.addEventListener(
 	"wheel",
 	(event) => {
 		event.preventDefault();
-		zoom(Math.exp(-event.deltaY * 0.002), svgPoint(event.clientX, event.clientY));
+		zoom(Math.exp(-event.deltaY * 0.002), svgPoint(event.clientX, event.clientY), true);
 	},
 	{ passive: false },
 );
 svg.addEventListener("click", (event) => {
-	if (view === "galaxy" || event.target.closest('[role="button"]')) return;
+	if (event.target.closest('[role="button"], [data-cell]')) return;
+	if (view === "galaxy") return selectGalaxySystem(event);
 	const point = svgPoint(event.clientX, event.clientY);
 	const radius = Math.hypot(point.x - camera.x, point.y - camera.y) / camera.scale;
 	const nearest = planets.reduce((best, planet) =>
 		Math.abs(planet.radius - radius) < Math.abs(best.radius - radius) ? planet : best,
 	);
 	if (Math.abs(nearest.radius - radius) * camera.scale <= 24) selectPlanet(nearest);
+});
+svg.addEventListener("keydown", (event) => {
+	if (view !== "galaxy") return;
+	const offset = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
+	if (offset) {
+		event.preventDefault();
+		const next = sectorMap.getSystem(selected.q + offset[0], selected.r + offset[1]);
+		if (!next) return;
+		const x = camera.x + next.x * camera.scale,
+			y = camera.y + next.y * camera.scale;
+		if (x < 40 || x > width - 40 || y < 40 || y > height - 40) {
+			camera.x = width / 2 - next.x * camera.scale;
+			camera.y = height / 2 - next.y * camera.scale;
+		}
+		selectSystem(next, false);
+		galaxyNodes.get(next.id).node.focus({ preventScroll: true });
+	} else if ((event.key === "Enter" || event.key === " ") && event.target === svg) {
+		event.preventDefault();
+		openSelection();
+	}
 });
 $("#zoom-in").addEventListener("click", () => zoom(1.3));
 $("#zoom-out").addEventListener("click", () => zoom(1 / 1.3));

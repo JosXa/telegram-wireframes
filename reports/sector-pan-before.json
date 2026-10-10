@@ -1,0 +1,89 @@
+{
+	"browser": "156.0.8078.4",
+	"results": [
+		{
+			"viewport": "desktop",
+			"zoom": "neighbourhood",
+			"cpuRate": 1,
+			"frameMedian": 33.299999999999955,
+			"frameP95": 66.60000000000036,
+			"slowFrames": 115,
+			"handlerP95": 0.7999999821186066,
+			"duration": 6083.099999999999,
+			"nodes": 991,
+			"mainThreadMs": 940.4690000000002,
+			"scriptMs": 148.334,
+			"layoutMs": 26.558
+		},
+		{
+			"viewport": "desktop",
+			"zoom": "regional",
+			"cpuRate": 1,
+			"frameMedian": 33.399999999999636,
+			"frameP95": 100,
+			"slowFrames": 139,
+			"handlerP95": 1.5,
+			"duration": 7983,
+			"nodes": 4312,
+			"mainThreadMs": 5627.473,
+			"scriptMs": 193.217,
+			"layoutMs": 61.249999999999986
+		},
+		{
+			"viewport": "desktop",
+			"zoom": "sector",
+			"cpuRate": 1,
+			"frameMedian": 16.700000000000728,
+			"frameP95": 33.400000000001455,
+			"slowFrames": 67,
+			"handlerP95": 0.4000000059604645,
+			"duration": 4233.100000000002,
+			"nodes": 614,
+			"mainThreadMs": 1016.8729999999986,
+			"scriptMs": 80.56200000000003,
+			"layoutMs": 13.476000000000015
+		},
+		{
+			"viewport": "phone-2x",
+			"zoom": "neighbourhood",
+			"cpuRate": 1,
+			"frameMedian": 16.699999999999818,
+			"frameP95": 16.700000000000273,
+			"slowFrames": 2,
+			"handlerP95": 0.5999999940395355,
+			"duration": 3033.2,
+			"nodes": 1044,
+			"mainThreadMs": 585.0540000000001,
+			"scriptMs": 98.598,
+			"layoutMs": 20.543000000000003
+		},
+		{
+			"viewport": "phone-2x",
+			"zoom": "regional",
+			"cpuRate": 1,
+			"frameMedian": 16.699999999999818,
+			"frameP95": 16.800000000000182,
+			"slowFrames": 3,
+			"handlerP95": 1.100000023841858,
+			"duration": 3049.8999999999996,
+			"nodes": 4987,
+			"mainThreadMs": 2060.5099999999998,
+			"scriptMs": 143.026,
+			"layoutMs": 44.80700000000001
+		},
+		{
+			"viewport": "phone-2x",
+			"zoom": "sector",
+			"cpuRate": 1,
+			"frameMedian": 16.700000000000728,
+			"frameP95": 33.399999999999636,
+			"slowFrames": 43,
+			"handlerP95": 0.30000001192092896,
+			"duration": 3733.300000000001,
+			"nodes": 614,
+			"mainThreadMs": 2077.5029999999997,
+			"scriptMs": 70.84200000000001,
+			"layoutMs": 11.435
+		}
+	]
+}

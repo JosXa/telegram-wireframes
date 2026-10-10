@@ -83,7 +83,7 @@ Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt 
 
 The mock supplies Telegram launch parameters, including theme, platform and version, and an empty `tgWebAppData`. Mock your app's authentication and game API for wireframes. Production `initData` validation belongs in the real server.
 
-Try the [galaxy prototype](examples/galaxy): an SVG map with mouse/finger drag, pinch and wheel zoom, animated planet surfaces, ownership colors and rings, and fleet trajectories that advance from timestamps. It uses sample state and has no game API.
+Try the [galaxy prototype](examples/galaxy): a map with mouse/finger drag, pinch and wheel zoom, animated planet surfaces, ownership colors and rings, and fleet trajectories that advance from timestamps. It uses sample state and has no game API.
 
 The map study has three views, also selectable with `?variant=galaxy`, `?variant=young` or `?variant=developed` on the app page:
 
@@ -92,6 +92,8 @@ The map study has three views, also selectable with `?variant=galaxy`, `?variant
 - High empire has eight settled planets, orbital stations, patrol craft and resource transports.
 
 The map fills the space below the tabs. Tap a star or planet for a popover with its details and actions; tap elsewhere or press Escape to dismiss it. Fleet details also float over the map.
+
+The full galaxy sample represents one sector, following the game's [sector design](https://github.com/JosXa/space-emperors/blob/main/docs/game-design.md#sector-size-and-expansion). The nebula is a cached image. Hexes and stars render to a canvas with a margin around the viewport, using cached stellar sprites. Panning translates that bitmap; zooming, resizing or crossing its margin rebuilds the visible region through an axial-coordinate lookup. At overview scale, the whole sector fits in the bitmap and dragging needs no redraw. SVG overlays hold visible settlements, selection and fleets. Arrow keys select adjacent systems; Enter opens their details.
 
 System orbits are spaced for panning on a phone. Planet targets stay 64 pixels wide at every zoom, while their artwork grows with zoom up to a fixed size. Tap an orbit or its planet to select it without moving the camera. The orbit buttons approach individual worlds.
 
@@ -107,7 +109,12 @@ bun run render examples/galaxy/fixture.json
 # A desktop shot shows the app floating above the chat:
 bun run render examples/galaxy/fixture.json --theme dark --width 1280 --height 900 --scale 1
 bun run test:mini-app
+bun run perf:mini-app
+# Longer drags cross the bitmap cache boundary; combine with CPU slowdown:
+CPU_RATE=4 PAN_DISTANCE=360 bun run perf:mini-app wireframes/performance/pan-4x.json
 ```
+
+The performance command measures 180 drag frames at neighbourhood, regional and sector zoom inside Telegram's iframe. It covers desktop and phone-sized viewports, including a 2× pixel ratio, and writes frame timings and main-thread time to JSON. Run it without competing browser jobs; CPU throttling and viewport emulation do not replace testing on a physical phone. See the [performance report](reports/sector-pan-2026-10-10.md) for the measured before/after results.
 
 <p>
   <img src="docs/galaxy-mini-app.png" width="280" alt="Hex galaxy inside Telegram's Mini App frame, with stars, nebulae and ownership rings">
