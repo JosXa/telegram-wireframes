@@ -65,7 +65,7 @@ serve <fixture.json...>    Serve fixtures for clicking around in a browser
 
 ### Space Emperors: all views
 
-The [complete game study](examples/empire-views) covers the view shortlist, battle replay, and their action states. Browse chat screens rendered by Telegram, try fleet dispatch and replay controls, or follow a player journey. Each state links to its design source and marks proposals and later scope.
+The [complete game study](examples/empire-views) covers the view shortlist and its action states. Browse chat screens rendered by Telegram, try fleet dispatch, or follow a player journey. Battle reports and round details appear in chat. Each state links to its design source and marks proposals and later scope.
 
 ```sh
 bun run views:render
@@ -73,6 +73,16 @@ bun run views:serve
 ```
 
 The serve command prints the connected bot and catalogue URLs. The bot menu joins all views and both admiral onboarding journeys. Follow native Telegram buttons between sample states, launch Mini Apps, and return to the menu with **All views** or `/menu`. The catalogue provides light/dark snapshots, source notes and coverage export.
+
+#### Comment on screens
+
+In the catalogue, choose **Add comment**, then click a point or drag over an area. Anchors use original screenshot pixels and stay aligned when you zoom or resize. Use 100% or 200% zoom to inspect details, or enter exact coordinates in the feedback form. The annotation area also accepts arrow keys (1 pixel, or 10 with Shift) and Enter to place a pin.
+
+Add a comment, quote the existing wording, and suggest replacement text. **Screen copy** provides selectable chat text and button labels. You can type other visible wording in **Quoted copy**. Save the comment to keep it across browsers and server restarts. New comment drafts stay in the current browser tab across reloads and screen changes.
+
+Comments retain the screenshot they refer to, even after a new render. Dark and light themes have separate comments. Use **All screens** to browse feedback, **Resolve** to close an item, or **Export feedback** to download Markdown with screen links and coordinates. **Export JSON** includes the complete records. Both exports include resolved comments.
+
+The server stores feedback and original PNGs in `.reviews/feedback.sqlite`, outside the build cache and excluded from Git. Preserve this directory when moving the preview. The catalogue reads and writes through `/__wireframes__/review/`. `GET /__wireframes__/review/comments` returns all saved feedback for agent review. Run `bun run test:review` to exercise the annotation workflow.
 
 ### Space Emperors: admirals in action
 

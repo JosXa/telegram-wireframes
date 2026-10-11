@@ -26,6 +26,7 @@
 		"views:render": "bun src/empire-views.ts render",
 		"test:views": "bun test/empire-views.smoke.ts",
 		"test:connected": "bun test/connected.smoke.ts",
+		"test:review": "bun test/review.smoke.ts",
 		"admirals:build": "bun src/admiral-onboarding.ts build",
 		"admirals:serve": "bun src/admiral-onboarding.ts serve",
 		"admirals:render": "bun src/admiral-onboarding.ts render",

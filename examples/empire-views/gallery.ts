@@ -1,10 +1,19 @@
 import type { Scene } from "./catalogue";
 import { journeys, scenes, views } from "./connected";
+import { createReview } from "./review";
 
-let theme = "dark";
+let theme = new URL(location.href).searchParams.get("theme") === "light" ? "light" : "dark";
 let journey: (typeof journeys)[number] | undefined;
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const image = element<HTMLImageElement>("screenshot");
+const review = createReview((scene, nextTheme, comment) => {
+	theme = nextTheme;
+	const url = new URL(location.href);
+	url.search = new URLSearchParams({ theme, comment: String(comment) }).toString();
+	url.hash = scene;
+	history.replaceState(null, "", url);
+	show();
+});
 function show() {
 	const id = location.hash.slice(1) || "command-center";
 	const scene = scenes.find((item) => item.id === id) || scenes[0];
@@ -33,7 +42,9 @@ function show() {
 	image.hidden = false;
 	element("pending").hidden = true;
 	image.alt = `${scene.view}: ${scene.title}, rendered in Telegram's ${theme} theme`;
-	image.src = `/__wireframes__/fixtures/${scene.id}/files/screenshots/${scene.preview || scene.id}-${theme}${launch ? "-mini-app" : ""}.png`;
+	for (const node of document.querySelectorAll<HTMLButtonElement>("[data-theme]"))
+		node.setAttribute("aria-pressed", String(node.dataset.theme === theme));
+	void review.show(scene, theme, `${scene.preview || scene.id}-${theme}${launch ? "-mini-app" : ""}.png`);
 	element("related").replaceChildren(
 		...scene.related.map((related) => {
 			const target = scenes.find((item) => item.id === related) as Scene;
@@ -119,6 +130,10 @@ element<HTMLInputElement>("search").addEventListener("input", (event) =>
 for (const button of document.querySelectorAll<HTMLButtonElement>("[data-theme]"))
 	button.addEventListener("click", () => {
 		theme = button.dataset.theme as string;
+		const url = new URL(location.href);
+		url.searchParams.set("theme", theme);
+		url.searchParams.delete("comment");
+		history.replaceState(null, "", url);
 		for (const node of document.querySelectorAll<HTMLButtonElement>("[data-theme]"))
 			node.setAttribute("aria-pressed", String(node === button));
 		show();

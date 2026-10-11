@@ -3,6 +3,7 @@
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 
 import type { Fixture } from "./fixture";
+import { reviewHandler } from "./review";
 import { validateFixture } from "./validate";
 
 export type RegisteredFixture = {
@@ -42,16 +43,21 @@ export function startServer({
 	fixtures,
 	port = 0,
 	debug = false,
+	reviewDatabase = resolve(".reviews/feedback.sqlite"),
 }: {
 	dist: string;
 	fixtures: Map<string, RegisteredFixture>;
 	port?: number;
 	debug?: boolean;
+	reviewDatabase?: string;
 }) {
+	const review = reviewHandler(fixtures, reviewDatabase);
 	return Bun.serve({
 		port,
 		async fetch(request) {
 			const { pathname } = new URL(request.url);
+			const reviewResponse = await review(request);
+			if (reviewResponse) return reviewResponse;
 
 			if (pathname === "/__wireframes__/config.json") return Response.json({ debug });
 
