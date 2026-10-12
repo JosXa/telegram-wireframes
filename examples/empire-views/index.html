@@ -15,28 +15,27 @@
     <main>
       <div class="scene-heading"><div><p id="scene-meta"></p><h2 id="scene-title">Choose a view</h2></div><div class="theme"><button type="button" data-theme="dark" aria-pressed="true">Dark</button><button type="button" data-theme="light" aria-pressed="false">Light</button></div></div>
       <div id="journey-progress"></div>
-      <section class="review-toolbar" aria-label="Review tools"><button id="comment-mode" type="button" aria-pressed="false" disabled>Add comment</button><label>Zoom <select id="review-zoom"><option value="fit">Fit</option><option value="1">100%</option><option value="2">200%</option></select></label><span id="review-dimensions"></span></section>
-      <p id="review-hint" class="review-hint">Click Add comment, then click a point or drag over an area.</p>
-      <div class="preview"><div id="review-canvas"><img id="screenshot" alt="" draggable="false"><button type="button" id="review-overlay" tabindex="-1" aria-label="Screen annotation area. Use arrow keys to position, then Enter to comment."></button><div id="review-pins"></div></div><p id="pending" hidden>Rendering this state. Open the live preview below.</p></div>
+      <section class="review-toolbar" aria-label="Review tools"><button id="comment-mode" type="button" aria-pressed="false" disabled>Add comment</button><button id="review-use-quote" type="button" disabled>Comment on selected text</button><label>Zoom <select id="review-zoom"><option value="fit">Fit</option><option value="1">100%</option><option value="2">200%</option></select></label><span id="review-dimensions"></span></section>
+      <p id="review-hint" class="review-hint">Choose Add comment, then select an element or drag across text in the live preview.</p>
+      <div class="preview"><div id="review-canvas"><div id="review-stage"><iframe id="review-frame" title="Live Telegram preview"></iframe><img id="screenshot" alt="Original screenshot for saved feedback" draggable="false" hidden><div id="review-pins"></div><div id="review-highlight" hidden></div></div></div></div>
       <div class="preview-actions"><a id="open-chat" href="/#100?mockScenario=wireframe%3Acommand-center" target="_blank" rel="noreferrer">Open in Telegram ↗</a><a id="open-app" href="app.html" target="_blank" rel="noreferrer" hidden>Try interactive view ↗</a></div>
-      <p class="caption">Telegram snapshots show each design. Open the connected bot to follow chat buttons between sample states, launch Mini Apps and return through All views.</p>
+      <p class="caption">Live Telegram HTML. Buttons and Mini Apps work here. Add comment selects the element and captures its copy without activating it.</p>
     </main>
     <aside class="annotation"><section id="review-panel" aria-label="Screen feedback">
       <h3>Feedback <span id="review-count"></span></h3>
       <p id="review-status" role="status" aria-live="polite">Loading saved comments…</p>
       <form id="review-form" hidden>
         <strong id="review-form-title">New comment</strong>
-        <div class="review-coordinates"><label>X<input id="review-x" type="number" min="0" step="1" required></label><label>Y<input id="review-y" type="number" min="0" step="1" required></label><label>Width<input id="review-width" type="number" min="0" step="1" required></label><label>Height<input id="review-height" type="number" min="0" step="1" required></label></div>
+        <details><summary>Selected element</summary><p id="review-target"></p><div class="review-coordinates"><label>X<input id="review-x" type="number" min="0" step="1" required></label><label>Y<input id="review-y" type="number" min="0" step="1" required></label><label>Width<input id="review-width" type="number" min="0" step="1" required></label><label>Height<input id="review-height" type="number" min="0" step="1" required></label></div></details>
         <label for="review-text">Comment</label><textarea id="review-text" rows="3" maxlength="8000" placeholder="What should change here?" required></textarea>
-        <label for="review-quote">Quoted copy <span>(optional)</span></label><textarea id="review-quote" rows="2" maxlength="8000" placeholder="Paste or select the wording below"></textarea>
+        <label for="review-quote">Quoted copy <span>(captured from selection)</span></label><textarea id="review-quote" rows="2" maxlength="8000" placeholder="Select an element or text in the live preview"></textarea>
         <label for="review-replacement">Suggested wording <span>(optional)</span></label><textarea id="review-replacement" rows="2" maxlength="8000" placeholder="Your replacement text"></textarea>
         <div class="review-actions"><button type="submit" id="review-save">Save comment</button><button type="button" id="review-cancel">Cancel</button></div>
       </form>
-      <details id="review-copy"><summary>Screen copy</summary><p>Select text below, then choose Quote selection. You can also type any visible wording in Quoted copy.</p><div id="review-copy-text"></div><button type="button" id="review-use-quote">Quote selection</button></details>
       <div class="review-filters"><label>Show <select id="review-filter"><option value="screen">This screen</option><option value="all">All screens</option></select></label><label><input id="review-resolved" type="checkbox"> Include resolved</label></div>
       <div id="review-comments"></div>
       <div class="review-actions"><button type="button" id="review-export">Export feedback</button><button type="button" id="review-json">Export JSON</button></div>
-      <button type="button" id="review-current" hidden>Back to current screenshot</button>
+      <button type="button" id="review-current" hidden>Back to live preview</button>
     </section><details><summary>Design notes</summary><p class="eyebrow">DESIGN NOTES</p><h3 id="view-name">View notes</h3><span id="scope"></span><p id="note"></p><a id="source" href="https://github.com/JosXa/space-emperors/blob/main/docs/design-shortlist.md" target="_blank" rel="noreferrer">Read source document ↗</a><h3>Related states</h3><div id="related"></div><p>Draft labels were approved for this design pass. Final naming holds remain in the glossary. Balance values are illustrative.</p><p>Buildings, research, resources and text battle reports stay in chat. Maps and fleet controls use the Mini App.</p><p>All chats and actions run locally with sample data. No Telegram account or game server is connected.</p></details></aside>
   </div>
 </body>

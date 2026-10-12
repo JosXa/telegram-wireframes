@@ -1,16 +1,27 @@
-// Review anchors use original screenshot pixels, never the displayed (scaled) image size.
+// Live feedback carries DOM context; existing screenshot feedback keeps its original image.
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { RegisteredFixture } from "./server";
 
 export type ReviewSnapshot = { id: string; width: number; height: number; url: string };
+export type ReviewTarget = {
+	selector: string;
+	frames: string[];
+	urls: string[];
+	tag: string;
+	text: string;
+	html: string;
+	viewport: { width: number; height: number };
+	selection?: { start: number; end: number };
+};
 export type ReviewComment = {
 	id: number;
 	scene: string;
 	title: string;
 	theme: "dark" | "light";
-	snapshot: ReviewSnapshot;
+	snapshot?: ReviewSnapshot;
+	target?: ReviewTarget;
 	x: number;
 	y: number;
 	width: number;
@@ -35,7 +46,21 @@ export function reviewHandler(fixtures: Map<string, RegisteredFixture>, database
 		database = new Database(databasePath, { create: true });
 		database.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
 			CREATE TABLE IF NOT EXISTS snapshots (id TEXT PRIMARY KEY, width INTEGER, height INTEGER, png BLOB);
-			CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, snapshot TEXT NOT NULL REFERENCES snapshots(id), body TEXT NOT NULL);`);
+			CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, snapshot TEXT REFERENCES snapshots(id), body TEXT NOT NULL);`);
+		// The first review UI required a PNG. Preserve those records while allowing DOM anchors.
+		if (
+			database
+				.query<{ name: string; notnull: number }, []>("PRAGMA table_info(comments)")
+				.all()
+				.some((column) => column.name === "snapshot" && column.notnull)
+		) {
+			database.transaction(() => {
+				database?.exec(`ALTER TABLE comments RENAME TO screenshot_comments;
+					CREATE TABLE comments (id INTEGER PRIMARY KEY AUTOINCREMENT, snapshot TEXT REFERENCES snapshots(id), body TEXT NOT NULL);
+					INSERT INTO comments SELECT * FROM screenshot_comments;
+					DROP TABLE screenshot_comments;`);
+			})();
+		}
 		return database;
 	}
 	return async (request: Request): Promise<Response | undefined> => {
@@ -90,7 +115,7 @@ export function reviewHandler(fixtures: Map<string, RegisteredFixture>, database
 			let body: Record<string, unknown>;
 			try {
 				const raw = await request.text();
-				if (raw.length > 30000) return fail("Comment is too long", 413);
+				if (raw.length > 60000) return fail("Comment is too long", 413);
 				body = JSON.parse(raw);
 				if (!body || typeof body !== "object" || Array.isArray(body)) return fail("Invalid comment");
 			} catch {
@@ -133,23 +158,68 @@ export function reviewHandler(fixtures: Map<string, RegisteredFixture>, database
 							)
 							.get(body.snapshotId)
 					: null;
-			if (!snapshot) return fail("Load the screen before commenting");
+			let target: ReviewTarget | undefined;
+			if (body.target !== undefined) {
+				const value = body.target as ReviewTarget;
+				const short = (text: unknown, max: number) => typeof text === "string" && text.length <= max;
+				if (
+					!value ||
+					typeof value !== "object" ||
+					!short(value.selector, 4000) ||
+					!value.selector ||
+					!short(value.tag, 100) ||
+					!short(value.text, 8000) ||
+					!short(value.html, 12000) ||
+					!Array.isArray(value.frames) ||
+					value.frames.length > 5 ||
+					!value.frames.every((frame) => short(frame, 4000)) ||
+					!Array.isArray(value.urls) ||
+					value.urls.length !== value.frames.length + 1 ||
+					!value.urls.every((path) => short(path, 4000) && path.startsWith("/") && !path.startsWith("//")) ||
+					!value.viewport ||
+					![value.viewport.width, value.viewport.height].every(
+						(size) => Number.isInteger(size) && size > 0 && size <= 10000,
+					) ||
+					(value.selection !== undefined &&
+						(!value.selection ||
+							!Number.isInteger(value.selection.start) ||
+							!Number.isInteger(value.selection.end) ||
+							value.selection.start < 0 ||
+							value.selection.end <= value.selection.start ||
+							value.selection.end > value.text.length))
+				)
+					return fail("Invalid element selection");
+				target = {
+					selector: value.selector,
+					frames: value.frames,
+					urls: value.urls,
+					tag: value.tag,
+					text: value.text,
+					html: value.html,
+					viewport: value.viewport,
+					...(value.selection ? { selection: value.selection } : {}),
+				};
+			}
+			const viewport = target?.viewport || snapshot;
+			if (!viewport) return fail("Select an element before commenting");
 			const { x, y, width, height } = body;
 			if (
 				![x, y, width, height].every(
 					(value) => typeof value === "number" && Number.isInteger(value) && value >= 0,
 				) ||
-				(x as number) >= snapshot.width ||
-				(y as number) >= snapshot.height ||
-				(x as number) + (width as number) > snapshot.width ||
-				(y as number) + (height as number) > snapshot.height
+				(x as number) >= viewport.width ||
+				(y as number) >= viewport.height ||
+				(x as number) + (width as number) > viewport.width ||
+				(y as number) + (height as number) > viewport.height
 			)
-				return fail("Selection is outside the screenshot");
+				return fail("Selection is outside the preview");
 			const comment = {
 				scene: body.scene,
 				title: body.title,
 				theme: body.theme,
-				snapshot: { ...snapshot, url: `${prefix}/snapshots/${snapshot.id}.png` },
+				...(target
+					? { target }
+					: { snapshot: { ...snapshot, url: `${prefix}/snapshots/${snapshot?.id}.png` } }),
 				x,
 				y,
 				width,
@@ -162,7 +232,7 @@ export function reviewHandler(fixtures: Map<string, RegisteredFixture>, database
 			};
 			const result = db()
 				.query("INSERT INTO comments (snapshot, body) VALUES (?, ?)")
-				.run(snapshot.id, JSON.stringify(comment));
+				.run(target ? null : (snapshot?.id ?? null), JSON.stringify(comment));
 			return json({ ...comment, id: Number(result.lastInsertRowid) }, 201);
 		}
 		return fail("Not found", 404);

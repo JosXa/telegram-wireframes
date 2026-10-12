@@ -1,10 +1,17 @@
-import type { ReviewComment, ReviewSnapshot } from "../../src/review";
+import type { ReviewComment, ReviewSnapshot, ReviewTarget } from "../../src/review";
 import type { Scene } from "./catalogue";
+import { createLivePreview, type ElementSelection } from "./live-review";
 
 const api = "/__wireframes__/review";
 const el = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 type Rect = Pick<ReviewComment, "x" | "y" | "width" | "height">;
-type Draft = Rect & { snapshot: ReviewSnapshot; text: string; quote: string; replacement: string };
+type Draft = Rect & {
+	snapshot?: ReviewSnapshot;
+	target?: ReviewTarget;
+	text: string;
+	quote: string;
+	replacement: string;
+};
 async function request<T>(path: string, body?: unknown, method = "POST"): Promise<T> {
 	const response = await fetch(
 		`${api}/${path}`,
@@ -25,27 +32,46 @@ function download(name: string, content: string, type: string) {
 	URL.revokeObjectURL(url);
 }
 
-export function createReview(navigate: (scene: string, theme: string, comment: number) => void) {
+export function createReview(navigate: (scene: string, theme: string, comment?: number) => void) {
 	const image = el<HTMLImageElement>("screenshot");
+	const frame = el<HTMLIFrameElement>("review-frame");
 	const canvas = el("review-canvas");
-	const overlay = el("review-overlay");
+	const stage = el("review-stage");
 	const form = el<HTMLFormElement>("review-form");
 	const mode = el<HTMLButtonElement>("comment-mode");
 	const fields = ["text", "quote", "replacement"] as const;
 	const coordinates = ["x", "y", "width", "height"] as const;
 	let scene: Scene;
 	let theme = "dark";
-	let current: ReviewSnapshot | undefined;
 	let snapshot: ReviewSnapshot | undefined;
+	let target: ReviewTarget | undefined;
 	let comments: ReviewComment[] = [];
 	let selected: number | undefined;
 	let editing: number | undefined;
 	let rect: Rect | undefined;
-	let start: { x: number; y: number } | undefined;
 	let generation = 0;
 	let saving = false;
 	let showing = "";
-	let copySelection = "";
+	const live = createLivePreview(frame, {
+		select: (value: ElementSelection) =>
+			begin(value.rect, {
+				...value.rect,
+				...(form.hidden ? { text: "", replacement: "" } : values()),
+				target: value.target,
+				quote: value.quote,
+			}),
+		hover: (box) => {
+			const highlight = el("review-highlight");
+			highlight.hidden = !box;
+			if (box) position(highlight, box);
+		},
+		change: draw,
+		selection: (available) => {
+			el<HTMLButtonElement>("review-use-quote").disabled = !available;
+		},
+		navigate: (id) => navigate(id, theme),
+		cancel: () => setMode(false),
+	});
 	const status = (text: string, error = false) => {
 		el("review-status").textContent = text;
 		el("review-status").dataset.error = String(error);
@@ -57,46 +83,57 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			"text" | "quote" | "replacement"
 		>;
 	function saveDraft() {
-		if (!form.hidden && rect && snapshot && !editing) {
-			sessionStorage.setItem(draftKey(), JSON.stringify({ ...rect, ...values(), snapshot }));
+		if (!form.hidden && rect && (snapshot || target) && !editing) {
+			sessionStorage.setItem(draftKey(), JSON.stringify({ ...rect, ...values(), snapshot, target }));
 		}
 	}
 	function setMode(active: boolean) {
 		mode.setAttribute("aria-pressed", String(active));
-		overlay.classList.toggle("active", active);
-		overlay.tabIndex = active ? 0 : -1;
+		mode.textContent = active ? "Stop selecting" : "Add comment";
+		canvas.classList.toggle("selecting", active);
+		live.inspect(active);
 		el("review-hint").textContent = active
-			? "Click to pin, or drag to mark an area. Arrow keys move 1 px; Shift moves 10 px; Enter places a pin."
-			: "Click Add comment, then click a point or drag over an area.";
+			? "Hover to highlight an element, then click to comment. Drag across words to quote just that text. Esc exits."
+			: "Use the live preview, or choose Add comment to select an element. You can also select text and comment on it.";
+		if (active && innerWidth < 1100) canvas.scrollIntoView({ block: "start", behavior: "instant" });
 	}
 	function zoom() {
 		const value = el<HTMLSelectElement>("review-zoom").value;
-		canvas.style.width =
-			value === "fit" ? "380px" : `${(snapshot?.width || image.naturalWidth) * Number(value)}px`;
-		canvas.style.maxWidth = value === "fit" ? "100%" : "none";
+		const width = snapshot?.width || 420;
+		const height = snapshot?.height || 900;
+		const available = canvas.parentElement?.clientWidth || width;
+		const scale = value === "fit" ? Math.min(1, (available - 32) / width) : Number(value);
+		canvas.style.width = `${width * scale}px`;
+		canvas.style.height = `${height * scale}px`;
+		stage.style.width = `${width}px`;
+		stage.style.height = `${height}px`;
+		stage.style.transform = `scale(${scale})`;
 	}
 	function showSnapshot(value: ReviewSnapshot) {
 		snapshot = value;
 		mode.disabled = true;
+		frame.hidden = true;
+		image.hidden = false;
 		image.src = value.url;
 		el("review-dimensions").textContent = `${value.width} × ${value.height} px`;
-		el("review-current").hidden = value.id === current?.id;
+		el("review-current").hidden = false;
 		zoom();
 	}
-	image.addEventListener("load", () => {
-		if (snapshot && image.src === new URL(snapshot.url, location.href).href) {
-			mode.disabled = false;
-			image.hidden = false;
-			el("pending").hidden = true;
-		}
-	});
+	function showLive() {
+		snapshot = undefined;
+		frame.hidden = false;
+		image.hidden = true;
+		mode.disabled = false;
+		el("review-current").hidden = true;
+		el("review-dimensions").textContent = "Live HTML · 420 × 900";
+		zoom();
+	}
 	function position(node: HTMLElement, box: Rect) {
-		if (!snapshot) return;
-		node.style.left = `${(box.x / snapshot.width) * 100}%`;
-		node.style.top = `${(box.y / snapshot.height) * 100}%`;
+		node.style.left = `${box.x}px`;
+		node.style.top = `${box.y}px`;
 		if (box.width || box.height) {
-			node.style.width = `${(box.width / snapshot.width) * 100}%`;
-			node.style.height = `${(box.height / snapshot.height) * 100}%`;
+			node.style.width = `${box.width}px`;
+			node.style.height = `${box.height}px`;
 		}
 	}
 	function draw() {
@@ -106,13 +143,15 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			(item) =>
 				item.scene === scene.id &&
 				item.theme === theme &&
-				item.snapshot.id === snapshot?.id &&
+				(snapshot ? item.snapshot?.id === snapshot.id : Boolean(item.target)) &&
 				(!item.resolved || el<HTMLInputElement>("review-resolved").checked),
 		)) {
-			if (comment.width || comment.height) {
+			const box = comment.target ? live.rect(comment.target) : comment;
+			if (!box) continue;
+			if (box.width || box.height) {
 				const region = document.createElement("div");
 				region.className = `review-region${comment.id === selected ? " selected" : ""}`;
-				position(region, comment);
+				position(region, box);
 				pins.append(region);
 			}
 			const pin = document.createElement("button");
@@ -121,14 +160,16 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			pin.textContent = String(comment.id);
 			pin.setAttribute("aria-label", `Comment ${comment.id}: ${comment.text}`);
 			pin.setAttribute("aria-pressed", String(comment.id === selected));
-			position(pin, { ...comment, width: 0, height: 0 });
+			position(pin, { ...box, width: 0, height: 0 });
 			pin.addEventListener("click", () => open(comment));
 			pins.append(pin);
 		}
 		if (rect) {
+			const box = target ? live.rect(target) : rect;
+			if (!box) return;
 			const mark = document.createElement("div");
 			mark.className = rect.width || rect.height ? "review-region draft" : "review-crosshair";
-			position(mark, rect);
+			position(mark, box);
 			pins.append(mark);
 		}
 	}
@@ -141,10 +182,14 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 		if (saving) return;
 		editing = undefined;
 		selected = undefined;
+		target = draft?.target;
+		el("review-target").textContent = target
+			? `${target.tag} · ${target.selector}`
+			: "Original screenshot anchor";
 		form.hidden = false;
 		el("review-form-title").textContent = "New comment";
 		for (const key of fields) el<HTMLTextAreaElement>(`review-${key}`).value = draft?.[key] || "";
-		for (const key of coordinates) el<HTMLInputElement>(`review-${key}`).disabled = false;
+		for (const key of coordinates) el<HTMLInputElement>(`review-${key}`).disabled = Boolean(target);
 		setRect(value);
 		setMode(false);
 		saveDraft();
@@ -154,22 +199,31 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 	function close() {
 		form.hidden = true;
 		rect = undefined;
+		target = undefined;
 		editing = undefined;
 		draw();
 	}
-	function open(comment: ReviewComment) {
+	async function open(comment: ReviewComment) {
 		saveDraft();
 		close();
 		selected = comment.id;
-		showSnapshot(comment.snapshot);
+		if (comment.snapshot) showSnapshot(comment.snapshot);
+		else showLive();
 		setMode(false);
 		render();
 		el(`review-comment-${comment.id}`)?.scrollIntoView({ block: "nearest" });
-		status(
-			comment.snapshot.id === current?.id
-				? `Comment #${comment.id} selected.`
-				: `Comment #${comment.id} shows its original screenshot. The current screen has changed.`,
-		);
+		if (comment.target) {
+			try {
+				const found = await live.reveal(comment.target);
+				status(
+					found
+						? `Comment #${comment.id} selected on the live element.`
+						: `The element has changed. Comment #${comment.id} retains its original text and HTML.`,
+				);
+			} catch (error) {
+				status(String(error), true);
+			}
+		} else status(`Comment #${comment.id} shows its original screenshot.`);
 	}
 	function button(label: string, action: () => void) {
 		const node = document.createElement("button");
@@ -191,7 +245,7 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 		if (!visible.length) {
 			const empty = document.createElement("p");
 			empty.textContent = all
-				? "No open feedback. Pick a screen and mark a point or area."
+				? "No open feedback. Pick a screen and select an element or text."
 				: "No open comments for this screen and theme.";
 			list.append(empty);
 		}
@@ -199,7 +253,7 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			const entry = document.createElement("article");
 			entry.id = `review-comment-${item.id}`;
 			entry.className = `review-comment${selected === item.id ? " selected" : ""}`;
-			const target = button(
+			const link = button(
 				`#${item.id} · ${item.title} · ${item.theme}${item.resolved ? " · Resolved" : ""}`,
 				() => {
 					if (scene.id !== item.scene || theme !== item.theme) navigate(item.scene, item.theme, item.id);
@@ -209,8 +263,10 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			const text = document.createElement("p");
 			text.textContent = item.text;
 			const location = document.createElement("small");
-			location.textContent = `x ${item.x}, y ${item.y}${item.width || item.height ? ` · ${item.width} × ${item.height} px` : " · point"}`;
-			entry.append(target, location, text);
+			location.textContent = item.target
+				? `${item.target.tag} · ${item.target.selection ? "Text selection" : "Element"}`
+				: `x ${item.x}, y ${item.y} · Original screenshot`;
+			entry.append(link, location, text);
 			for (const [label, content] of [
 				["Copy", item.quote],
 				["Suggested wording", item.replacement],
@@ -225,13 +281,15 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			const actions = document.createElement("div");
 			actions.className = "review-actions";
 			actions.append(
-				button("Edit", () => {
+				button("Edit", async () => {
 					if (scene.id !== item.scene || theme !== item.theme) {
 						navigate(item.scene, item.theme, item.id);
 						return;
 					}
-					open(item);
+					await open(item);
 					editing = item.id;
+					target = item.target;
+					el("review-target").textContent = item.target?.selector || "Original screenshot anchor";
 					form.hidden = false;
 					el("review-form-title").textContent = `Edit comment #${item.id}`;
 					setRect(item);
@@ -255,103 +313,13 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 		}
 		draw();
 	}
-	function point(event: PointerEvent) {
-		const bounds = image.getBoundingClientRect();
-		return {
-			x: Math.max(
-				0,
-				Math.min(
-					(snapshot?.width || 1) - 1,
-					Math.round(((event.clientX - bounds.left) / bounds.width) * (snapshot?.width || 1)),
-				),
-			),
-			y: Math.max(
-				0,
-				Math.min(
-					(snapshot?.height || 1) - 1,
-					Math.round(((event.clientY - bounds.top) / bounds.height) * (snapshot?.height || 1)),
-				),
-			),
-		};
-	}
 	mode.addEventListener("click", () => {
-		if (!snapshot || saving) return;
+		if (snapshot || saving) return;
 		saveDraft();
 		setMode(mode.getAttribute("aria-pressed") !== "true");
-		if (mode.getAttribute("aria-pressed") === "true") overlay.focus({ preventScroll: true });
 	});
-	overlay.addEventListener("pointerdown", (event) => {
-		if (event.button !== 0 || !snapshot || saving) return;
-		start = point(event);
-		overlay.setPointerCapture(event.pointerId);
-		setRect({ ...start, width: 0, height: 0 });
-	});
-	overlay.addEventListener("pointermove", (event) => {
-		if (!start) return;
-		const end = point(event);
-		setRect({
-			x: Math.min(start.x, end.x),
-			y: Math.min(start.y, end.y),
-			width: Math.abs(start.x - end.x),
-			height: Math.abs(start.y - end.y),
-		});
-	});
-	overlay.addEventListener("pointerup", () => {
-		if (start && rect)
-			begin(rect, form.hidden ? undefined : { ...rect, ...values(), snapshot: snapshot as ReviewSnapshot });
-		start = undefined;
-	});
-	overlay.addEventListener("pointercancel", () => {
-		start = undefined;
-		rect = undefined;
-		draw();
-	});
-	overlay.addEventListener("keydown", (event) => {
-		if (!snapshot) return;
-		const key = event.key;
-		if (key === "Escape") {
-			setMode(false);
-			return;
-		}
-		if (key === "Enter" || key === " ") {
-			event.preventDefault();
-			begin(
-				rect || {
-					x: Math.floor(snapshot.width / 2),
-					y: Math.floor(snapshot.height / 2),
-					width: 0,
-					height: 0,
-				},
-			);
-			return;
-		}
-		if (!key.startsWith("Arrow")) return;
-		event.preventDefault();
-		const step = event.shiftKey ? 10 : 1;
-		const origin = rect || {
-			x: Math.floor(snapshot.width / 2),
-			y: Math.floor(snapshot.height / 2),
-			width: 0,
-			height: 0,
-		};
-		setRect({
-			x: Math.max(
-				0,
-				Math.min(
-					snapshot.width - 1,
-					origin.x + (key === "ArrowRight" ? step : key === "ArrowLeft" ? -step : 0),
-				),
-			),
-			y: Math.max(
-				0,
-				Math.min(
-					snapshot.height - 1,
-					origin.y + (key === "ArrowDown" ? step : key === "ArrowUp" ? -step : 0),
-				),
-			),
-			width: 0,
-			height: 0,
-		});
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape") setMode(false);
 	});
 	for (const key of coordinates)
 		el(`review-${key}`).addEventListener("input", () => {
@@ -368,7 +336,7 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 	});
 	form.addEventListener("submit", async (event) => {
 		event.preventDefault();
-		if (saving || !rect || !snapshot) return;
+		if (saving || !rect || (!snapshot && !target)) return;
 		const key = draftKey();
 		const version = generation;
 		const existing = comments.find((item) => item.id === editing);
@@ -381,7 +349,15 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 				editing ? `comments/${editing}` : "comments",
 				editing
 					? { ...values(), resolved: existing?.resolved || false }
-					: { ...values(), ...rect, snapshotId: snapshot.id, scene: scene.id, title: scene.title, theme },
+					: {
+							...values(),
+							...rect,
+							snapshotId: snapshot?.id,
+							target,
+							scene: scene.id,
+							title: scene.title,
+							theme,
+						},
 				editing ? "PATCH" : "POST",
 			);
 			if (!wasEditing) sessionStorage.removeItem(key);
@@ -400,35 +376,18 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 		}
 	});
 	el("review-zoom").addEventListener("change", zoom);
+	new ResizeObserver(zoom).observe(canvas.parentElement as HTMLElement);
 	el("review-filter").addEventListener("change", render);
 	el("review-resolved").addEventListener("change", render);
 	el("review-current").addEventListener("click", () => {
 		saveDraft();
 		close();
 		selected = undefined;
-		if (current) showSnapshot(current);
+		showLive();
 		render();
-		status("Current screenshot.");
+		status("Live HTML preview.");
 	});
-	document.addEventListener("selectionchange", () => {
-		const selection = getSelection();
-		if (selection?.anchorNode && el("review-copy-text").contains(selection.anchorNode))
-			copySelection = selection.toString();
-	});
-	el("review-use-quote").addEventListener("click", () => {
-		if (!copySelection) {
-			status("Select wording in Screen copy first.");
-			return;
-		}
-		if (form.hidden) {
-			setMode(true);
-			status("Mark its location on the screenshot, then choose Quote selection again.");
-			return;
-		}
-		el<HTMLTextAreaElement>("review-quote").value = copySelection;
-		saveDraft();
-		status("Selected wording added to your comment.");
-	});
+	el("review-use-quote").addEventListener("click", () => live.commentSelection());
 	function linkFor(item: ReviewComment) {
 		const url = new URL(location.href);
 		url.search = new URLSearchParams({ theme: item.theme, comment: String(item.id) }).toString();
@@ -440,10 +399,10 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			comments = await request("comments");
 			const output = [
 				"# Space Emperors feedback",
-				"Coordinates use original screenshot pixels, measured from the top left.",
+				"Live comments include DOM selectors, frame URLs, selected text, and HTML captured when the comment was made.",
 				...comments.map(
 					(item) =>
-						`## #${item.id} · ${item.title} (${item.theme}) · ${item.resolved ? "Resolved" : "Open"}\n\n[Review screen](${linkFor(item)}) · [Original screenshot](${location.origin}${item.snapshot.url})\n\nScene: ${item.scene}\nAnchor: x=${item.x}, y=${item.y}, width=${item.width}, height=${item.height}; screenshot ${item.snapshot.width}×${item.snapshot.height}\n\n${item.text}${
+						`## #${item.id} · ${item.title} (${item.theme}) · ${item.resolved ? "Resolved" : "Open"}\n\n[Review screen](${linkFor(item)})${item.snapshot ? ` · [Original screenshot](${location.origin}${item.snapshot.url})` : ""}\n\nScene: ${item.scene}\nAnchor: x=${item.x}, y=${item.y}, width=${item.width}, height=${item.height}${item.target ? `\nElement: ${item.target.selector}\nFrames: ${item.target.frames.join(" → ") || "Telegram chat"}\nURLs: ${item.target.urls.join(" → ")}\n\n\`\`\`html\n${item.target.html}\n\`\`\`` : ""}\n\n${item.text}${
 							item.quote
 								? `\n\nQuoted copy:\n${item.quote
 										.split("\n")
@@ -478,7 +437,7 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 		}
 	});
 	return {
-		async show(next: Scene, nextTheme: string, filename: string) {
+		async show(next: Scene, nextTheme: string) {
 			const key = `${next.id}:${nextTheme}:${new URL(location.href).searchParams.get("comment") || ""}`;
 			if (showing === key) return;
 			showing = key;
@@ -486,52 +445,36 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 			const version = ++generation;
 			scene = next;
 			theme = nextTheme;
-			current = undefined;
 			snapshot = undefined;
 			selected = undefined;
-			copySelection = "";
-			start = undefined;
 			close();
 			setMode(false);
 			mode.disabled = true;
-			image.src = `/__wireframes__/fixtures/${next.id}/files/screenshots/${filename}`;
+			image.hidden = true;
+			frame.hidden = false;
 			el("review-current").hidden = true;
 			el("review-dimensions").textContent = "";
-			const copy = next.fixture.messages
-				.flatMap((message) => [
-					message.text,
-					message.caption,
-					...(message.reply_markup && "inline_keyboard" in message.reply_markup
-						? message.reply_markup.inline_keyboard.flat().map((item) => item.text)
-						: []),
-				])
-				.filter(Boolean)
-				.join("\n\n");
-			el("review-copy-text").textContent =
-				copy || "No chat copy for this screen. Type visible Mini App wording in Quoted copy.";
-			status("Loading saved comments…");
+			zoom();
+			status("Loading live Telegram preview…");
 			try {
-				const [loaded, saved] = await Promise.all([
-					request<ReviewSnapshot>(`screen?${new URLSearchParams({ scene: scene.id, image: filename })}`),
-					request<ReviewComment[]>("comments"),
-				]);
+				const [, saved] = await Promise.all([live.load(next, theme), request<ReviewComment[]>("comments")]);
 				if (generation !== version) return;
-				current = loaded;
 				comments = saved;
-				showSnapshot(loaded);
-				status("Saved on this server. Exports include every screen.");
+				showLive();
+				status("Select elements or text in the live preview. Feedback is saved on this server.");
 				const id = Number(new URL(location.href).searchParams.get("comment"));
 				const linked = comments.find(
 					(item) => item.id === id && item.scene === scene.id && item.theme === theme,
 				);
 				if (linked) {
 					if (linked.resolved) el<HTMLInputElement>("review-resolved").checked = true;
-					open(linked);
+					await open(linked);
 				} else {
 					const draft = sessionStorage.getItem(draftKey());
 					if (draft) {
 						const value = JSON.parse(draft) as Draft;
-						showSnapshot(value.snapshot);
+						if (value.snapshot) showSnapshot(value.snapshot);
+						if (value.target) await live.reveal(value.target);
 						begin(value, value);
 						status("Your unsaved draft has been restored.");
 					}
@@ -539,6 +482,7 @@ export function createReview(navigate: (scene: string, theme: string, comment: n
 				render();
 			} catch (error) {
 				if (version === generation) {
+					showing = "";
 					status(String(error), true);
 					el("review-comments").replaceChildren();
 				}

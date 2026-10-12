@@ -330,35 +330,34 @@ select {
 }
 #review-canvas {
 	position: relative;
-	width: 380px;
-	max-width: 100%;
 	margin: auto;
 	outline: 1px solid var(--line);
 }
-#review-overlay,
+#review-stage {
+	position: relative;
+	transform-origin: top left;
+}
+#review-frame {
+	width: 420px;
+	height: 900px;
+	border: 0;
+	display: block;
+}
+#review-frame[hidden],
+#screenshot[hidden] {
+	display: none;
+}
+#review-highlight,
 #review-pins {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
 }
-#review-overlay.active {
-	pointer-events: auto;
-	touch-action: none;
-	cursor: crosshair;
+#review-highlight {
+	inset: auto;
 	z-index: 4;
-	outline: 2px solid var(--accent);
-}
-#review-overlay {
-	background: transparent;
-	border: 0;
-	border-radius: 0;
-	padding: 0;
-	width: 100%;
-	height: 100%;
-}
-#review-overlay:focus-visible {
-	outline: 3px solid var(--accent);
-	outline-offset: 3px;
+	border: 2px solid oklch(78% 0.16 85);
+	background: oklch(78% 0.16 85 / 0.12);
 }
 #review-pins {
 	z-index: 3;
@@ -383,6 +382,9 @@ select {
 	background: oklch(28% 0.06 185);
 	outline: 2px solid var(--accent);
 	outline-offset: 2px;
+}
+.selecting .review-pin {
+	pointer-events: none;
 }
 .review-region {
 	position: absolute;
@@ -470,17 +472,9 @@ button:disabled {
 	margin: 4px 0 0;
 	background: oklch(99% 0.004 90);
 }
-#review-copy {
-	margin: 16px 0;
-}
-#review-copy-text {
-	white-space: pre-wrap;
-	max-height: 280px;
-	overflow: auto;
-	font-size: 13px;
-	line-height: 1.6;
-	padding: 10px 0;
-	user-select: text;
+#review-target {
+	overflow-wrap: anywhere;
+	font-family: ui-monospace, monospace;
 }
 .review-filters {
 	font-size: 12px;

@@ -5,11 +5,10 @@ import { createReview } from "./review";
 let theme = new URL(location.href).searchParams.get("theme") === "light" ? "light" : "dark";
 let journey: (typeof journeys)[number] | undefined;
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const image = element<HTMLImageElement>("screenshot");
 const review = createReview((scene, nextTheme, comment) => {
 	theme = nextTheme;
 	const url = new URL(location.href);
-	url.search = new URLSearchParams({ theme, comment: String(comment) }).toString();
+	url.search = new URLSearchParams({ theme, ...(comment ? { comment: String(comment) } : {}) }).toString();
 	url.hash = scene;
 	history.replaceState(null, "", url);
 	show();
@@ -39,12 +38,9 @@ function show() {
 	appLink.hidden = !miniApp;
 	if (miniApp)
 		appLink.href = new URL(miniApp, `${location.origin}/__wireframes__/fixtures/${scene.id}/files/`).href;
-	image.hidden = false;
-	element("pending").hidden = true;
-	image.alt = `${scene.view}: ${scene.title}, rendered in Telegram's ${theme} theme`;
 	for (const node of document.querySelectorAll<HTMLButtonElement>("[data-theme]"))
 		node.setAttribute("aria-pressed", String(node.dataset.theme === theme));
-	void review.show(scene, theme, `${scene.preview || scene.id}-${theme}${launch ? "-mini-app" : ""}.png`);
+	void review.show(scene, theme);
 	element("related").replaceChildren(
 		...scene.related.map((related) => {
 			const target = scenes.find((item) => item.id === related) as Scene;
@@ -138,10 +134,6 @@ for (const button of document.querySelectorAll<HTMLButtonElement>("[data-theme]"
 			node.setAttribute("aria-pressed", String(node === button));
 		show();
 	});
-image.addEventListener("error", () => {
-	image.hidden = true;
-	element("pending").hidden = false;
-});
 element("export").addEventListener("click", () => {
 	const text = `# Space Emperors wireframe coverage\n\nDraft names are authorized for this design pass. Final glossary decisions remain open. Values are illustrative.\n\n${scenes.map((scene) => `## ${scene.view}: ${scene.title}\n\n${scene.surface} · ${scene.status}\n\n${scene.note}\n\n[Open wireframe](${location.origin}${location.pathname}#${scene.id}) · [Source](https://github.com/JosXa/space-emperors/blob/main/docs/${scene.source})\n`).join("\n")}`;
 	const url = URL.createObjectURL(new Blob([text], { type: "text/markdown" }));
