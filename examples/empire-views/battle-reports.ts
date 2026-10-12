@@ -38,6 +38,8 @@ export const ships = {
 export type Ship = keyof typeof ships;
 export type Group = { ship: Ship; before: number; after: number };
 export type Contingent = { owner: string; side: "Attacker" | "Defender"; groups: Group[] };
+// Use the same role icons in every battle report summary and detail page.
+const sideIcons = { Attacker: "⚔️", Defender: "🛡️" } as const;
 export type Battle = {
 	id: string;
 	label: string;
@@ -276,7 +278,7 @@ export function archiveMessage(): FixtureMessage {
 				return {
 					heading: b.label,
 					lines: [
-						`${b.planet} ${b.coordinates} · ${count(s.attacking.before)} vs ${count(s.defending.before)} ships`,
+						`${b.planet} ${b.coordinates} · ${sideIcons.Attacker} ${count(s.attacking.before)} vs ${sideIcons.Defender} ${count(s.defending.before)} ships`,
 					],
 				};
 			}),
@@ -297,7 +299,7 @@ export function reportMessage(battle: Battle): FixtureMessage {
 		...battle.contingents.map((c) => {
 			const total = totals(c.groups);
 			return {
-				heading: `${c.side} · ${c.owner}`,
+				heading: `${sideIcons[c.side]} ${c.owner}`,
 				lines:
 					battle.contingents.length > 2
 						? [
@@ -312,7 +314,7 @@ export function reportMessage(battle: Battle): FixtureMessage {
 			};
 		}),
 		{
-			heading: "Loot · aboard returning ships",
+			heading: "Returning loot",
 			lines: [
 				resources(result.loot[0], result.loot[1]),
 				...(result.won
@@ -348,7 +350,7 @@ export function lossesMessage(battle: Battle, index: number): FixtureMessage {
 			{
 				heading: `${battle.planet} · ship losses ${index + 1}/${battle.contingents.length}`,
 				lines: [
-					`${battle.coordinates} · ${contingent.side}: ${contingent.owner}`,
+					`${battle.coordinates} · ${sideIcons[contingent.side]} ${contingent.owner}`,
 					"Before → survivors · lost",
 					"Sample base stats per ship.",
 				],
@@ -388,10 +390,16 @@ export function resourceMessage(battle: Battle): FixtureMessage {
 				heading: `${battle.planet} · resources`,
 				lines: [battle.coordinates, "Sample defaults: up to 50% looted; 30% salvage."],
 			},
-			{ heading: "Attacker construction losses", lines: [resources(s.attacking.minerals, s.attacking.gas)] },
-			{ heading: "Defender construction losses", lines: [resources(s.defending.minerals, s.defending.gas)] },
 			{
-				heading: "Loot carried home",
+				heading: `${sideIcons.Attacker} Construction losses`,
+				lines: [resources(s.attacking.minerals, s.attacking.gas)],
+			},
+			{
+				heading: `${sideIcons.Defender} Construction losses`,
+				lines: [resources(s.defending.minerals, s.defending.gas)],
+			},
+			{
+				heading: "Returning loot",
 				lines: [
 					resources(s.loot[0], s.loot[1]),
 					...(s.won
@@ -436,14 +444,23 @@ export function roundsMessage(): FixtureMessage {
 			},
 			{
 				heading: "At arrival",
-				lines: ["Joscha: 24 Scout Fighters + 2 Resource Transports", "Defenders: 8 Scout Fighters"],
+				lines: [
+					`${sideIcons.Attacker} Joscha: 24 Scout Fighters + 2 Resource Transports`,
+					`${sideIcons.Defender} Abandoned world: 8 Scout Fighters`,
+				],
 			},
-			{ heading: "Round 1", lines: ["Scout Fighters: Joscha 24 → 22 · defenders 8 → 5"] },
-			{ heading: "Round 2", lines: ["Scout Fighters: Joscha 22 → 20 · defenders 5 → 2"] },
+			{
+				heading: "Round 1",
+				lines: [`Scout Fighters: ${sideIcons.Attacker} 24 → 22 · ${sideIcons.Defender} 8 → 5`],
+			},
+			{
+				heading: "Round 2",
+				lines: [`Scout Fighters: ${sideIcons.Attacker} 22 → 20 · ${sideIcons.Defender} 5 → 2`],
+			},
 			{
 				heading: "Round 3 · victory",
 				lines: [
-					"Scout Fighters: Joscha 20 → 18 · defenders 2 → 0",
+					`Scout Fighters: ${sideIcons.Attacker} 20 → 18 · ${sideIcons.Defender} 2 → 0`,
 					"Both Resource Transports survive.",
 					"18 fighters + 2 transports return with cargo.",
 				],
