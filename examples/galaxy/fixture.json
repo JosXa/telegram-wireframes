@@ -9,7 +9,7 @@
 		{ "from": "user", "text": "/galaxy" },
 		{
 			"from": "bot",
-			"text": "🪐 Vega · 1:14:1\n💠 1 240  🔥 610\n\nExplore the galaxy, your first colonies, or a fully developed eight-planet system.",
+			"text": "🪐 Vega · 🌐 1:14:1\n💠 1 240  🔥 610\n\nExplore the galaxy, your first colonies, or a fully developed eight-planet system.",
 			"reply_markup": {
 				"inline_keyboard": [
 					[{ "text": "🗺 Open galaxy map", "web_app": { "url": "app/index.html" }, "style": "primary" }]

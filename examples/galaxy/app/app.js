@@ -1,6 +1,7 @@
 // Throwaway map study: galaxy, four-planet frontier and eight-planet empire on one route.
 // ?variant=galaxy|young|developed selects the scene. All traffic and settlements are sample state.
 import { classify, multiplicity, stellarSystem } from "./astronomy.js";
+import { count } from "./numbers.js";
 import { createSectorMap } from "./sector-map.js";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -531,7 +532,7 @@ function systemScene() {
 				class: `planet ${planet.owner}`,
 				role: "button",
 				tabindex: 0,
-				"aria-label": `${planet.name}, ${planet.id}, ${biomes[planet.biome].label}, ${planet.owner === "own" ? "your colony" : "unclaimed"}`,
+				"aria-label": `${planet.name}, 🌐 ${planet.id}, ${biomes[planet.biome].label}, ${planet.owner === "own" ? "your colony" : "unclaimed"}`,
 				"data-planet": planet.id,
 			},
 			$("#planets"),
@@ -542,7 +543,7 @@ function systemScene() {
 		element("circle", { r: 34, class: "selected-ring" }, art);
 		planetArt(art, planet, index);
 		element("text", { x: 0, y: 32, "text-anchor": "middle", class: "planet-label" }, group, planet.name);
-		element("text", { x: 0, y: 46, "text-anchor": "middle", class: "coordinate" }, group, planet.id);
+		element("text", { x: 0, y: 46, "text-anchor": "middle", class: "coordinate" }, group, `🌐 ${planet.id}`);
 		element("circle", { r: 32, fill: "transparent", class: "planet-hitbox" }, group);
 		bindSelect(group, () => selectPlanet(planet));
 		if (planet.owner === "own") {
@@ -563,7 +564,7 @@ function systemScene() {
 		}
 		const button = document.createElement("button");
 		button.type = "button";
-		button.innerHTML = `${biomes[planet.biome].icon} ${index + 1}<small>${planet.id}</small>`;
+		button.innerHTML = `${biomes[planet.biome].icon} ${index + 1}<small>🌐 ${planet.id}</small>`;
 		button.setAttribute("aria-label", `Orbit ${index + 1}: ${planet.name}`);
 		button.dataset.orbitSelect = planet.id;
 		button.addEventListener("click", () => selectPlanet(planet, true));
@@ -766,7 +767,7 @@ function paintFleet(fleet) {
 		"title",
 		{},
 		ship,
-		`${state.sender} · ${fleetLabel(state)} · ${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name}`,
+		`${state.sender} · ${fleetLabel(state)} · 🌐 ${fleet.from.id || fleet.from.name} → 🌐 ${fleet.to.id || fleet.to.name}`,
 	);
 	ship.style.display = state.ended ? "none" : "";
 }
@@ -804,7 +805,7 @@ function selectPlanet(planet, approach = false, inspect = true) {
 	}
 	$("#planet-name").textContent = planet.name;
 	$("#planet-meta").textContent =
-		`${planet.home ? "YOUR HOME PLANET" : planet.owner === "own" ? "YOUR COLONY" : "UNCLAIMED WORLD"} · ${planet.id}`;
+		`${planet.home ? "YOUR HOME PLANET" : planet.owner === "own" ? "YOUR COLONY" : "UNCLAIMED WORLD"} · 🌐 ${planet.id}`;
 	$("#planet-biome").textContent = biomes[planet.biome].icon;
 	$("#planet-detail").textContent =
 		`${biomes[planet.biome].label} · ${planet.ships ? `${planet.ships} ships · ${view === "developed" ? "Orbital citadel" : "Outpost"}` : "No settlement"}`;
@@ -923,9 +924,8 @@ function showView(next) {
 	$("#overview").hidden = view === "galaxy";
 	$("#stellar-classification").hidden = view !== "galaxy";
 	$("#stellar-key").hidden = view !== "galaxy";
-	$("#minerals").textContent =
-		`💠 ${(scenes[view]?.minerals || 1240).toLocaleString("en-US").replaceAll(",", " ")}`;
-	$("#gas").textContent = `🔥 ${(scenes[view]?.gas || 610).toLocaleString("en-US").replaceAll(",", " ")}`;
+	$("#minerals").textContent = `💠 ${count(scenes[view]?.minerals || 1240)}`;
+	$("#gas").textContent = `🔥 ${count(scenes[view]?.gas || 610)}`;
 	if (view === "galaxy") galaxy();
 	else systemScene();
 	resize();
@@ -1161,7 +1161,7 @@ function showMovements() {
 			button.type = "button";
 			button.className = `movement-row ${fleetTone(state)}`;
 			button.dataset.movement = state.id;
-			button.innerHTML = `<span class="movement-symbol">${state.own ? "↗" : intelligence(state) ? "👁" : "◇"}</span><span><strong>${fleetLabel(state)}</strong><small>${state.sender} · ${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name}</small></span><span class="arrival-time" ${state.ended ? "" : `data-arrival="${state.arrival}"`}>${state.ended || timeLeft(state.arrival)}</span>`;
+			button.innerHTML = `<span class="movement-symbol">${state.own ? "↗" : intelligence(state) ? "👁" : "◇"}</span><span><strong>${fleetLabel(state)}</strong><small>${state.sender} · 🌐 ${fleet.from.id || fleet.from.name} → 🌐 ${fleet.to.id || fleet.to.name}</small></span><span class="arrival-time" ${state.ended ? "" : `data-arrival="${state.arrival}"`}>${state.ended || timeLeft(state.arrival)}</span>`;
 			button.addEventListener("click", () => openMovement(fleet));
 			list.append(button);
 		}
@@ -1192,7 +1192,7 @@ function openMovement(fleet) {
 	const { state } = fleet,
 		report = intelligence(state);
 	const composition = state.own ? state.composition : report?.composition;
-	detail.innerHTML = `<div class="fleet-title ${fleetTone(state)}"><p class="eyebrow">${state.own ? "YOUR FLEET" : `SENDER · ${state.sender}`}</p><h2>${fleetLabel(state)}</h2><p>${fleet.from.id || fleet.from.name} → ${fleet.to.id || fleet.to.name} · ${state.ended ? state.ended : `<span data-arrival="${state.arrival}">${timeLeft(state.arrival)}</span> · arrival ${clock(state.arrival)}`}</p></div>
+	detail.innerHTML = `<div class="fleet-title ${fleetTone(state)}"><p class="eyebrow">${state.own ? "YOUR FLEET" : `SENDER · ${state.sender}`}</p><h2>${fleetLabel(state)}</h2><p>🌐 ${fleet.from.id || fleet.from.name} → 🌐 ${fleet.to.id || fleet.to.name} · ${state.ended ? state.ended : `<span data-arrival="${state.arrival}">${timeLeft(state.arrival)}</span> · arrival ${clock(state.arrival)}`}</p></div>
 		<p class="verification ${fleetTone(state)}" id="verification">${state.ended ? `Verification expired: movement ${state.ended}.` : report ? `👁 Mission verified at ${clock(report.verifiedAt)} · this leg only` : state.own ? `Travel time fixed at dispatch · ${Math.round((state.arrival - state.departure) / 60000)} min` : "◇ Mission unverified · ship composition unknown"}</p>
 		${
 			composition
