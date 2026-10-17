@@ -144,4 +144,21 @@ element("export").addEventListener("click", () => {
 	URL.revokeObjectURL(url);
 });
 window.addEventListener("hashchange", show);
+let revision: string | undefined;
+async function refreshAfterDeployment() {
+	if (document.hidden || !review.canReload()) return;
+	try {
+		const response = await fetch("/__wireframes__/config.json", { cache: "no-store" });
+		if (!response.ok) return;
+		const current = (await response.json()).revision as string;
+		if (revision && current !== revision) location.reload();
+		else revision = current;
+	} catch {
+		// The preview server can be briefly unavailable while its fixtures rebuild.
+	}
+}
+void refreshAfterDeployment();
+setInterval(refreshAfterDeployment, 5000);
+document.addEventListener("visibilitychange", refreshAfterDeployment);
+window.addEventListener("focus", refreshAfterDeployment);
 navigation();

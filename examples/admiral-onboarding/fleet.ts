@@ -2,7 +2,7 @@ import { admirals, beats, format, styles, words } from "./journey";
 
 const copy = words.miniApp;
 document.title = words.appTitle;
-(document.querySelector("#brand") as HTMLElement).textContent = words.game.toUpperCase();
+(document.querySelector("#brand") as HTMLElement).textContent = words.game;
 (document.querySelector("#badge") as HTMLElement).textContent = words.appBadge;
 
 const query = new URLSearchParams(location.search);
@@ -29,11 +29,11 @@ const quote = () => {
 	};
 };
 function guide() {
-	if (mode === "plain" || stage === "sent") return "";
+	if (stage === "sent") return "";
 	const beat = beats.find((item) => item.id === (stage === "incoming" ? "incoming" : "review"));
 	if (!beat) throw new Error("Missing guidance");
 	const name = format(words.admiral, { name: person.name });
-	return `<section class="guide ${mode === "art" ? "" : "text-only"}">${mode === "art" ? `<img src="art/${style.id}-${person.id}-${beat.art}.jpg" alt="${name}">` : ""}<div><strong>${name}</strong><p>${beat.lines[person.id]}</p></div></section>`;
+	return `<section class="guide ${mode === "art" ? "" : "text-only"}">${mode === "art" ? `<img src="art/${style.id}-${person.id}-${beat.art}.jpg" alt="${name}">` : ""}<div><p>${beat.lines[person.id]}</p></div></section>`;
 }
 function render() {
 	const q = quote();

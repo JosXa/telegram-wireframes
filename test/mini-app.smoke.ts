@@ -243,7 +243,7 @@ try {
 			await app.getByRole("button", { name: "Orbit 2: Kepler", exact: true }).click();
 			// Animated SVGs confuse Playwright's locator stability check; send real pointer input at the hit target.
 			assert.equal(await app.locator("#coordinate-orbit").textContent(), "2");
-			assert.equal(await app.locator("[data-planet='1:14:2'] .coordinate").textContent(), "1:14:2");
+			assert.equal(await app.locator("[data-planet='1:14:2'] .coordinate").textContent(), "🌐 1:14:2");
 			const target = await app.locator("[data-planet='1:14:2'] .planet-hitbox").boundingBox();
 			assert.ok(target);
 			assert.ok(target.width >= 63 && target.height >= 63, "planet targets must remain finger-sized");

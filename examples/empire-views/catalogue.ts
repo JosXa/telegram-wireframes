@@ -47,7 +47,7 @@ export const views = [
 ];
 export const resource = (minerals: string | number, gas: string | number) => `💠 ${minerals}  ·  🔥 ${gas}`;
 const stock = resource("12 400", "6 100");
-const warning = "⚠ Incoming fleet · Nacre 1:214:6 · 20:40\nMission unverified · inspect before acting.";
+const warning = "⚠ Fleet approaching Nacre 🌐 1:214:6 · 20:40\nIts mission is unknown.";
 const cb = (text: string, id: string, style?: InlineKeyboardButton["style"]): InlineKeyboardButton => ({
 	text,
 	callback_data: id,
@@ -74,7 +74,8 @@ const bot: Fixture["bot"] = {
 	first_name: "Space Emperors",
 	username: "spaceemperorsbot",
 	color: 5,
-	description: "A persistent galaxy. Build colonies, coordinate fleets, share intelligence.",
+	description:
+		"Build colonies, send fleets and spy on your neighbours. Anyone with a planet and a fleet calls themselves an emperor here.",
 	commands: [
 		{ command: "colony", description: "Command Center" },
 		{ command: "empire", description: "Your colonies" },
@@ -127,11 +128,11 @@ export const scenes: Scene[] = [
 		"Settled name. A compact check-in with local stocks and independent work tracks; 2 building slots is the playtest default.",
 		[
 			message(
-				`🪐 Nacre · 1:214:6\nCommand Center · 🏝 Tropical · Home planet\n\n${stock}\n💠 +720/h · storage 20 000\n🔥 +240/h · storage 10 000\n\n2 building upgrades running\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\nResearch: Combustion Engine → 5 · 46 min\nShipyard: 4 / 10 Scout Fighters ready\n\n${warning}`,
+				`🪐 Nacre · 🌐 1:214:6\nCommand Center · 🏝 Tropical · Home planet\n\n${stock}\n💠 +720/h · storage 20 000\n🔥 +240/h · storage 10 000\n\n2 building upgrades running\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\nResearch: Combustion Engine → 5 · 46 min\nShipyard: 4 / 10 Scout Fighters ready\n\n${warning}`,
 				[
 					[cb("Buildings", "buildings"), cb("Research", "research")],
 					[cb("Shipyard", "shipyard"), cb("Empire", "empire")],
-					[app("Inspect incoming fleet", "incoming")],
+					[app("Spy on incoming fleet", "incoming")],
 					[map("Open system", "young"), app("Fleet Command", "fleets")],
 				],
 			),
@@ -147,11 +148,11 @@ export const scenes: Scene[] = [
 		"Changing the selected colony changes its stock and work queues. Resources are never pooled.",
 		[
 			message(
-				"🪐 Choose a colony\n\n🏝 Nacre · 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n\n🏔 Rime · 1:218:2\n💠 8 200  ·  🔥 1 800\n\n🌋 Cinder · 1:231:4\n💠 2 100  ·  🔥 9 300",
+				"🪐 Your colonies\nChoose where to give your next orders.\n\n🏝 Nacre · 🌐 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n\n🏔 Rime · 🌐 1:218:2\n💠 8 200  ·  🔥 1 800\n\n🌋 Cinder · 🌐 1:231:4\n💠 2 100  ·  🔥 9 300",
 				[
-					[cb("Nacre · 1:214:6", "command-center")],
-					[cb("Rime · 1:218:2", "storage-full")],
-					[cb("Cinder · 1:231:4", "empire")],
+					[cb("Nacre · 🌐 1:214:6", "command-center")],
+					[cb("Rime · 🌐 1:218:2", "storage-full")],
+					[cb("Cinder · 🌐 1:231:4", "empire")],
 				],
 			),
 		],
@@ -166,7 +167,7 @@ export const scenes: Scene[] = [
 		"Production pauses at capacity in the provisional storage model. Deliveries and cancellation may exceed it; no energy amount is invented.",
 		[
 			message(
-				"🏔 Rime · 1:218:2\nCommand Center · Snowy\n\n💠 20 000 / 20 000\nMineral production paused: storage is full.\n🔥 1 800 / 10 000 · +180/h\n\nBuilding upgrades: 1 / 2 active\nResearch Lab → 4 · 27 min\nShipyard is available",
+				"🏔 Rime · 🌐 1:218:2\nCommand Center · Snowy\n\n💠 20 000 / 20 000\nMineral storage is full, so the mine has stopped production.\n🔥 1 800 / 10 000 · +180/h\n\nBuilding upgrades: 1 / 2 active\nResearch Lab → 4 · 27 min\nShipyard available",
 				[
 					[cb("Review storage", "buildings")],
 					[app("Transport resources", "dispatch")],
@@ -185,11 +186,11 @@ export const scenes: Scene[] = [
 		"Mineral Mine and Atmospheric Harvester are settled. Storage uses a draft unified Logistics Depot. All values are sample balance.",
 		[
 			message(
-				`🏗 Buildings · Nacre 1:214:6\n${stock}\n\nRUNNING · 2 / 2\nMineral Mine 12 → 13 · 18 min\nAtmospheric Harvester 8 → 9 · 32 min\n\nWAITING · already paid\nResearch Lab 4 → 5\n\nAVAILABLE\nLogistics Depot · Level 6\nOrbital Shipyard · Level 4\n\n${warning}`,
+				`🏗 Buildings · Nacre 🌐 1:214:6\n${stock}\n\nIn progress · 2 / 2\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\n\nWaiting\nResearch Lab → 5\n\n${warning}`,
 				[
-					[cb("Mineral Mine · 12 → 13", "building-detail")],
+					[cb("Mineral Mine → 13", "building-detail")],
 					[cb("Logistics Depot · Level 6", "building-detail")],
-					[cb("Manage paid queue", "building-queue")],
+					[cb("Building queue", "building-queue")],
 					[cb("Command Center", "command-center")],
 				],
 			),
@@ -205,7 +206,7 @@ export const scenes: Scene[] = [
 		"Queueing pays immediately. Example effects and prices are illustrative, and storage remains a design choice.",
 		[
 			message(
-				`🏗 Logistics Depot · 6 → 7\nNacre · 1:214:6\n\nStorage capacity\n💠 20 000 → 26 000\n🔥 10 000 → 13 000\n\nCost: ${resource("2 400", "800")}\nAfter payment: ${resource("10 000", "5 300")}\nDuration: 24 min once started\n\nBoth building slots are occupied.\nJoins the paid waiting queue.`,
+				`🏗 Logistics Depot · 6 → 7\nNacre · 🌐 1:214:6\n\nStorage capacity\n💠 20 000 → 26 000\n🔥 10 000 → 13 000\n\nCost: ${resource("2 400", "800")}\nRemaining stock: ${resource("10 000", "5 300")}\nDuration: 24 min\n\nThis upgrade will wait behind Research Lab level 5.`,
 				[
 					[cb("Queue upgrade · Level 7", "building-queue", "success")],
 					[cb("Back to buildings", "buildings")],
@@ -223,7 +224,7 @@ export const scenes: Scene[] = [
 		"No refund wording at the initial 100% rate. Reordering is not offered because its rules remain open.",
 		[
 			message(
-				"🏗 Building queue · Nacre\n\nRUNNING\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\n\nWAITING · already paid\n1. Research Lab → 5\n2. Logistics Depot → 7\n\nWaiting work starts when a building slot opens.",
+				"🏗 Building queue · Nacre\n\nIn progress\nMineral Mine → 13 · 18 min\nAtmospheric Harvester → 9 · 32 min\n\nWaiting\n1. Research Lab → 5\n2. Logistics Depot → 7",
 				[
 					[cb("Cancel Mineral Mine → 13", "queue-cancelled")],
 					[cb("Cancel Logistics Depot → 7", "queue-cancelled")],
@@ -242,8 +243,8 @@ export const scenes: Scene[] = [
 		"The cancelled paid amount returns to this colony. This snapshot follows cancelling Logistics Depot level 7.",
 		[
 			message(
-				`✓ Logistics Depot upgrade cancelled\nNacre · 1:214:6\n\n${stock}\n\nResearch Lab → 5 is still waiting.\n2 building upgrades continue.`,
-				[[cb("Buildings", "buildings"), cb("Paid queue", "building-queue")]],
+				`✓ Logistics Depot upgrade cancelled\nNacre · 🌐 1:214:6\n\n${stock}\n\nThe resources are back in storage.\nResearch Lab level 5 is still waiting behind 2 building upgrades.`,
+				[[cb("Buildings", "buildings"), cb("Building queue", "building-queue")]],
 			),
 		],
 		["buildings", "building-queue"],
@@ -257,7 +258,7 @@ export const scenes: Scene[] = [
 		"Example dependency only, not an approved tech tree. Ineligible work stays paid and cancellable while eligible work can start.",
 		[
 			message(
-				"⏸ Research Lab → 5 is waiting\nNacre · 1:214:6\n\nMissing prerequisite in this example:\nHeadquarters level 5\n\nIts prerequisite upgrade was cancelled.\nThis work stays in your paid queue.\nOther eligible work can start.",
+				"⏸ Research Lab → 5 is waiting\nNacre · 🌐 1:214:6\n\nThe Headquarters upgrade was cancelled, so the lab still needs Headquarters level 5.\nQueue that upgrade again or cancel the lab upgrade.\n\nOther eligible work can start.",
 				[
 					[cb("View prerequisite", "building-detail")],
 					[cb("Cancel Research Lab → 5", "queue-cancelled")],
@@ -277,7 +278,7 @@ export const scenes: Scene[] = [
 		"Draft view label. One player-wide research track is the provisional default; Nacre pays for this queue.",
 		[
 			message(
-				`🔬 Research\nApplies across your colonies this season\n\nRUNNING AT NACRE\nCombustion Engine 4 → 5 · 46 min\nPaid from Nacre · 1:214:6\n\nWAITING · already paid\nLaser Cannon 2 → 3\n\nCOMPLETED\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\n${warning}`,
+				`🔬 Research\nYour colonies share these discoveries.\n\nIn progress at Nacre · 🌐 1:214:6\nCombustion Engine → 5 · 46 min\n\nWaiting\nLaser Cannon → 3\n\nCompleted\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\n${warning}`,
 				[
 					[cb("Combustion Engine · Level 4", "research-detail")],
 					[cb("Cancel Laser Cannon → 3", "research-empty")],
@@ -297,10 +298,10 @@ export const scenes: Scene[] = [
 		"Example research benefit, cost and duration. No dependency or balance curve is approved by this wireframe.",
 		[
 			message(
-				`🔬 Solar Sails · 1 → 2\nApplies across all your colonies\n\nExample effect: greater travel speed\nNew speeds apply to future dispatches.\nFleets already in flight keep their arrival times.\n\nPaid from Nacre · 1:214:6\n${stock}\nCost: ${resource("3 600", "1 800")}\nDuration: 1h 20m once started\n\nJoins your research queue.`,
+				`🔬 Solar Sails · 1 → 2\nFleets you dispatch after this upgrade will travel faster.\n\nResources from Nacre · 🌐 1:214:6\n${stock}\nCost: ${resource("3 600", "1 800")}\nDuration: 1h 20m\n\nThis upgrade will join your research queue.`,
 				[
 					[cb("Queue research · Level 2", "research")],
-					[cb("Change paying colony", "colony-picker")],
+					[cb("Choose another colony", "colony-picker")],
 					[cb("Research", "research")],
 				],
 			),
@@ -316,7 +317,7 @@ export const scenes: Scene[] = [
 		"An empty track gives a useful action without idle reminders or pressure to return.",
 		[
 			message(
-				`🔬 Research\nNo research running or waiting\n\nYour completed research still applies:\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\nNacre · 1:214:6\n${stock}`,
+				`🔬 Research\nNo research is running or waiting.\nThe lab has put the kettle on.\n\nCompleted\nCombustion Engine · 4\nLaser Cannon · 2\nSolar Sails · 1\n\nNacre · 🌐 1:214:6\n${stock}`,
 				[[cb("Choose research", "research-detail")], [cb("Tech tree", "tech-tree")]],
 			),
 		],
@@ -331,12 +332,8 @@ export const scenes: Scene[] = [
 		"A deliberately marked example tree, because the complete prerequisite graph is still undecided.",
 		[
 			message(
-				"🔬 Tech tree · example dependencies\n\n✓ Research Lab · Level 4\n  ↳ Combustion Engine · Level 4\n  ↳ Laser Cannon · Level 2\n\n○ Advanced ship construction\n  Prerequisites still under design\n\nColony ships are a substantial investment.\nTheir gate and price curve are not settled.",
-				[
-					[cb("Combustion Engine", "research-detail")],
-					[off("Colony Ship · gate undecided")],
-					[cb("Research", "research")],
-				],
+				"🔬 Tech tree\n\n✓ Research Lab · Level 4\n  ↳ Combustion Engine · Level 4\n  ↳ Laser Cannon · Level 2\n\nExpansion\nColony Ship\nYour colonies: 3",
+				[[cb("Combustion Engine", "research-detail")], [off("Colony Ship")], [cb("Research", "research")]],
 			),
 		],
 		["research", "shipyard-locked"],
@@ -351,7 +348,7 @@ export const scenes: Scene[] = [
 		"Orbital Shipyard and Scout Fighter are draft labels. Four finished ships are already available; the unfinished six remain cancellable.",
 		[
 			message(
-				`🛠 Shipyard · Nacre 1:214:6\nOrbital Shipyard · Level 4\n${stock}\n\nRUNNING\nScout Fighter · 4 / 10 complete\nNext ship: 2 min · batch: 12 min\nCompleted ships are already stationed.\n\nWAITING · already paid\nResource Transport × 2\n\nYOUR STATIONED SHIPS\nScout Fighter × 24\nResource Transport × 6`,
+				`🛠 Shipyard · Nacre 🌐 1:214:6\nOrbital Shipyard · Level 4\n${stock}\n\nIn progress\nScout Fighter · 4 / 10 complete\nNext ship: 2 min · batch: 12 min\n\nWaiting\nResource Transport × 2\n\nYour stationed ships\nScout Fighter × 24\nResource Transport × 6`,
 				[
 					[cb("Build ships", "ship-batch")],
 					[cb("Cancel 6 unfinished ships", "ship-batch-cancelled")],
@@ -371,7 +368,7 @@ export const scenes: Scene[] = [
 		"The batch is paid in full when queued. Values and ship characteristics are sample state.",
 		[
 			message(
-				`🛠 Scout Fighter × 10\nFast · fragile · small cargo hold\n\nBatch cost: ${resource("2 000", "500")}\n2 min per ship once started\nEach completed ship becomes available.\n\nAlready queued: 1 active, 1 waiting\nThis batch joins the waiting queue.`,
+				`🛠 Scout Fighter × 10\nFast · fragile · small cargo hold\n\nBatch cost: ${resource("2 000", "500")}\nDuration: 2 min per ship\n\nShip batches: 1 in progress · 1 waiting\nThese ships will follow the waiting batch.`,
 				[
 					[cb("− 1", "ship-batch"), cb("10 ships", "ship-batch"), cb("+ 1", "ship-batch")],
 					[cb("Build 10 ships", "shipyard", "success")],
@@ -390,7 +387,7 @@ export const scenes: Scene[] = [
 		"Unaffordable actions use Telegram's disabled button support. Resources come from the selected colony.",
 		[
 			message(
-				`🛠 Scout Fighter × 100\nNacre · 1:214:6\n\nCost: ${resource("20 000", "5 000")}\nAvailable: ${stock}\n\nNeed 💠 7 600 more at Nacre.\nChoose a smaller batch or transport resources.`,
+				`🛠 Scout Fighter × 100\nNacre · 🌐 1:214:6\n\nCost: ${resource("20 000", "5 000")}\nAvailable: ${stock}\n\nNacre needs 💠 7 600 more minerals for these ships.\nChoose a smaller batch or transport resources here.`,
 				[
 					[off("Build 100 · insufficient 💠 minerals")],
 					[cb("Choose 10 ships", "ship-batch")],
@@ -409,7 +406,7 @@ export const scenes: Scene[] = [
 		"Only the six unfinished ships are cancelled; four completed ships remain usable. No full-refund wording appears.",
 		[
 			message(
-				"✓ 6 unfinished Scout Fighters cancelled\nNacre · 1:214:6\n\n4 completed ships remain stationed.\nResource Transport × 2 has started.\n\n💠 13 600  ·  🔥 6 400",
+				"✓ 6 unfinished Scout Fighters cancelled\nNacre · 🌐 1:214:6\n\nThe 4 completed ships remain stationed, and work has started on Resource Transport × 2.\nThe unused resources are back in storage.\n\n💠 13 600  ·  🔥 6 400",
 				[[cb("Shipyard", "shipyard")], [app("Stationed ships", "stationed")]],
 			),
 		],
@@ -424,12 +421,8 @@ export const scenes: Scene[] = [
 		"The colony ship's final gates and increasing price are unresolved, so this state shows that explicitly instead of inventing them.",
 		[
 			message(
-				"🛠 Colony Ship\nFounds a colony on a free planet\n\nExpansion is a substantial investment.\nCost increases with owned planets.\n\nDESIGN PREVIEW\nPrerequisites and price curve are undecided.\nYou currently own 3 colonies.",
-				[
-					[off("Production gate under design")],
-					[map("Find a free planet", "young")],
-					[cb("Shipyard", "shipyard")],
-				],
+				"🛠 Colony Ship\nA Colony Ship founds your next colony on a free planet.\nThe cost rises with the number of planets you own.\n\nYour colonies: 3",
+				[[off("Colony Ship")], [map("Find a free planet", "young")], [cb("Shipyard", "shipyard")]],
 			),
 		],
 		["galaxy-map", "system-view", "tech-tree"],
@@ -444,7 +437,7 @@ export const scenes: Scene[] = [
 		"Each colony keeps its resource pool. Biome affects gas production; the example rates do not select multipliers.",
 		[
 			message(
-				"🏛 Empire · 3 colonies\n\n🏝 Nacre · 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n💠 +720/h  ·  🔥 +240/h\nBuildings 2 / 2 · Shipyard 4 / 10\n⚠ 1 incoming fleet · 20:40\n\n🏔 Rime · 1:218:2\n💠 8 200  ·  🔥 1 800\n💠 +540/h  ·  🔥 +180/h\nBuildings 1 / 2 · Shipyard available\n\n🌋 Cinder · 1:231:4\n💠 2 100  ·  🔥 9 300\n💠 +360/h  ·  🔥 +410/h\nBuildings 1 / 2 · Shipyard 1 / 4",
+				"🏛 Empire · 3 colonies\n\n🏝 Nacre · 🌐 1:214:6 · Home planet\n💠 12 400  ·  🔥 6 100\n💠 +720/h  ·  🔥 +240/h\nBuildings 2 / 2 · Shipyard 4 / 10\n⚠ 1 incoming fleet · 20:40\n\n🏔 Rime · 🌐 1:218:2\n💠 8 200  ·  🔥 1 800\n💠 +540/h  ·  🔥 +180/h\nBuildings 1 / 2 · Shipyard available\n\n🌋 Cinder · 🌐 1:231:4\n💠 2 100  ·  🔥 9 300\n💠 +360/h  ·  🔥 +410/h\nBuildings 1 / 2 · Shipyard 1 / 4",
 				[
 					[cb("Nacre", "command-center"), cb("Rime", "storage-full")],
 					[app("Move resources", "dispatch")],
@@ -463,8 +456,8 @@ export const scenes: Scene[] = [
 		"Draft label and later concept only. Automatic routes are explicitly outside V1; this wireframe directs the player to manual dispatch.",
 		[
 			message(
-				"📦 Supply Routes · later concept\n\nAutomatic transfers are outside V1.\nFor now, dispatch ships with cargo.\n\nNacre · 1:214:6 → Rime · 1:218:2\nChoose ships, cargo and arrival time\nfor each transport.",
-				[[app("Prepare a manual transport", "dispatch")], [cb("Empire", "empire")]],
+				"📦 Supply Routes\nPrepare a transport between your colonies.\n\nNacre · 🌐 1:214:6 → Rime · 🌐 1:218:2\n\nYour cargo needs ships, however impressive the shipping manifest looks.",
+				[[app("Prepare transport", "dispatch")], [cb("Empire", "empire")]],
 			),
 		],
 		["dispatch", "empire"],
@@ -479,7 +472,7 @@ export const scenes: Scene[] = [
 		"Draft view label. Own missions are visible; others' incoming missions stay unknown. Recall is available only outbound.",
 		[
 			message(
-				`🚀 Fleet Command\nNacre · 1:214:6\n\n1 outbound · 1 returning\n1 unverified incoming fleet\n\n${warning}`,
+				`🚀 Fleet Command\nNacre · 🌐 1:214:6\n\n1 outbound · 1 returning\n1 incoming fleet with an unknown mission\n\n${warning}`,
 				[
 					[cb("Your ship lineup", "fleet-lineup")],
 					[app("Open Fleet Command", "fleets")],
@@ -511,7 +504,7 @@ export const scenes: Scene[] = [
 		"Interactive manual dispatch. Departure is immediate. Speed changes arrival and illustrative gas cost; the minimum speed and curve remain proposals.",
 		[
 			message(
-				`🚀 Prepare a fleet\nOrigin: Nacre · 1:214:6\n${stock}\n\nChoose owned ships, target, mission and cargo.\nPick an arrival time within the fleet's speed bounds.`,
+				`🚀 Prepare a fleet\nOrigin: Nacre · 🌐 1:214:6\n${stock}\n\nChoose your ships, target, mission and cargo.`,
 				[[app("Prepare dispatch", "dispatch")]],
 			),
 		],
@@ -526,10 +519,9 @@ export const scenes: Scene[] = [
 		warfare,
 		"The quoted sample totals reserve travel gas for both legs. Attacking an ally requires an extra explicit confirmation.",
 		[
-			message(
-				"🚀 Review dispatch\nYour ships leave when you confirm.\n\nTravel time stays fixed during flight.",
-				[[app("Review dispatch", "confirm")]],
-			),
+			message("🚀 Review dispatch\nYour fleet is ready for your order.", [
+				[app("Review dispatch", "confirm")],
+			]),
 		],
 		["dispatch", "fleet-dispatched", "ally-attack"],
 		{ launch: "Review dispatch" },
@@ -543,7 +535,7 @@ export const scenes: Scene[] = [
 		"Deliberate betrayal is possible under the arrival defaults. This confirmation never certifies someone else's unknown mission.",
 		[
 			message(
-				"⚠ Attack an alliance member\nTarget: Beacon · 1:219:3\nOwner: Mira · your alliance\n\nThis is an attack mission.",
+				"⚠ Attack an alliance member\nTarget: Beacon · 🌐 1:219:3\nOwner: Mira · your alliance\n\nYou're about to attack Mira's colony.\nThe alliance group will have something to discuss.",
 				[[app("Review allied target", "ally-attack")]],
 			),
 		],
@@ -559,7 +551,7 @@ export const scenes: Scene[] = [
 		"A completed local preview updates ships and resources once. It does not contact a game server.",
 		[
 			message(
-				"✓ Transport dispatched\nNacre 1:214:6 → Rime 1:218:2\n\nResource Transport × 2\nCargo: 💠 2 000  ·  🔥 500\nArrival: 19:35 · Return: 20:50\nTravel gas reserved: 🔥 180",
+				"✓ Transport dispatched\nNacre 🌐 1:214:6 → Rime 🌐 1:218:2\n\nResource Transport × 2\nCargo: 💠 2 000  ·  🔥 500\nArrival: 19:35 · Return: 20:50\nTravel gas: 🔥 180",
 				[[app("View movement", "dispatched")]],
 			),
 		],
@@ -575,8 +567,8 @@ export const scenes: Scene[] = [
 		"Returning fleets cannot be recalled. Withdrawing stationed ships is a separate action from recall.",
 		[
 			message(
-				"↙ Fleet returning\nAsh 1:214:8 → Nacre 1:214:6\n\nScout Fighter × 18\nResource Transport × 2\nCargo: 💠 2 688  ·  🔥 672\nArrival: 19:10\n\nThis fleet is already returning.",
-				[[off("Recall unavailable on return")], [app("Fleet movements", "fleets")]],
+				"↙ Fleet returning\nAsh 🌐 1:214:8 → Nacre 🌐 1:214:6\n\nScout Fighter × 18\nResource Transport × 2\nReturning loot: 💠 2 688  ·  🔥 672\nArrival: 19:10",
+				[[off("Returning to Nacre")], [app("Fleet movements", "fleets")]],
 			),
 		],
 		["fleets", "stationed"],
@@ -589,7 +581,7 @@ export const scenes: Scene[] = [
 		warfare,
 		"The host cannot dispatch visiting ships. Withdraw is available for your contingent stationed at another player's colony.",
 		[
-			message("🛡 Stationed ships\nOwned ships and visiting reinforcements remain separate.", [
+			message("🛡 Stationed ships\nReview your ships and visiting reinforcements.", [
 				[cb("Ship lineup & stats", "fleet-lineup")],
 				[app("Open stationed ships", "stationed")],
 			]),
@@ -606,12 +598,12 @@ export const scenes: Scene[] = [
 		"An allied sender is not evidence of a friendly mission. Investigation is a sample response, with no approved drone count, range or success formula.",
 		[
 			message(
-				`⚠ Incoming fleet\nMira · Beacon 1:219:3 → Nacre 1:214:6\nArrival: 20:40\n\nMission and ship composition unknown.\nMira is in your alliance.`,
-				[[app("Inspect fleet", "incoming")]],
+				`⚠ Incoming fleet\nMira · Beacon 🌐 1:219:3 → Nacre 🌐 1:214:6\nArrival: 20:40\n\nMira is in your alliance, but the fleet's mission and ships are unknown.\nThe reception committee has left the banner rolled up.`,
+				[[app("Spy on fleet", "incoming")]],
 			),
 		],
 		["fleet-verified", "fleet-scan-failed", "alliance", "stationed"],
-		{ launch: "Inspect fleet" },
+		{ launch: "Spy on fleet" },
 	),
 	scene(
 		"fleet-verified",
@@ -622,12 +614,12 @@ export const scenes: Scene[] = [
 		"Verification is attached to the current leg, not a 14-day fleet guarantee. The app includes a preview control for recall or arrival expiry.",
 		[
 			message(
-				"👁 Reinforcements incoming\nMira → Nacre 1:214:6\nVerified at 18:12 · current leg only\n\nScout Fighter × 12\nCargo unknown\nArrival: 20:40\n\nRecall, arrival or a replacement leg ends this verification.",
-				[[app("Inspect verification", "verified")]],
+				"👁 Reinforcements incoming\nMira → Nacre 🌐 1:214:6\nEspionage report · 18:12\n\nScout Fighter × 12\nCargo unknown\nArrival: 20:40\n\nMira's fleet is bringing reinforcements.\nThe reception committee can unroll the banner.",
+				[[app("View fleet report", "verified")]],
 			),
 		],
 		["fleet-report-expired", "incoming", "intelligence"],
-		{ launch: "Inspect verification" },
+		{ launch: "View fleet report" },
 	),
 	scene(
 		"fleet-scan-failed",
@@ -638,12 +630,12 @@ export const scenes: Scene[] = [
 		"A failed scan leaves mission and composition unknown. It never turns the fleet into a reinforcement.",
 		[
 			message(
-				"👁 No new information\nMira → Nacre 1:214:6\nInvestigation at 18:12\n\n⚠ Incoming fleet · 20:40\nMission unverified\nShip composition unknown",
-				[[app("Inspect incoming fleet", "scan-failed")], [cb("Intelligence", "intelligence")]],
+				"👁 Espionage revealed nothing\nMira → Nacre 🌐 1:214:6\nEspionage attempt · 18:12\n\n⚠ Incoming fleet · 20:40\nMission unknown\nShips unknown\n\nThe report arrived in a very confidential envelope.",
+				[[app("View incoming fleet", "scan-failed")], [cb("Intelligence", "intelligence")]],
 			),
 		],
 		["incoming", "intelligence"],
-		{ launch: "Inspect incoming fleet" },
+		{ launch: "View incoming fleet" },
 	),
 	scene(
 		"fleet-report-expired",
@@ -654,7 +646,7 @@ export const scenes: Scene[] = [
 		"The historical snapshot remains readable, but cannot verify a replacement movement.",
 		[
 			message(
-				"👁 Fleet report · historical\nMira → Nacre 1:214:6\nVerified 10 Oct · 18:12\n\nSnapshot: Reinforcement mission\nScout Fighter × 12\n\nThis movement was recalled at 18:26.\nIts verification is no longer current.",
+				"👁 Fleet report · recalled\nMira → Nacre 🌐 1:214:6\nEspionage report · 10 Oct · 18:12\n\nMission: Reinforcements\nScout Fighter × 12\n\nMira recalled this fleet at 18:26.",
 				[[app("Current movements", "fleets")], [cb("Intelligence", "intelligence")]],
 			),
 		],
@@ -668,10 +660,9 @@ export const scenes: Scene[] = [
 		ui,
 		"Reuses the optimized 4,921-system sector map. Full-galaxy sector layout and fog-of-war rules remain open; exposed map data is illustrative.",
 		[
-			message(
-				"🗺 Galaxy Map\nYour neighbourhood in one sector\n\nSelect a hex to inspect its stellar system.\nZoom out for the sector; pan to explore.",
-				[[map("Open Galaxy Map", "galaxy")]],
-			),
+			message("🗺 Galaxy Map\nExplore your sector and choose a star system.", [
+				[map("Open Galaxy Map", "galaxy")],
+			]),
 		],
 		["system-view", "dispatch", "incoming"],
 		{ launch: "Open Galaxy Map" },
@@ -684,10 +675,9 @@ export const scenes: Scene[] = [
 		ui,
 		"Reuses the existing four-planet study with interactive orbits. A separate chat snapshot shows the rendered hexagonal system view.",
 		[
-			message(
-				"🪐 System View\nPlanets, ownership and visible movements\n\n⚠ Incoming fleets remain visible on the map.\nTap a marker for intelligence.",
-				[[map("Open System View", "young")]],
-			),
+			message("🪐 System View\nChoose a planet or follow a fleet's approach.", [
+				[map("Open System View", "young")],
+			]),
 		],
 		["system-chat", "system-developed", "incoming", "planet-card"],
 		{ launch: "Open System View" },
@@ -700,7 +690,7 @@ export const scenes: Scene[] = [
 		ui,
 		"Existing eight-planet map study: orbital stations, patrols and transport movements, with planets sized for touch selection.",
 		[
-			message("🪐 Aurelia · established system\n8 colonies and orbital infrastructure", [
+			message("🪐 Aurelia\n8 colonies share this star.\nThe property boundaries extend into orbit.", [
 				[map("Open established system", "developed")],
 			]),
 		],
@@ -719,10 +709,10 @@ export const scenes: Scene[] = [
 				from: "bot",
 				photo: "system.png",
 				caption:
-					"🪐 Solara · Sector 1 · System 214\n8 orbits · Nacre at 1:214:6\n⚠ Incoming fleet to Nacre · 20:40\n👁 Ash · report valid until 23 Oct",
+					"🪐 Solara · Sector 1 · System 214\n8 orbits · Nacre at 🌐 1:214:6\n⚠ Incoming fleet to Nacre · 20:40\n👁 Ash · report valid until 23 Oct",
 				reply_markup: {
 					inline_keyboard: [
-						[cb("Nacre · 1:214:6", "command-center"), cb("Ash · 1:214:8", "planet-report")],
+						[cb("Nacre · 🌐 1:214:6", "command-center"), cb("Ash · 🌐 1:214:8", "planet-report")],
 						[map("Explore system", "young")],
 					],
 				},
@@ -739,11 +729,11 @@ export const scenes: Scene[] = [
 		"Draft archive label. Planet snapshots and movement-leg verification have different lifetimes.",
 		[
 			message(
-				"👁 Intelligence\n\nPLANET REPORTS\nAsh · 1:214:8\n9 Oct · 18:12 · valid until 23 Oct\n\nCairn · 1:228:5\n21 Sep · 10:04 · expired\n\nFLEET REPORTS\nMira → Nacre · 10 Oct · 18:12\nReinforcements · current leg\n\nOrin → Nacre · 9 Oct · 09:10\nHistorical · fleet arrived",
+				"👁 Intelligence\n\nPlanet reports\nAsh · 🌐 1:214:8\n9 Oct · 18:12 · valid until 23 Oct\n\nCairn · 🌐 1:228:5\n21 Sep · 10:04 · expired\n\nFleet reports\nMira → Nacre · 10 Oct · 18:12\nReinforcements · approaching\n\nOrin → Nacre · 9 Oct · 09:10\nArchived · fleet arrived",
 				[
-					[cb("Ash · current snapshot", "planet-report")],
-					[cb("Cairn · expired snapshot", "planet-report-expired")],
-					[cb("Mira · movement verification", "fleet-verified")],
+					[cb("Ash: espionage report", "planet-report")],
+					[cb("Cairn: expired report", "planet-report-expired")],
+					[cb("Mira: fleet report", "fleet-verified")],
 				],
 			),
 		],
@@ -758,10 +748,10 @@ export const scenes: Scene[] = [
 		"The 14-day marker is not a live feed. Share publishes only this dated report.",
 		[
 			message(
-				"👁 Ash · 1:214:8\nSnapshot: 9 Oct · 18:12\nValid until 23 Oct · 18:12\n\n🏜 Wasteland · Abandoned world\n💠 6 400  ·  🔥 1 600\nStationed ships: Scout Fighter × 8\nBuildings and queued work: unknown\n\nThese values may have changed.",
+				"👁 Ash · 🌐 1:214:8\nEspionage report · 9 Oct · 18:12\nValid until 23 Oct · 18:12\n\n🏜 Wasteland · Abandoned world\n💠 6 400  ·  🔥 1 600\nStationed ships: Scout Fighter × 8\nBuildings and queued work: unknown\n\nAsh has no active owner, but 8 Scout Fighters still disagree with visitors.",
 				[
 					[app("Prepare an attack", "attack")],
-					[{ text: "Share this snapshot", switch_inline_query: "report:ash-20261009" }],
+					[{ text: "Share espionage report", switch_inline_query: "report:ash-20261009" }],
 					[cb("Intelligence", "intelligence")],
 				],
 			),
@@ -777,8 +767,8 @@ export const scenes: Scene[] = [
 		"Expired reports lose their current map marker. Their old values remain historical, without claiming current access.",
 		[
 			message(
-				"👁 Cairn · 1:228:5 · expired\nSnapshot: 21 Sep · 10:04\nExpired: 5 Oct · 10:04\n\nHistorical resources\n💠 4 200  ·  🔥 900\n\nCurrent resources and stationed ships unknown.\nNo current 👁 marker on this planet.",
-				[[off("Investigation unavailable · outside sample range")], [cb("Intelligence", "intelligence")]],
+				"👁 Cairn · 🌐 1:228:5 · expired\nEspionage report · 21 Sep · 10:04\nExpired: 5 Oct · 10:04\n\nResources on 21 Sep\n💠 4 200  ·  🔥 900\n\nCairn's current resources and stationed ships are unknown.\nThe map pin has outlived its usefulness.",
+				[[off("Outside espionage range")], [cb("Intelligence", "intelligence")]],
 			),
 		],
 		["intelligence", "planet-report"],
@@ -792,7 +782,7 @@ export const scenes: Scene[] = [
 		"A selected snapshot intended for inline sharing. This preview sends nothing to a real chat.",
 		[
 			message(
-				"🪐 Nacre · 1:214:6\n🏝 Tropical · Colony of Joscha\nAlliance: Meridian\n\nShared 10 Oct · 18:20\nResource stocks and queues are private.",
+				"🪐 Nacre · 🌐 1:214:6\n🏝 Tropical · Colony of Joscha\nAlliance: Meridian\n\nShared 10 Oct · 18:20",
 				[
 					[{ text: "Share planet card", switch_inline_query: "planet:1:214:6" }],
 					[map("View system", "young")],
@@ -810,9 +800,9 @@ export const scenes: Scene[] = [
 		"Draft view label. Group actions are only mock buttons, and no real group link or outbound message is used.",
 		[
 			message(
-				"🤝 Meridian\nAlliance · 12 members · English\n\nOwner: Mira\nJoin policy: approval\nMinimum trophy count: 500\n\n⚠ Nacre · fleet arrives 20:40\nMission unverified · sender Mira\n\nLatest battle: Ash · 18:04\nJoscha won · report available",
+				"🤝 Meridian\nAlliance · 12 members · English\n\nOwner: Mira\nJoin policy: approval\nMinimum trophy count: 500\n\n⚠ Nacre · fleet arrives 20:40\nMission unknown · sender Mira\n\nLatest battle: Ash · 18:04\nJoscha won · battle report ready",
 				[
-					[cb("Open alliance group · preview", "alliance-group")],
+					[cb("Alliance group", "alliance-group")],
 					[cb("Member roster", "alliance-roster"), cb("Join policy", "alliance-manage")],
 					[app("Coordinate reinforcements", "reinforce")],
 				],
@@ -829,8 +819,8 @@ export const scenes: Scene[] = [
 		"Content proposal shown in a private fixture because the renderer does not yet support group peers. Aggregate events and avoid repeated mentions.",
 		[
 			message(
-				"🛡 Meridian · fleet summary\n\nNacre · 1:214:6\n1 incoming fleet · arrival 20:40\nMira · mission unverified\n\n12 allied ships already stationed\nInspect the movement before coordinating.",
-				[[app("Inspect movement", "incoming")], [app("Prepare reinforcements", "reinforce")]],
+				"🛡 Meridian · fleet summary\n\nNacre · 🌐 1:214:6\n1 incoming fleet · arrival 20:40\nMira · mission unknown\n\nReinforcements stationed: 12 ships\n\nMira's fleet is approaching Nacre, but its mission is still unknown.",
+				[[app("Spy on fleet", "incoming")], [app("Prepare reinforcements", "reinforce")]],
 			),
 		],
 		["alliance", "incoming", "stationed"],
@@ -863,10 +853,10 @@ export const scenes: Scene[] = [
 		"Owner-only scenario. Kick allows a new application; ban blocks rejoining. No real membership changes occur.",
 		[
 			message(
-				"🤝 Meridian · owner controls\nPreview as Mira\n\nJoin policy: approval\nMinimum trophy count: 500\nLanguage: English\n\nSelected member: Elian\nKick: may apply again\nBan: cannot rejoin",
+				"🤝 Meridian · alliance controls\nOwner: Mira\n\nJoin policy: approval\nMinimum trophy count: 500\nLanguage: English\n\nSelected member: Elian",
 				[
 					[cb("Change join policy", "alliance-manage")],
-					[cb("Kick Elian · review", "alliance-remove"), cb("Ban Elian · review", "alliance-remove")],
+					[cb("Kick Elian", "alliance-remove"), cb("Ban Elian", "alliance-remove")],
 					[cb("Member roster", "alliance-roster")],
 				],
 			),
@@ -881,13 +871,10 @@ export const scenes: Scene[] = [
 		design,
 		"Destructive membership changes need an explicit review. This snapshot demonstrates the ban variant.",
 		[
-			message(
-				"Ban Elian from Meridian?\n\nElian will leave the alliance and cannot rejoin.\nUse Kick instead if a later application should be allowed.",
-				[
-					[cb("Confirm ban · preview", "alliance-roster", "danger")],
-					[cb("Keep membership", "alliance-roster")],
-				],
-			),
+			message("Ban Elian from Meridian?\n\nElian will leave the alliance and won't be able to rejoin.", [
+				[cb("Ban Elian", "alliance-roster", "danger")],
+				[cb("Keep Elian", "alliance-roster")],
+			]),
 		],
 		["alliance-roster", "alliance-manage"],
 	),
@@ -903,7 +890,7 @@ export const scenes: Scene[] = [
 				"🤝 Find an alliance\nYour trophies: 🏆 1 240\n\nMeridian · English · 12 members\nApproval · minimum 🏆 500\n\nWayfarers · German · 8 members\nOpen · minimum 🏆 200\n\nZenith · English · 18 members\nApproval · minimum 🏆 2 000",
 				[
 					[cb("Apply to Meridian", "alliance-pending")],
-					[cb("Join Wayfarers · preview", "alliance")],
+					[cb("Join Wayfarers", "alliance")],
 					[off("Zenith · requires 🏆 2 000")],
 				],
 			),
@@ -919,7 +906,7 @@ export const scenes: Scene[] = [
 		"No repeated prompts or assumption that the alliance owner has read the request.",
 		[
 			message(
-				"🤝 Application sent to Meridian\n\nApproval is pending.\nYou can keep playing while the owner decides.",
+				"🤝 Application sent to Meridian\n\nYour application is waiting for Mira's approval.\nThe imperial seal has made its first impression.",
 				[[cb("Find alliances", "alliance-join")], [cb("Command Center", "command-center")]],
 			),
 		],
@@ -988,10 +975,10 @@ export const scenes: Scene[] = [
 		"Leading proposal, not settled behavior: 6 rounds across a 5-minute window. Only this planet's spending, cancellation and stationed ships are locked.",
 		[
 			message(
-				"⚔ Battle at Nacre · 1:214:6\nPROPOSED TIMED-BATTLE STATE\nRound 3 / 6 · ends in 2m 30s\n\nProduction and paid work continue.\nNewly completed ships join next round.\nSpending, cancelling and stationed ships\nare locked here until the battle ends.\n\nYour other colonies remain available.",
+				"⚔ Battle at Nacre · 🌐 1:214:6\nRound 3 / 6 · ends in 2m 30s\n\nA battle is raging above Nacre, so new orders and cancellations must wait until it ends.\nExisting work and production continue, and newly completed ships join the next round.\nThe construction site has put out a second traffic cone.",
 				[
-					[off("Buildings · locked during battle")],
-					[off("Dispatch from Nacre · ships in battle")],
+					[off("Buildings: battle in progress")],
+					[off("Nacre's ships are in battle")],
 					[cb("Choose another colony", "colony-picker")],
 					[app("Fleets elsewhere", "fleets")],
 				],
@@ -1009,7 +996,7 @@ export const scenes: Scene[] = [
 		"Trophies and achievements survive resets. Earning formulas and achievement awards remain sample design.",
 		[
 			message(
-				"🏆 Joscha's dynasty\n1 240 trophies\n\nACHIEVEMENTS\nFirst arrival · completed your first attack\nSecond horizon · founded a second colony\nTogether · defended with an ally\n\nTrophies and achievements survive\nthe end of a season.\nColonies, ships and research reset.",
+				"🏆 Joscha's dynasty\n1 240 trophies\n\nAchievements\nFirst arrival · completed your first attack\nSecond horizon · founded a second colony\nTogether · defended with an ally\n\nYour trophies and achievements will follow you into the next season.\nThe trophy cabinet is already taking up most of the office.",
 				[[cb("Rankings", "rankings")], [cb("Season Briefing", "season")], [cb("Invite a player", "invite")]],
 			),
 		],
@@ -1024,7 +1011,7 @@ export const scenes: Scene[] = [
 		"Illustrative standings by trophies. Alliance aggregation is still an example convention rather than a settled scoring rule.",
 		[
 			message(
-				"🏆 Rankings · players\n\n1. Mira · 2 480\n2. Orin · 2 160\n3. Tavi · 1 940\n\n…\n18. Joscha · 1 240 · you\n19. Elian · 1 180\n\nUpdated with this sample snapshot.",
+				"🏆 Rankings · players\n\n1. Mira · 2 480\n2. Orin · 2 160\n3. Tavi · 1 940\n\n…\n18. Joscha · 1 240 · you\n19. Elian · 1 180",
 				[[cb("Players", "rankings"), cb("Alliances", "rankings-alliance")], [cb("Dynasty", "dynasty")]],
 			),
 		],
@@ -1039,7 +1026,7 @@ export const scenes: Scene[] = [
 		"Example sums of member trophies; the final alliance ranking formula needs design.",
 		[
 			message(
-				"🏆 Rankings · alliances\nExample: combined member trophies\n\n1. Zenith · 28 600 · 18 members\n2. Meridian · 18 240 · 12 members\n3. Wayfarers · 11 080 · 8 members\n\nYour alliance: Meridian",
+				"🏆 Rankings · alliances\nCombined member trophies\n\n1. Zenith · 28 600 · 18 members\n2. Meridian · 18 240 · 12 members\n3. Wayfarers · 11 080 · 8 members\n\nYour alliance: Meridian",
 				[[cb("Players", "rankings"), cb("Alliances", "rankings-alliance")], [cb("Alliance", "alliance")]],
 			),
 		],
@@ -1055,7 +1042,7 @@ export const scenes: Scene[] = [
 		"The challenge chain begins with a nickname. Starter protection lasts five days; joining as its start is the provisional default.",
 		[
 			message(
-				"👋 Welcome to Space Emperors\nI'm your advisor. Let's establish your first colony.\n\nChoose a nickname to begin.\nYour home planet has 5 days of starter protection.\n\nChallenge 1 · Choose a nickname\nReward to your home planet: 💠 100  ·  🔥 50",
+				"👋 Welcome to Space Emperors\nThe Tide has brought another galaxy within reach for one season.\nAnyone with a planet and a fleet calls themselves an emperor here, so your stationery will need a name.\n\nChallenge 1 · Choose a nickname\nStarter protection: 5 days\nReward to your home planet: 💠 100  ·  🔥 50",
 				[[cb("Choose nickname", "nickname")], [cb("Season Briefing", "season")]],
 			),
 		],
@@ -1069,12 +1056,12 @@ export const scenes: Scene[] = [
 		design,
 		"Nicknames are unique. This storyboard shows an occupied name and an available replacement; it introduces no new naming rules.",
 		[
-			message("Choose your nickname\nReply with the name you want other players to see."),
+			message("Choose your nickname\nWhat will the other emperors call you?"),
 			{ from: "user", text: "Nova" },
-			message("Nova is already taken.\nChoose another nickname."),
+			message("Nova is already taken.\nThat letterhead belongs to someone else, so choose another nickname."),
 			{ from: "user", text: "Joscha" },
 			message(
-				"✓ Welcome, Joscha\nYour home planet is Nacre · 1:214:6\n\nChallenge complete\n💠 100  ·  🔥 50 added to Nacre",
+				"✓ Welcome, Joscha\nYour home planet is Nacre · 🌐 1:214:6\n\nChallenge complete\nDelivered to Nacre: 💠 100  ·  🔥 50\n\nYour name is on the door.",
 				[[cb("Next challenge", "advisor-mine")]],
 			),
 		],
@@ -1089,7 +1076,7 @@ export const scenes: Scene[] = [
 		"The active screen changes during the first upgrade rather than sending an unsolicited message at each completion.",
 		[
 			message(
-				"🧭 Advisor · 2 / 6\nUpgrade your Mineral Mine\n\nNacre · 1:214:6\nMineral Mine · Level 1 → 2\nDuration: 3 seconds\nCost: 💠 50  ·  🔥 0\n\nReward to Nacre: 💠 150  ·  🔥 50",
+				"🧭 Advisor · 2 / 6\nUpgrade your Mineral Mine on Nacre.\n\nNacre · 🌐 1:214:6\nMineral Mine · Level 1 → 2\nDuration: 3 seconds\nCost: 💠 50  ·  🔥 0\n\nReward to Nacre: 💠 150  ·  🔥 50",
 				[[cb("Upgrade Mineral Mine", "advisor-ships", "success")], [cb("Command Center", "command-center")]],
 			),
 		],
@@ -1104,10 +1091,10 @@ export const scenes: Scene[] = [
 		"Draft installation and hull names. First dispatch should be possible within 30 minutes; this wireframe does not define the full prerequisite tree.",
 		[
 			message(
-				"🧭 Advisor · 3 / 6\nEstablish ship production\n\n✓ Nickname chosen\n✓ Mineral Mine upgraded\n\nNext: build your Orbital Shipyard.\nThen produce starter Scout Fighters.\n\nReward to Nacre: 💠 300  ·  🔥 100",
+				"🧭 Advisor · 3 / 6\nBuild your Orbital Shipyard, then build Scout Fighters.\nA fleet looks more convincing with ships in it.\n\n✓ Nickname chosen\n✓ Mineral Mine upgraded\n\nReward to Nacre: 💠 300  ·  🔥 100",
 				[
 					[cb("Open buildings", "buildings")],
-					[cb("Preview ship batch", "ship-batch")],
+					[cb("Choose ships to build", "ship-batch")],
 					[cb("View next challenge", "advisor-dispatch")],
 				],
 			),
@@ -1123,8 +1110,8 @@ export const scenes: Scene[] = [
 		"The target is an abandoned world in the home system. Founding a second colony is a later milestone, not a tutorial task.",
 		[
 			message(
-				"🧭 Advisor · 6 / 6\nAttack an abandoned world\n\n✓ Starter ships built\n✓ Fleet Command opened\n\nAsh · 1:214:8 · Abandoned world\nChoose ships and review your arrival time.\nYour survivors return after the battle.\n\nReward to Nacre: 💠 500  ·  🔥 200",
-				[[app("Prepare first attack", "attack")], [cb("Preview battle report", "battle-report")]],
+				"🧭 Advisor · 6 / 6\nPrepare your first attack on Ash, an abandoned world in your home system.\n\n✓ Starter ships built\n✓ Fleet Command opened\n\nAsh · 🌐 1:214:8 · Abandoned world\n\nReward to Nacre: 💠 500  ·  🔥 200",
+				[[app("Prepare first attack", "attack")], [cb("Battle report", "battle-report")]],
 			),
 		],
 		["dispatch", "battle-report", "advisor-complete"],
@@ -1138,9 +1125,9 @@ export const scenes: Scene[] = [
 		"A completed challenge is claimable once; the next snapshot shows the reward already claimed.",
 		[
 			message(
-				"✓ First attack completed\nYour fleet is returning to Nacre.\n\nReward claimed at Nacre · 1:214:6\n💠 500  ·  🔥 200\n\nYou can plan upgrades or inspect the battle.\nThe galaxy is yours to explore at your pace.",
+				"✓ First attack completed\nYour fleet is returning to Nacre.\nThe imperial history will need more than one page now.\n\nReward delivered to Nacre · 🌐 1:214:6\n💠 500  ·  🔥 200",
 				[
-					[off("Reward already claimed")],
+					[off("Reward delivered")],
 					[cb("Battle report", "battle-report")],
 					[cb("Command Center", "command-center")],
 				],
@@ -1157,9 +1144,9 @@ export const scenes: Scene[] = [
 		"Routine and critical categories are separate. Quiet hours apply to both unless critical override is explicitly enabled. Reminders start off.",
 		[
 			message(
-				"🔔 Alert Preferences\n\nRoutine completions: on\nIncoming fleets and verified attacks: on\n\nQuiet hours: 22:00–08:00\nTime zone: Europe/Berlin\nCritical alerts during quiet hours: off\n\nFleet reminders: off\nReactivation reminders: off\n\nUnseen routine changes are grouped into\none summary when you return.",
+				"🔔 Notification Preferences\n\nUpgrades and ship completions: on\nIncoming fleets and known attacks: on\n\nQuiet hours: 22:00–08:00\nLocal time: Berlin\nFleet notifications during quiet hours: off\n\nFleet reminders: off\nReturn reminders: off",
 				[
-					[cb("Routine · on", "preferences-muted"), cb("Critical · on", "preferences-muted")],
+					[cb("Completions: on", "preferences-muted"), cb("Incoming fleets: on", "preferences-muted")],
 					[cb("Quiet hours", "preferences-quiet")],
 					[cb("Reminders · off", "preferences-quiet")],
 				],
@@ -1176,8 +1163,8 @@ export const scenes: Scene[] = [
 		"The underlying events continue and remain visible on return; this state does not postpone a flood of messages.",
 		[
 			message(
-				"🔕 Routine messages are muted\n\nUpgrades, production and fleets keep progressing.\nYour next Activity Summary will show changes.\n\nCritical fleet alerts: on\nQuiet hours: 22:00–08:00\nCritical override: off\nReminders: off",
-				[[cb("Turn routine messages on", "preferences")], [cb("Activity Summary", "activity")]],
+				"🔕 Completion notifications are off\n\nYour next Activity Summary will show what finished.\n\nIncoming fleet notifications: on\nQuiet hours: 22:00–08:00\nNotifications during quiet hours: off\nReminders: off",
+				[[cb("Turn completion notifications on", "preferences")], [cb("Activity Summary", "activity")]],
 			),
 		],
 		["preferences", "activity"],
@@ -1191,11 +1178,11 @@ export const scenes: Scene[] = [
 		"No escalation because a player is asleep. Enabling critical override is a distinct explicit choice, not a default.",
 		[
 			message(
-				"🌙 Quiet hours\n22:00 → 08:00 · Europe/Berlin\n\nRoutine messages are quiet.\nCritical fleet alerts are also quiet.\nGame events remain visible when you return.\n\nAllow critical alerts during these hours?",
+				"🌙 Quiet hours\n22:00 → 08:00 · Berlin\n\nAll notifications are quiet during these hours.\nMay incoming fleets and known attacks interrupt?",
 				[
-					[cb("Keep all alerts quiet", "preferences")],
-					[cb("Allow critical alerts · preview", "preferences")],
-					[cb("Change times · preview", "preferences-quiet")],
+					[cb("Keep all notifications quiet", "preferences")],
+					[cb("Allow fleet notifications", "preferences")],
+					[cb("Change quiet hours", "preferences-quiet")],
 				],
 			),
 		],
@@ -1210,7 +1197,7 @@ export const scenes: Scene[] = [
 		"No final season length or speed is selected. Example dates are explicitly marked, and protection is five days.",
 		[
 			message(
-				"🌌 Season Briefing\n\nILLUSTRATIVE SEASON\n10 Oct → 9 Jan · 1× game speed\nFinal duration and speed remain undecided.\n\nOne galaxy, growing by sectors\n5 days of starter protection when joining\nManual resource transports\nEnglish and German\n\nCARRY OVER\nTrophies and achievements\n\nRESET\nColonies, ships, resources and research",
+				"🌌 Season Briefing\nThe Tide has brought a new galaxy within reach for one season.\nThe imperial flags still have the creases from storage.\n\n10 Oct → 9 Jan · 1× game speed\n5 days of starter protection\nEnglish and German\n\nYour dynasty keeps\nTrophies and achievements\n\nNext season starts fresh\nColonies, ships, resources and research",
 				[[cb("Dynasty", "dynasty")], [cb("Start with the Advisor", "advisor")]],
 			),
 		],
@@ -1225,7 +1212,7 @@ export const scenes: Scene[] = [
 		"An end-state proposal with no invented new-season start date or paid early-access mechanism.",
 		[
 			message(
-				"🌌 This season has ended\n\nYour dynasty remains:\n🏆 1 240 trophies\n3 achievements\n\nColonies, ships, resources and research reset.\nNext season's start has not been announced.",
+				"🌌 This season has ended\nThe galaxy stands frozen exactly as it was, unfinished upgrades included.\nYour dynasty's trophies and achievements come with you into the next season.\n\n🏆 1 240 trophies\n3 achievements\n\nNext season: awaiting announcement",
 				[[cb("View dynasty", "dynasty")], [cb("Final rankings", "rankings")]],
 			),
 		],
@@ -1241,11 +1228,11 @@ export const scenes: Scene[] = [
 		"One summary of changes since the last meaningful action. Incoming fleets remain prominent without replaying every queued notification.",
 		[
 			message(
-				"Welcome back, Joscha\nSince your last action · 8 hours ago\n\n⚠ Incoming fleet to Nacre · 20:40\nMira · mission unverified\n\nCOMPLETED\n3 building upgrades across 2 colonies\nCombustion Engine reached level 4\n10 Scout Fighters finished at Nacre\n\nARRIVED\nTransport delivered to Rime\n💠 2 000  ·  🔥 500\n\nBATTLE\nVictory at Ash · report ready",
+				"Welcome back, Joscha\nHere's what changed in the last 8 hours.\n\n⚠ Incoming fleet to Nacre · 20:40\nMira · mission unknown\n\nCompleted\n3 building upgrades across 2 colonies\nCombustion Engine reached level 4\n10 Scout Fighters finished at Nacre\n\nDelivered to Rime\n💠 2 000  ·  🔥 500\n\nBattle\nVictory at Ash · battle report ready",
 				[
-					[app("Inspect incoming fleet", "incoming")],
+					[app("Spy on incoming fleet", "incoming")],
 					[cb("Battle report", "battle-report"), cb("Empire", "empire")],
-					[cb("Alert Preferences", "preferences")],
+					[cb("Notification Preferences", "preferences")],
 				],
 			),
 		],
@@ -1260,7 +1247,7 @@ export const scenes: Scene[] = [
 		"No guilt, urgency or upgrade reminder when there are no new events.",
 		[
 			message(
-				"You're up to date\nNo new events since your last action.\n\nNext completion at Nacre:\nMineral Mine → 13 · 18 min",
+				"You're up to date\nNothing new has happened since your last orders.\nThe imperial bulletin is unusually thin.\n\nNext completion at Nacre\nMineral Mine → 13 · 18 min",
 				[[cb("Command Center", "command-center")], [map("Explore the galaxy", "galaxy")]],
 			),
 		],
@@ -1275,10 +1262,10 @@ export const scenes: Scene[] = [
 		"A sample invite token with no live recipient. Reward amounts and claim conditions are undecided; premium remains later work.",
 		[
 			message(
-				"🎁 Invite a player\nYour invitation token: DEMO-JOSCHA\n\nInviting a new player earns a reward.\nReward amount and claim conditions\nare still under design.\n\nHave a bonus code?\nChoose the colony that receives its resources.",
+				"🎁 Invite a player\nInvite someone to the galaxy and earn a reward when they join.\nThere's always room for another emperor with opinions about borders.\n\nYour invite code: DEMO-JOSCHA",
 				[
-					[{ text: "Copy sample invite token", copy_text: { text: "DEMO-JOSCHA" } }],
-					[cb("Redeem bonus code · preview", "bonus-code")],
+					[{ text: "Copy invite code", copy_text: { text: "DEMO-JOSCHA" } }],
+					[cb("Redeem bonus code", "bonus-code")],
 					[cb("Dynasty", "dynasty")],
 				],
 			),
@@ -1293,9 +1280,9 @@ export const scenes: Scene[] = [
 		design,
 		"Example failed redemption with a clear recovery path; no actual code is consumed.",
 		[
-			message("🎁 Bonus code\nResources will go to Nacre · 1:214:6\nReply with your code."),
+			message("🎁 Bonus code\nReply with your code to deliver its resources to Nacre 🌐 1:214:6."),
 			{ from: "user", text: "DEMO-EXPIRED" },
-			message("This code has expired.\nNo resources were added.", [
+			message("This bonus code has expired.\nTry another code.", [
 				[cb("Try another code", "invite")],
 				[cb("Change receiving colony", "colony-picker")],
 			]),

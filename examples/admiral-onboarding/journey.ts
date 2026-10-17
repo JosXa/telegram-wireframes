@@ -43,7 +43,14 @@ export function makeFixture(
 ): Fixture {
 	const guide = admirals.find((person) => person.id === admiral);
 	if (!guide) throw new Error("Unknown admiral");
-	const text = `${beat.title}\n\n${mode === "plain" ? "" : `${format(words.admiral, { name: guide.name })}\n“${beat.lines[admiral]}”\n\n`}${beat.facts}`;
+	const dialogue = beat.id === "returned" || beat.id === "loss";
+	const prose = dialogue
+		? mode === "plain"
+			? ""
+			: `${format(words.admiral, { name: guide.name })}\n“${beat.lines[admiral]}”\n\n`
+		: `${beat.lines[admiral]}\n\n`;
+	const title = beat.id === "queue" ? "Building upgrades" : beat.title;
+	const text = `${title}\n\n${prose}${beat.facts}`;
 	const main: InlineKeyboardButton = beat.app
 		? {
 				text: beat.action,
@@ -63,9 +70,9 @@ export function makeFixture(
 					? {
 							photo: `art/${style}-${admiral}-${beat.art}.jpg`,
 							caption: text,
-							caption_entities: [{ type: "bold" as const, offset: 0, length: beat.title.length }],
+							caption_entities: [{ type: "bold" as const, offset: 0, length: title.length }],
 						}
-					: { text, entities: [{ type: "bold" as const, offset: 0, length: beat.title.length }] }),
+					: { text, entities: [{ type: "bold" as const, offset: 0, length: title.length }] }),
 				reply_markup: {
 					inline_keyboard: [
 						[main],

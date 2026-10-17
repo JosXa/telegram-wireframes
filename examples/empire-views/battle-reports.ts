@@ -1,4 +1,5 @@
 import type { FixtureMessage, InlineKeyboardButton, MessageEntity } from "../../src/fixture";
+import { count } from "../galaxy/app/numbers.js";
 
 // Draft names come from the design shortlist. These base stats and authored losses are presentation samples,
 // not approved balance or a combat simulation. Cargo, loss values and salvage share the same data.
@@ -49,7 +50,6 @@ export type Battle = {
 	rounds: number;
 	contingents: Contingent[];
 	stock: [number, number];
-	aftermath: string;
 };
 const group = (ship: Ship, before: number, after: number): Group => ({ ship, before, after });
 export const battles: Battle[] = [
@@ -65,7 +65,6 @@ export const battles: Battle[] = [
 			{ owner: "Abandoned world", side: "Defender", groups: [group("scout", 8, 0)] },
 		],
 		stock: [6400, 1600],
-		aftermath: "Cargo aboard · home at 19:10.\nAsh remains an abandoned world.",
 	},
 	{
 		id: "battle-loss",
@@ -79,7 +78,6 @@ export const battles: Battle[] = [
 			{ owner: "Orin", side: "Defender", groups: [group("gunship", 10, 9), group("cruiser", 2, 2)] },
 		],
 		stock: [24000, 8000],
-		aftermath: "No attacking ships return.\nYour colonies and research are intact.",
 	},
 	{
 		id: "battle-defense",
@@ -109,7 +107,6 @@ export const battles: Battle[] = [
 			{ owner: "Tavi", side: "Defender", groups: [group("gunship", 200, 132), group("battleship", 20, 17)] },
 		],
 		stock: [420000, 180000],
-		aftermath: "Allied survivors remain stationed.\nEach owner controls their own ships.",
 	},
 	{
 		id: "battle-draw",
@@ -123,7 +120,6 @@ export const battles: Battle[] = [
 			{ owner: "Orin", side: "Defender", groups: [group("scout", 300, 75), group("cruiser", 30, 13)] },
 		],
 		stock: [150000, 70000],
-		aftermath: "Both sides survive round 6.\nYour ships return at 23:40 without loot.",
 	},
 	{
 		id: "battle-raid",
@@ -137,7 +133,6 @@ export const battles: Battle[] = [
 			{ owner: "Orin", side: "Defender", groups: [group("scout", 8, 0), group("transport", 6, 0)] },
 		],
 		stock: [120000, 40000],
-		aftermath: "Cargo holds full · home at 20:15.\nSable still belongs to Orin.",
 	},
 	{
 		id: "battle-unopposed",
@@ -151,7 +146,6 @@ export const battles: Battle[] = [
 			{ owner: "Abandoned world", side: "Defender", groups: [] },
 		],
 		stock: [8000, 2000],
-		aftermath: "No shots fired.\nCargo aboard · home at 19:55.",
 	},
 	{
 		id: "battle-tutorial",
@@ -165,11 +159,9 @@ export const battles: Battle[] = [
 			{ owner: "Abandoned world", side: "Defender", groups: [group("scout", 1, 0)] },
 		],
 		stock: [800, 200],
-		aftermath: "Cargo aboard · home at 19:50.\nThe first launch challenge is complete.",
 	},
 ];
 
-export const count = (value: number) => value.toLocaleString("en-GB").replaceAll(",", " ");
 export const resources = (m: number, g: number) => `💠 ${count(m)} · 🔥 ${count(g)}`;
 export function totals(groups: Group[]) {
 	return groups.reduce(
@@ -205,7 +197,7 @@ export function settlement(battle: Battle) {
 	};
 }
 
-type Section = { heading: string; lines: string[] };
+type Section = { heading: string; lines: string[]; table?: string };
 function textMessage(sections: Section[], buttons: InlineKeyboardButton[][]): FixtureMessage {
 	let text = "";
 	const entities: MessageEntity[] = [];
@@ -213,10 +205,29 @@ function textMessage(sections: Section[], buttons: InlineKeyboardButton[][]): Fi
 		if (text) text += "\n\n";
 		entities.push({ type: "bold", offset: text.length, length: section.heading.length });
 		text += `${section.heading}${section.lines.length ? `\n${section.lines.join("\n")}` : ""}`;
+		if (section.table) {
+			text += "\n";
+			entities.push({ type: "pre", offset: text.length, length: section.table.length });
+			text += section.table;
+		}
 	}
 	return { from: "bot", text, entities, reply_markup: { inline_keyboard: buttons } };
 }
 const callback = (text: string, id: string): InlineKeyboardButton => ({ text, callback_data: id });
+function lossTable(groups: Group[]): string | undefined {
+	if (!groups.length) return;
+	// Keep full ship names and just two numeric columns so Telegram can fit the table on a phone.
+	const rows = groups.map((g) => [ships[g.ship].name, count(g.before - g.after), count(g.after)]);
+	rows.unshift(["Ship", "Lost", "Survived"]);
+	const widths = rows[0].map((_, column) => Math.max(...rows.map((row) => row[column].length)));
+	return rows
+		.map((row) =>
+			row
+				.map((value, column) => (column ? value.padStart(widths[column]) : value.padEnd(widths[column])))
+				.join(" "),
+		)
+		.join("\n");
+}
 export function shipStats(id: Ship) {
 	const s = ships[id];
 	return [`Atk ${count(s.attack)} · Hull ${count(s.hull)}`, `Cargo ${count(s.cargo)} · Speed ${s.speed}`];
@@ -238,28 +249,22 @@ export function lineupMessage(large: boolean): FixtureMessage {
 	return textMessage(
 		[
 			{
-				heading: large ? "Battle fleet · Nacre 1:214:6" : "Your ships · Nacre 1:214:6",
-				lines: ["Base stats per ship · sample values", "Higher speed is faster; the slowest ship sets pace."],
+				heading: large ? "Battle fleet · Nacre 🌐 1:214:6" : "Your ships · Nacre 🌐 1:214:6",
+				lines: ["Stats per ship"],
 			},
 			...lineup.map(([id, amount]) => ({
 				heading: `${ships[id].name} × ${count(amount)}`,
 				lines: shipStats(id),
 			})),
 			{
-				heading: `${count(lineup.reduce((n, [, amount]) => n + amount, 0))} ships · yours to command`,
-				lines: large
-					? ["Heavy hulls commit the fleet for longer."]
-					: ["Mira also has 12 Scout Fighters here.", "Her ships defend with yours; only she commands them."],
+				heading: `${count(lineup.reduce((n, [, amount]) => n + amount, 0))} ships · your ships`,
+				lines: large ? [] : ["Mira has 12 Scout Fighters stationed here."],
 			},
 		],
 		[
-			[
-				callback(
-					large ? "Colony lineup" : "Large fleet example",
-					large ? "fleet-lineup" : "fleet-lineup-large",
-				),
-			],
-			[callback("Battle Reports", "battle-reports"), callback("Fleet controls", "fleets")],
+			[callback(large ? "Colony ships" : "Battle fleet", large ? "fleet-lineup" : "fleet-lineup-large")],
+			[callback("Battle reports", "battle-reports")],
+			[callback("⬅️ Fleet Command", "fleets")],
 		],
 	);
 }
@@ -267,50 +272,57 @@ export function archiveMessage(): FixtureMessage {
 	return textMessage(
 		[
 			{
-				heading: "Battle Reports",
-				lines: [
-					"Small battles, allied defense and resource raids.",
-					"Sample outcomes · draft ship names and stats.",
-				],
+				heading: "Battle reports",
+				lines: ["Your battles and their losses are recorded here."],
 			},
 			...battles.map((b) => {
 				const s = settlement(b);
 				return {
-					heading: b.label,
+					heading: b.title,
 					lines: [
-						`${b.planet} ${b.coordinates} · ${sideIcons.Attacker} ${count(s.attacking.before)} vs ${sideIcons.Defender} ${count(s.defending.before)} ships`,
+						`${b.planet} 🌐 ${b.coordinates} · ${sideIcons.Attacker} ${count(s.attacking.before)} vs ${sideIcons.Defender} ${count(s.defending.before)} ships`,
 					],
 				};
 			}),
 		],
-		battles.map((b) => [callback(b.label, b.id)]),
+		battles.map((b) => [callback(b.title, b.id)]),
 	);
 }
 export function reportMessage(battle: Battle): FixtureMessage {
 	const result = settlement(battle);
+	const summaries: Record<string, string> = {
+		"battle-report":
+			"You defeated Ash's defenders. The victory parade is waiting for the transports to unload.",
+		"battle-loss": "Your fleet was lost at Cairn. The admiralty has put the victory stationery away.",
+		"battle-defense": "Nacre's defenders held. The safety officer has recommended a hard hat.",
+		"battle-draw": "Both sides still had ships at Bastion. Both have requested the same victory banner.",
+		"battle-raid": "You won at Sable. The imperial procession includes Resource Transports.",
+		"battle-unopposed":
+			"Your fleet met no defenders at Dusk. The formal challenge was read to an empty orbit.",
+		"battle-tutorial":
+			"Your first battle at Ash ended in victory. The commemorative plaque is larger than the cargo hold.",
+	};
 	const sections: Section[] = [
 		{
 			heading: battle.title,
 			lines: [
-				`${battle.coordinates} · ${battle.rounds ? `${battle.rounds} round${battle.rounds === 1 ? "" : "s"}` : "No combat"} · 10 Oct`,
-				"Sample battle · before → survivors (lost)",
+				`🌐 ${battle.coordinates} · ${battle.rounds ? `${battle.rounds} round${battle.rounds === 1 ? "" : "s"}` : "No combat"} · 10 Oct`,
+				summaries[battle.id],
 			],
 		},
 		...battle.contingents.map((c) => {
 			const total = totals(c.groups);
 			return {
 				heading: `${sideIcons[c.side]} ${c.owner}`,
-				lines:
-					battle.contingents.length > 2
-						? [
-								`${count(total.before)} → ${count(total.after)} ships (${count(total.before - total.after)} lost)`,
-							]
-						: c.groups.length
-							? c.groups.map(
-									(g) =>
-										`${ships[g.ship].name}: ${count(g.before)} → ${count(g.after)} (${count(g.before - g.after)} lost)`,
-								)
-							: ["No stationed ships"],
+				lines: c.groups.length
+					? [
+							`${count(total.before)} ships at arrival`,
+							...(battle.contingents.length > 2
+								? [`${count(total.before - total.after)} lost · ${count(total.after)} survived`]
+								: []),
+						]
+					: ["No stationed ships"],
+				table: battle.contingents.length > 2 ? undefined : lossTable(c.groups),
 			};
 		}),
 		{
@@ -318,28 +330,24 @@ export function reportMessage(battle: Battle): FixtureMessage {
 			lines: [
 				resources(result.loot[0], result.loot[1]),
 				...(result.won
-					? [`Hold: ${count(result.loot[0] + result.loot[1])} / ${count(result.attacking.capacity)}`]
-					: ["No loot without an attacking victory."]),
+					? [
+							`Cargo capacity used: ${count(result.loot[0] + result.loot[1])} / ${count(result.attacking.capacity)}`,
+						]
+					: []),
 			],
 		},
 		{
-			heading: `Salvage · left at ${battle.coordinates}`,
-			lines: [
-				resources(result.salvage[0], result.salvage[1]),
-				...(result.salvage.some(Boolean)
-					? ["Separate collection mission required."]
-					: ["No ships destroyed."]),
-			],
+			heading: `Salvage · left at 🌐 ${battle.coordinates}`,
+			lines: [resources(result.salvage[0], result.salvage[1])],
 		},
-		{ heading: "After the battle", lines: [battle.aftermath] },
 	];
 	return textMessage(sections, [
 		[
-			callback("Ship losses & stats", `${battle.id}-ships-0`),
-			callback("Loot & loss value", `${battle.id}-resources`),
+			callback("Ship losses and stats", `${battle.id}-ships-0`),
+			callback("Loot and losses", `${battle.id}-resources`),
 		],
 		...(battle.id === "battle-report" ? [[callback("Round by round", "battle-replay")]] : []),
-		[callback("Battle Reports", "battle-reports")],
+		[callback("⬅️ Battle reports", "battle-reports")],
 	]);
 }
 export function lossesMessage(battle: Battle, index: number): FixtureMessage {
@@ -350,17 +358,14 @@ export function lossesMessage(battle: Battle, index: number): FixtureMessage {
 			{
 				heading: `${battle.planet} · ship losses ${index + 1}/${battle.contingents.length}`,
 				lines: [
-					`${battle.coordinates} · ${sideIcons[contingent.side]} ${contingent.owner}`,
-					"Before → survivors · lost",
-					"Sample base stats per ship.",
+					`🌐 ${battle.coordinates} · ${sideIcons[contingent.side]} ${contingent.owner}`,
+					`${count(total.before)} ships at arrival`,
 				],
+				table: lossTable(contingent.groups),
 			},
 			...contingent.groups.map((g) => ({
 				heading: ships[g.ship].name,
-				lines: [
-					`${count(g.before)} → ${count(g.after)} · ${count(g.before - g.after)} lost`,
-					shipStats(g.ship)[0],
-				],
+				lines: [shipStats(g.ship)[0]],
 			})),
 			{
 				heading: `${count(total.before - total.after)} ships lost`,
@@ -377,7 +382,8 @@ export function lossesMessage(battle: Battle, index: number): FixtureMessage {
 					? [callback("Next fleet →", `${battle.id}-ships-${index + 1}`)]
 					: []),
 			],
-			[callback("Battle summary", battle.id), callback("Battle Reports", "battle-reports")],
+			[callback("Battle reports", "battle-reports")],
+			[callback("⬅️ Battle summary", battle.id)],
 		],
 	);
 }
@@ -388,14 +394,14 @@ export function resourceMessage(battle: Battle): FixtureMessage {
 		[
 			{
 				heading: `${battle.planet} · resources`,
-				lines: [battle.coordinates, "Sample defaults: up to 50% looted; 30% salvage."],
+				lines: [`🌐 ${battle.coordinates}`],
 			},
 			{
-				heading: `${sideIcons.Attacker} Construction losses`,
+				heading: `${sideIcons.Attacker} Ship losses`,
 				lines: [resources(s.attacking.minerals, s.attacking.gas)],
 			},
 			{
-				heading: `${sideIcons.Defender} Construction losses`,
+				heading: `${sideIcons.Defender} Ship losses`,
 				lines: [resources(s.defending.minerals, s.defending.gas)],
 			},
 			{
@@ -404,34 +410,30 @@ export function resourceMessage(battle: Battle): FixtureMessage {
 					resources(s.loot[0], s.loot[1]),
 					...(s.won
 						? [
-								"Limited by half the available stock and surviving holds.",
-								`${count(s.attacking.capacity - s.loot[0] - s.loot[1])} cargo space unused.`,
+								`Cargo capacity: ${count(s.attacking.capacity)}`,
+								`Unused cargo capacity: ${count(s.attacking.capacity - s.loot[0] - s.loot[1])}`,
 							]
-						: ["No attacking victory; no resources taken."]),
+						: ["No resources were taken."]),
 				],
 			},
 			{
 				heading: "Salvage at the orbit",
-				lines: [
-					resources(s.salvage[0], s.salvage[1]),
-					"From destroyed hulls on both sides.",
-					"Travel gas is spent; it does not become salvage.",
-				],
+				lines: [resources(s.salvage[0], s.salvage[1])],
 			},
 		],
 		[
-			[callback("Battle summary", battle.id)],
 			...(s.salvage.some(Boolean)
 				? [
 						[
 							{
-								text: "Prepare salvage collection",
+								text: "Collect salvage",
 								web_app: { url: `app.html?view=salvage&sector=${sector}&system=${system}&orbit=${orbit}` },
 							},
 						],
 					]
 				: []),
-			[callback("Battle Reports", "battle-reports")],
+			[callback("Battle reports", "battle-reports")],
+			[callback("⬅️ Battle summary", battle.id)],
 		],
 	);
 }
@@ -440,7 +442,7 @@ export function roundsMessage(): FixtureMessage {
 		[
 			{
 				heading: "Ash · round by round",
-				lines: ["1:214:8 · small battle", "Sample losses · both sides fire each round."],
+				lines: ["🌐 1:214:8"],
 			},
 			{
 				heading: "At arrival",
@@ -462,10 +464,10 @@ export function roundsMessage(): FixtureMessage {
 				lines: [
 					`Scout Fighters: ${sideIcons.Attacker} 20 → 18 · ${sideIcons.Defender} 2 → 0`,
 					"Both Resource Transports survive.",
-					"18 fighters + 2 transports return with cargo.",
+					"18 Scout Fighters and 2 Resource Transports return with cargo.",
 				],
 			},
 		],
-		[[callback("Battle summary", "battle-report")], [callback("Battle Reports", "battle-reports")]],
+		[[callback("Battle reports", "battle-reports")], [callback("⬅️ Battle summary", "battle-report")]],
 	);
 }

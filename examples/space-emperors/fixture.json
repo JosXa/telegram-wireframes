@@ -52,8 +52,8 @@
 		},
 		{
 			"from": "bot",
-			"text": "⚠️ Fleet incoming at 2:14:6\nArrives in 12 min · 38 Light Fighters",
-			"entities": [{ "type": "bold", "offset": 3, "length": 24 }],
+			"text": "⚠️ Fleet incoming at 🌐 2:14:6\nArrives in 12 min · 38 Light Fighters",
+			"entities": [{ "type": "bold", "offset": 3, "length": 25 }],
 			"reply_markup": {
 				"inline_keyboard": [
 					[

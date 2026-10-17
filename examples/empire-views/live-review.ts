@@ -56,7 +56,7 @@ export function createLivePreview(
 		select: (selection: ElementSelection) => void;
 		hover: (rect?: Rect) => void;
 		change: () => void;
-		selection: (available: boolean) => void;
+		selection: (rect?: Rect) => void;
 		navigate: (scene: string) => void;
 		cancel: () => void;
 	},
@@ -72,16 +72,17 @@ export function createLivePreview(
 		cancelAnimationFrame(redraw);
 		redraw = requestAnimationFrame(callbacks.change);
 	}
+	function clearSelection() {
+		selectedRange = undefined;
+		for (const doc of documents.keys()) doc.getSelection()?.removeAllRanges();
+		callbacks.selection();
+	}
 	function inspect(active: boolean) {
 		inspecting = active;
 		for (const doc of documents.keys()) {
 			doc.documentElement.toggleAttribute("data-review-selecting", active);
-			if (active) doc.getSelection()?.removeAllRanges();
 		}
-		if (active) {
-			selectedRange = undefined;
-			callbacks.selection(false);
-		}
+		if (active) clearSelection();
 		callbacks.hover();
 	}
 	function bounds(element: Element, range?: Range): Rect {
@@ -169,6 +170,17 @@ export function createLivePreview(
 		doc.head.append(style);
 		const signal = controller.signal;
 		let swallowClick = false;
+		let dragging = false;
+		function updateSelection() {
+			const selection = doc.getSelection();
+			selectedRange =
+				selection?.rangeCount && !selection.isCollapsed && selection.toString().trim()
+					? selection.getRangeAt(0).cloneRange()
+					: undefined;
+			const node = selectedRange?.commonAncestorContainer;
+			const element = node?.nodeType === Node.ELEMENT_NODE ? (node as Element) : node?.parentElement;
+			callbacks.selection(selectedRange && element && !dragging ? bounds(element, selectedRange) : undefined);
+		}
 		function target(event: Event) {
 			const node = event.target as Element;
 			return node.closest("button, a, input, textarea, select, [role=button]") || node;
@@ -176,8 +188,12 @@ export function createLivePreview(
 		function navigateButton(event: Event) {
 			if (doc !== frame.contentDocument) return;
 			const button = (event.target as Element).closest("button");
-			const label = button?.textContent?.trim();
-			if (!label) return;
+			if (!button) return;
+			// Web A renders emoji as images; include their alt text when matching the Bot API label.
+			const copy = button.cloneNode(true) as Element;
+			for (const emoji of copy.querySelectorAll("img.emoji"))
+				emoji.replaceWith(emoji.getAttribute("alt") || "");
+			const label = copy.textContent?.replaceAll("\u00a0", " ").trim();
 			for (const message of scene.fixture.messages) {
 				const markup = message.reply_markup;
 				if (!markup || !("inline_keyboard" in markup)) continue;
@@ -213,6 +229,8 @@ export function createLivePreview(
 		doc.addEventListener(
 			"pointerdown",
 			(event) => {
+				dragging = true;
+				callbacks.selection();
 				if (!inspecting) return;
 				swallowClick = true;
 				event.stopImmediatePropagation();
@@ -224,11 +242,22 @@ export function createLivePreview(
 		doc.addEventListener(
 			"pointerup",
 			(event) => {
+				dragging = false;
+				if (doc.getSelection()?.toString().trim()) swallowClick = true;
+				updateSelection();
 				if (!inspecting) return;
 				event.stopImmediatePropagation();
 				if (doc.getSelection()?.toString()) commentSelection(doc.getSelection()?.getRangeAt(0));
 			},
 			{ capture: true, signal },
+		);
+		doc.addEventListener(
+			"pointercancel",
+			() => {
+				dragging = false;
+				updateSelection();
+			},
+			{ signal },
 		);
 		doc.addEventListener(
 			"click",
@@ -247,22 +276,14 @@ export function createLivePreview(
 			},
 			{ capture: true, signal },
 		);
-		doc.addEventListener(
-			"selectionchange",
-			() => {
-				const selection = doc.getSelection();
-				selectedRange =
-					selection?.rangeCount && !selection.isCollapsed ? selection.getRangeAt(0).cloneRange() : undefined;
-				callbacks.selection(Boolean(selectedRange));
-			},
-			{ signal },
-		);
+		doc.addEventListener("selectionchange", updateSelection, { signal });
 		doc.addEventListener(
 			"keydown",
 			(event) => {
-				if (event.key === "Escape" && inspecting) {
+				if (event.key === "Escape" && (inspecting || selectedRange)) {
 					event.preventDefault();
 					event.stopImmediatePropagation();
+					clearSelection();
 					callbacks.cancel();
 				} else if (event.key === "Enter" && inspecting) {
 					event.preventDefault();
@@ -329,6 +350,7 @@ export function createLivePreview(
 	return {
 		inspect,
 		commentSelection,
+		clearSelection,
 		rect(value: ReviewTarget) {
 			const found = find(value);
 			if (!found) return;
@@ -363,7 +385,7 @@ export function createLivePreview(
 			for (const observer of documents.values()) observer.disconnect();
 			documents.clear();
 			selectedRange = undefined;
-			callbacks.selection(false);
+			callbacks.selection();
 			scene = next;
 			frame.style.colorScheme = theme;
 			const signal = controller.signal;

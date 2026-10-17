@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { admirals, beats, styles, variantName } from "../examples/admiral-onboarding/journey";
+import { admirals, beats, styles, variantName, words } from "../examples/admiral-onboarding/journey";
 import { buildOnboarding, onboardingDir, onboardingPath } from "../src/admiral-onboarding";
 import { chatUrl, startServer } from "../src/server";
 import { paths } from "../src/upstream";
@@ -33,7 +33,9 @@ try {
 			const app = page.frameLocator("iframe");
 			await app.locator("[data-ready='true']").waitFor();
 			await page.waitForTimeout(800); // Telegram's opening animation outlives iframe readiness.
-			assert.match(await app.locator("#content").innerText(), new RegExp(person.name));
+			const review = beats.find((beat) => beat.id === "review");
+			assert.ok(review);
+			assert.ok((await app.locator("#content").innerText()).includes(review.lines[person.id]));
 			assert.match(await app.locator("#content").innerText(), /6 Scout Fighters/);
 			assert.match(await app.locator("#content").innerText(), /19:05/);
 			assert.ok(
@@ -43,7 +45,7 @@ try {
 						(image) => (image as HTMLImageElement).complete && (image as HTMLImageElement).naturalWidth > 0,
 					),
 			);
-			await app.getByRole("button", { name: "Edit", exact: true }).click();
+			await app.getByRole("button", { name: words.miniApp.edit, exact: true }).click();
 			assert.equal(await app.getByRole("textbox", { name: "Sector", exact: true }).inputValue(), "1");
 			assert.equal(await app.getByRole("textbox", { name: "System", exact: true }).inputValue(), "214");
 			await app.getByRole("textbox", { name: "Orbit", exact: true }).fill("7");
@@ -56,10 +58,10 @@ try {
 			await app.locator('[name="speed"]').press("Home");
 			assert.match(await app.locator("#quote").innerText(), /19:50/);
 			await app.getByRole("button", { name: "Review dispatch", exact: true }).click();
-			await app.getByRole("button", { name: "Dispatch now", exact: true }).click();
+			await app.getByRole("button", { name: words.miniApp.dispatch, exact: true }).click();
 			assert.match(await app.locator("#content").innerText(), /6 Scout Fighters are outbound/);
 			assert.equal(await app.locator(".guide").count(), 0);
-			assert.equal(await app.getByRole("button", { name: "Dispatch now", exact: true }).count(), 0);
+			assert.equal(await app.getByRole("button", { name: words.miniApp.dispatch, exact: true }).count(), 0);
 			assert.equal(
 				await app.locator("body").evaluate(() => document.documentElement.scrollWidth > innerWidth),
 				false,

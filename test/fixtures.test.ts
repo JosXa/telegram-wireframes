@@ -97,8 +97,11 @@ describe("server", () => {
 			const base = `${server.url.origin}/__wireframes__/fixtures/${name}`;
 			expect(await (await fetch(`${base}/fixture.json`)).json()).toEqual(minimal);
 			expect((await fetch(`${base}/files/..%2F..%2Fetc%2Fpasswd`)).status).toBe(403);
-			expect(await (await fetch(`${server.url.origin}/__wireframes__/config.json`)).json()).toEqual({
+			const config = await fetch(`${server.url.origin}/__wireframes__/config.json`);
+			expect(config.headers.get("cache-control")).toBe("no-store");
+			expect(await config.json()).toEqual({
 				debug: false,
+				revision: expect.any(String),
 			});
 		} finally {
 			server.stop(true);

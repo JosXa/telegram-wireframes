@@ -35,7 +35,7 @@ async function systemImage() {
 				).join(" ");
 				const own = index === 5;
 				const abandoned = index === 7;
-				return `<g><polygon points="${hex}" fill="#18222e" stroke="${own ? "#8ed4c8" : "#344451"}"/><circle cx="${x}" cy="${y - 7}" r="${own ? 20 : 13}" fill="${own ? "#77ad9e" : abandoned ? "#b79975" : "#647b88"}"/><text x="${x}" y="${y + 29}" text-anchor="middle" fill="#e1e8ec" font-size="14">${own ? "Nacre · 1:214:6" : abandoned ? "Ash · 1:214:8" : `1:214:${index + 1}`}</text>${own ? `<text x="${x}" y="${y + 48}" text-anchor="middle" fill="#8ed4c8" font-size="11">YOUR COLONY</text>` : ""}</g>`;
+				return `<g><polygon points="${hex}" fill="#18222e" stroke="${own ? "#8ed4c8" : "#344451"}"/><circle cx="${x}" cy="${y - 7}" r="${own ? 20 : 13}" fill="${own ? "#77ad9e" : abandoned ? "#b79975" : "#647b88"}"/><text x="${x}" y="${y + 29}" text-anchor="middle" fill="#e1e8ec" font-size="14">${own ? "Nacre · 🌐 1:214:6" : abandoned ? "Ash · 🌐 1:214:8" : `🌐 1:214:${index + 1}`}</text>${own ? `<text x="${x}" y="${y + 48}" text-anchor="middle" fill="#8ed4c8" font-size="11">YOUR COLONY</text>` : ""}</g>`;
 			})
 			.join("");
 		await page.setContent(

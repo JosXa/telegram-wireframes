@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { chromium } from "playwright";
-import { admirals, beats } from "../examples/admiral-onboarding/journey";
+import { admirals, beats, words } from "../examples/admiral-onboarding/journey";
 import { battles } from "../examples/empire-views/battle-reports";
 import { scenes, views } from "../examples/empire-views/connected";
 import { buildStudy, studyDir } from "../src/empire-views";
@@ -27,16 +27,25 @@ try {
 		colorScheme: "dark",
 		hasTouch: true,
 	});
+	page.setDefaultTimeout(30000);
 	await page.goto(chatUrl(server.url.origin, "menu"));
 	await page.getByRole("button", { name: "Start onboarding", exact: true }).waitFor();
 	for (const view of views) {
-		await page.getByRole("button", { name: view, exact: true }).click();
-		await page.getByRole("button", { name: "All views", exact: true }).waitFor();
+		const root = view === "Command Center";
+		await page.getByRole("button", { name: root ? "⬅️ Command Center" : view, exact: true }).click();
+		const allViews = page.getByRole("button", { name: root ? "⬅️ All views" : "All views", exact: true });
+		await allViews.waitFor();
 		assert.equal(await page.locator(".Message").count(), 1, `${view} replaces the previous screen`);
-		await page.getByRole("button", { name: "All views", exact: true }).click();
+		await allViews.click();
 		await page.getByRole("button", { name: "Start onboarding", exact: true }).waitFor();
 	}
 	await page.getByRole("button", { name: "Buildings", exact: true }).click();
+	await page.getByRole("button", { name: "Logistics Depot · Level 6", exact: true }).click();
+	const back = page.getByRole("button", { name: "⬅️ Buildings", exact: true });
+	await back.waitFor();
+	assert.equal(await page.locator(".Message button").last().innerText(), await back.innerText());
+	await page.screenshot({ path: `${studyDir}/back-button-phone.png` });
+	await back.click();
 	await page.getByRole("button", { name: "Logistics Depot · Level 6", exact: true }).click();
 	await page.getByRole("button", { name: "Queue upgrade · Level 7", exact: true }).click();
 	await page.getByRole("button", { name: "Cancel Logistics Depot → 7", exact: true }).click();
@@ -45,10 +54,13 @@ try {
 	// All report reading stays in native messages; only a collection order opens fleet controls.
 	for (const battle of battles) {
 		await page.getByRole("button", { name: "Battle Reports", exact: true }).click();
-		await page.getByRole("button", { name: battle.label, exact: true }).click();
-		await page.locator(".Message").getByText(battle.title, { exact: true }).waitFor();
+		await page.getByRole("button", { name: battle.title, exact: true }).click();
+		// The archive also lists battle titles, so wait for the report's own action before reading its heading.
+		const losses = page.getByRole("button", { name: "Ship losses and stats", exact: true });
+		await losses.waitFor();
+		assert.match(await page.locator(".Message").innerText(), new RegExp(`^${battle.title}$`, "m"));
 		assert.equal(await page.locator("iframe, .Message img.full-media").count(), 0);
-		await page.getByRole("button", { name: "Ship losses & stats", exact: true }).click();
+		await losses.click();
 		for (let index = 0; index < battle.contingents.length; index++) {
 			await page
 				.locator(".Message")
@@ -62,12 +74,12 @@ try {
 			if (index + 1 < battle.contingents.length)
 				await page.getByRole("button", { name: "Next fleet →", exact: true }).click();
 		}
-		await page.getByRole("button", { name: "Battle summary", exact: true }).click();
-		await page.getByRole("button", { name: "Loot & loss value", exact: true }).click();
+		await page.getByRole("button", { name: "⬅️ Battle report", exact: true }).click();
+		await page.getByRole("button", { name: "Loot and losses", exact: true }).click();
 		await page.locator(".Message").getByText(`${battle.planet} · resources`, { exact: true }).waitFor();
 		assert.equal(await page.locator("iframe").count(), 0);
 		if (battle.id === "battle-raid") {
-			await page.getByRole("button", { name: "Prepare salvage collection", exact: true }).click();
+			await page.getByRole("button", { name: "Collect salvage", exact: true }).click();
 			await page.waitForFunction(
 				() => document.querySelector(".Modal.confirm") || document.querySelector("iframe"),
 			);
@@ -99,14 +111,16 @@ try {
 		await page.getByRole("button", { name: person.name, exact: true }).click();
 		for (const beat of beats.slice(0, 12)) {
 			await page.getByText(beat.title, { exact: true }).waitFor();
-			if (["welcome", "home", "shipyard"].includes(beat.id)) {
+			if (["welcome", "home", "shipyard", "returned"].includes(beat.id))
 				await page.waitForFunction(() =>
 					[...document.querySelectorAll<HTMLImageElement>(".Message img.full-media")].some(
 						(image) => image.complete && image.naturalWidth > 0,
 					),
 				);
-				assert.match(await page.locator(".Message").innerText(), new RegExp(person.name));
-			}
+			// Only character dialogue names the admiral; other beats carry the advisor's plain lines.
+			const message = await page.locator(".Message").innerText();
+			assert.ok(message.includes(beat.lines[person.id]), `${beat.id} shows ${person.name}'s line`);
+			if (beat.id === "returned") assert.match(message, new RegExp(person.name));
 			if (["mine", "mine-ready", "departed"].includes(beat.id))
 				assert.equal(await page.locator(".Message img.full-media").count(), 0);
 			if (beat.id === "review") {
@@ -118,7 +132,7 @@ try {
 				if (await permission.isVisible()) await permission.click();
 				const app = page.frameLocator("iframe");
 				await app.locator("[data-ready='true']").waitFor();
-				assert.match(await app.locator("#content").innerText(), new RegExp(person.name));
+				assert.ok((await app.locator("#content").innerText()).includes(beat.lines[person.id]));
 				await app
 					.locator("body")
 					.evaluate(() =>
@@ -131,7 +145,8 @@ try {
 			}
 			await page
 				.getByRole("button", {
-					name: beat.app || ["departed", "victory"].includes(beat.id) ? "Continue onboarding" : beat.action,
+					name:
+						beat.app || ["departed", "victory"].includes(beat.id) ? words.continueOnboarding : beat.action,
 					exact: true,
 				})
 				.click();
@@ -150,7 +165,7 @@ try {
 	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 1);
 	await input.fill("/colony");
 	await input.press("Enter");
-	await page.getByRole("button", { name: "Inspect incoming fleet", exact: true }).waitFor();
+	await page.getByRole("button", { name: "Spy on incoming fleet", exact: true }).waitFor();
 	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 2);
 	await input.fill("hello");
 	await input.press("Enter");
@@ -165,7 +180,7 @@ try {
 		await page.locator(".Message").getByText(text, { exact: false }).waitFor();
 		await page.waitForFunction(() => document.querySelectorAll(".Message").length === 3);
 	}
-	await page.getByRole("button", { name: "All views", exact: true }).click();
+	await page.getByRole("button", { name: /^(⬅️ )?All views$/ }).click();
 	await page.getByRole("button", { name: "Start onboarding", exact: true }).waitFor();
 	await page.waitForFunction(() => document.querySelectorAll(".Message").length === 1);
 	await page.screenshot({ path: `${studyDir}/connected-phone.png` });

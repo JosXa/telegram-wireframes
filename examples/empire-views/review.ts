@@ -52,6 +52,7 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 	let generation = 0;
 	let saving = false;
 	let showing = "";
+	let selectionTimer: ReturnType<typeof setTimeout>;
 	const live = createLivePreview(frame, {
 		select: (value: ElementSelection) =>
 			begin(value.rect, {
@@ -66,8 +67,12 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 			if (box) position(highlight, box);
 		},
 		change: draw,
-		selection: (available) => {
-			el<HTMLButtonElement>("review-use-quote").disabled = !available;
+		selection: (box) => {
+			clearTimeout(selectionTimer);
+			el<HTMLButtonElement>("review-use-quote").disabled = !box;
+			// Wait for the highlight to settle, then open the composer beside the selected words.
+			if (box && form.hidden && !snapshot && !mode.disabled && !saving)
+				selectionTimer = setTimeout(() => live.commentSelection(), 120);
 		},
 		navigate: (id) => navigate(id, theme),
 		cancel: () => setMode(false),
@@ -94,7 +99,7 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 		live.inspect(active);
 		el("review-hint").textContent = active
 			? "Hover to highlight an element, then click to comment. Drag across words to quote just that text. Esc exits."
-			: "Use the live preview, or choose Add comment to select an element. You can also select text and comment on it.";
+			: "Highlight text to open a comment box. Choose Add comment to pick a button or another element.";
 		if (active && innerWidth < 1100) canvas.scrollIntoView({ block: "start", behavior: "instant" });
 	}
 	function zoom() {
@@ -136,7 +141,49 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 			node.style.height = `${box.height}px`;
 		}
 	}
+	function positionComposer(box: Rect) {
+		// Keep the composer in the top layer, outside the scaled and scrolling Telegram iframe.
+		const preview = frame.getBoundingClientRect();
+		const scale = preview.width / 420;
+		const anchor = {
+			left: preview.left + box.x * scale,
+			top: preview.top + box.y * scale,
+			right: preview.left + (box.x + box.width) * scale,
+			bottom: preview.top + (box.y + box.height) * scale,
+		};
+		const viewport = window.visualViewport;
+		const left = (viewport?.offsetLeft || 0) + 12;
+		const top = (viewport?.offsetTop || 0) + 12;
+		const right = left + (viewport?.width || innerWidth) - 24;
+		const bottom = top + (viewport?.height || innerHeight) - 24;
+		form.style.maxHeight = `${bottom - top}px`;
+		const size = form.getBoundingClientRect();
+		let x = anchor.right - size.width;
+		let y = anchor.bottom + 8;
+		if (innerWidth < 700) {
+			x = left + (right - left - size.width) / 2;
+			y = bottom - size.height;
+		} else if (anchor.right + 12 + size.width <= right) {
+			x = anchor.right + 12;
+			y = anchor.top;
+		} else if (anchor.left - size.width - 12 >= left) {
+			x = anchor.left - size.width - 12;
+			y = anchor.top;
+		}
+		form.style.left = `${Math.max(left, Math.min(x, right - size.width))}px`;
+		form.style.top = `${Math.max(top, Math.min(y, bottom - size.height))}px`;
+	}
+	function showComposer() {
+		form.hidden = false;
+		form.showPopover();
+		const anchor = target ? live.rect(target) : rect;
+		if (anchor) positionComposer(anchor);
+	}
 	function draw() {
+		if (!form.hidden) {
+			const anchor = target ? live.rect(target) : rect;
+			if (anchor) positionComposer(anchor);
+		}
 		const pins = el("review-pins");
 		pins.replaceChildren();
 		for (const comment of comments.filter(
@@ -180,6 +227,7 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 	}
 	function begin(value: Rect, draft?: Draft) {
 		if (saving) return;
+		clearTimeout(selectionTimer);
 		editing = undefined;
 		selected = undefined;
 		target = draft?.target;
@@ -193,11 +241,13 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 		setRect(value);
 		setMode(false);
 		saveDraft();
+		showComposer();
 		el("review-text").focus({ preventScroll: true });
-		if (innerWidth < 1100) form.scrollIntoView({ block: "nearest", behavior: "instant" });
 	}
 	function close() {
+		form.hidePopover();
 		form.hidden = true;
+		live.clearSelection();
 		rect = undefined;
 		target = undefined;
 		editing = undefined;
@@ -295,7 +345,8 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 					setRect(item);
 					for (const key of fields) el<HTMLTextAreaElement>(`review-${key}`).value = item[key];
 					for (const key of coordinates) el<HTMLInputElement>(`review-${key}`).disabled = true;
-					el("review-text").focus();
+					showComposer();
+					el("review-text").focus({ preventScroll: true });
 				}),
 				button(item.resolved ? "Reopen" : "Resolve", async () => {
 					try {
@@ -319,7 +370,18 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 		setMode(mode.getAttribute("aria-pressed") !== "true");
 	});
 	document.addEventListener("keydown", (event) => {
-		if (event.key === "Escape") setMode(false);
+		if (event.key !== "Escape") return;
+		if (!form.hidden) {
+			saveDraft();
+			close();
+			frame.focus({ preventScroll: true });
+		}
+		live.clearSelection();
+		setMode(false);
+	});
+	el("review-close").addEventListener("click", () => {
+		saveDraft();
+		close();
 	});
 	for (const key of coordinates)
 		el(`review-${key}`).addEventListener("input", () => {
@@ -377,6 +439,10 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 	});
 	el("review-zoom").addEventListener("change", zoom);
 	new ResizeObserver(zoom).observe(canvas.parentElement as HTMLElement);
+	window.addEventListener("scroll", draw, { capture: true, passive: true });
+	window.addEventListener("resize", draw);
+	window.visualViewport?.addEventListener("resize", draw);
+	window.visualViewport?.addEventListener("scroll", draw);
 	el("review-filter").addEventListener("change", render);
 	el("review-resolved").addEventListener("change", render);
 	el("review-current").addEventListener("click", () => {
@@ -437,6 +503,8 @@ export function createReview(navigate: (scene: string, theme: string, comment?: 
 		}
 	});
 	return {
+		// New drafts are persisted on input; defer refresh while editing a saved comment or submitting it.
+		canReload: () => !saving && editing === undefined,
 		async show(next: Scene, nextTheme: string) {
 			const key = `${next.id}:${nextTheme}:${new URL(location.href).searchParams.get("comment") || ""}`;
 			if (showing === key) return;

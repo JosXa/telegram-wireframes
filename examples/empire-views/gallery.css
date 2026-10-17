@@ -443,9 +443,35 @@ button:disabled {
 	color: oklch(45% 0.15 25);
 }
 #review-form {
-	padding-block: 14px 20px;
-	border-block: 1px solid var(--line);
-	margin-bottom: 16px;
+	position: fixed;
+	inset: auto;
+	margin: 0;
+	width: min(360px, calc(100vw - 24px));
+	padding: 16px;
+	border: 1px solid var(--line);
+	border-radius: 10px;
+	background: oklch(99% 0.004 90);
+	color: oklch(27% 0.018 245);
+	box-shadow: 0 8px 32px oklch(20% 0.015 185 / 0.2);
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+.review-form-heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+#review-close {
+	padding: 0;
+	min-height: 32px;
+	width: 32px;
+	font-size: 22px;
+	line-height: 1;
+	border: 0;
+}
+#review-form details {
+	margin-top: 10px;
 }
 #review-form label {
 	display: block;

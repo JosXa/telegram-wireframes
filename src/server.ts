@@ -52,6 +52,7 @@ export function startServer({
 	reviewDatabase?: string;
 }) {
 	const review = reviewHandler(fixtures, reviewDatabase);
+	const revision = crypto.randomUUID();
 	return Bun.serve({
 		port,
 		async fetch(request) {
@@ -59,7 +60,8 @@ export function startServer({
 			const reviewResponse = await review(request);
 			if (reviewResponse) return reviewResponse;
 
-			if (pathname === "/__wireframes__/config.json") return Response.json({ debug });
+			if (pathname === "/__wireframes__/config.json")
+				return Response.json({ debug, revision }, { headers: { "Cache-Control": "no-store" } });
 
 			const fixtureMatch = pathname.match(/^\/__wireframes__\/fixtures\/([^/]+)\/(.+)$/);
 			if (fixtureMatch) {

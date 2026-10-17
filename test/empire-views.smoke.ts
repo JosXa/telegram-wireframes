@@ -33,7 +33,7 @@ try {
 		const frame = page.frameLocator("iframe");
 		await frame.locator("[data-ready='true']").waitFor();
 		await page.waitForTimeout(800);
-		assert.equal(await frame.getByRole("heading", { name: "Prepare dispatch" }).count(), 1);
+		assert.equal(await frame.getByRole("heading", { name: "Prepare fleet" }).count(), 1);
 		const coordinates = frame.getByRole("group", { name: "Target coordinates", exact: true });
 		const values = () =>
 			coordinates
@@ -74,38 +74,38 @@ try {
 		assert.match(await frame.locator("#dispatch-error").innerText(), /capacity/);
 		await frame.locator('[name="minerals"]').fill("2000");
 		await frame.getByRole("button", { name: "Review dispatch" }).click();
-		assert.match(await frame.locator("#content").innerText(), /Rime · 1:218:2/);
-		await frame.getByRole("button", { name: "Dispatch now" }).click();
+		assert.match(await frame.locator("#content").innerText(), /Rime · 🌐 1:218:2/);
+		await frame.getByRole("button", { name: "Send fleet" }).click();
 		assert.equal(await frame.getByRole("heading", { name: "Fleet dispatched" }).count(), 1);
 		await frame.getByRole("button", { name: "Stationed", exact: true }).click();
 		assert.match(await frame.locator("#content").innerText(), /4 Resource Transports/);
 		assert.equal(await frame.getByRole("button", { name: /Mira.*dispatch|dispatch.*Mira/i }).count(), 0);
 		await frame.getByRole("button", { name: "Withdraw your 8 ships" }).click();
-		await frame.getByRole("button", { name: "Confirm withdrawal" }).click();
-		assert.equal(await frame.getByRole("button", { name: "Withdrawal started" }).isDisabled(), true);
+		await frame.getByRole("button", { name: "Withdraw ships" }).click();
+		assert.equal(await frame.getByRole("button", { name: "Returning to Nacre" }).isDisabled(), true);
 		await frame.getByRole("button", { name: "Movements", exact: true }).click();
 		await frame.getByRole("button", { name: "Recall transport", exact: true }).click();
-		await frame.getByRole("button", { name: "Confirm recall" }).click();
+		await frame.locator("#recall-review").getByRole("button", { name: "Recall transport" }).click();
 		assert.equal(await frame.getByRole("button", { name: "Already returning" }).isDisabled(), true);
 		await frame.locator(".warning").click();
-		assert.match(await frame.locator("#content").innerText(), /Mission unverified/);
-		await frame.getByRole("button", { name: "Sample failure", exact: true }).click();
-		assert.match(await frame.locator("#content").innerText(), /Mission unverified/);
-		await frame.getByRole("button", { name: "Investigate · sample success" }).click();
+		assert.match(await frame.locator("#content").innerText(), /Mission unknown/);
+		await frame.getByRole("button", { name: "Spy again", exact: true }).click();
+		assert.match(await frame.locator("#content").innerText(), /Mission unknown/);
+		await frame.getByRole("button", { name: "Spy on fleet" }).click();
 		await frame.getByRole("heading", { name: "Reinforcements incoming" }).waitFor();
 		assert.match(await frame.locator("#content").innerText(), /12 Scout Fighter/);
 		await frame.getByRole("button", { name: "Movements", exact: true }).click();
 		assert.match(await frame.locator("#content").innerText(), /Reinforcements incoming/);
 		await frame.locator(".warning").click();
-		await frame.getByRole("button", { name: "Preview recall / verification expiry" }).click();
-		assert.match(await frame.locator("#content").innerText(), /Current mission and ship composition unknown/);
+		await frame.getByRole("button", { name: "Follow fleet return" }).click();
+		assert.match(await frame.locator("#content").innerText(), /Espionage report expired/);
 		await frame.getByRole("button", { name: "Dispatch", exact: true }).click();
 		await frame.locator('[name="target"]').selectOption("2");
 		await frame.locator('[name="mission"]').selectOption("Attack");
 		await frame.getByRole("button", { name: "Review dispatch" }).click();
-		assert.equal(await frame.getByRole("button", { name: "Dispatch now" }).isDisabled(), true);
-		await frame.getByRole("checkbox", { name: "I intend to attack Mira" }).check();
-		assert.equal(await frame.getByRole("button", { name: "Dispatch now" }).isEnabled(), true);
+		assert.equal(await frame.getByRole("button", { name: "Send fleet" }).isDisabled(), true);
+		await frame.getByRole("checkbox", { name: "Attack Mira's colony" }).check();
+		assert.equal(await frame.getByRole("button", { name: "Send fleet" }).isEnabled(), true);
 		assert.equal(await frame.getByRole("button", { name: "Replay", exact: true }).count(), 0);
 		const overflow = await frame
 			.locator("body")

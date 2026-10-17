@@ -10,7 +10,7 @@ import { paths } from "../src/upstream";
 
 const root = await mkdtemp("/tmp/opencode/wireframe-review-browser-");
 const fixtures = await buildStudy();
-const server = startServer({ fixtures, dist: paths.dist, reviewDatabase: join(root, "reviews.sqlite") });
+let server = startServer({ fixtures, dist: paths.dist, reviewDatabase: join(root, "reviews.sqlite") });
 const browser = await chromium.launch();
 const url = `${server.url.origin}${studyPath}`;
 const comments = async () =>
@@ -25,6 +25,7 @@ const ready = async (page: Page) => {
 try {
 	// Let iframe color-scheme inheritance work instead of forcing a browser-wide media override.
 	const context = await browser.newContext({ viewport: { width: 1440, height: 1200 }, colorScheme: null });
+	context.setDefaultTimeout(30000);
 	const page = await context.newPage();
 	const errors: string[] = [];
 	page.on("pageerror", (error) => errors.push(error.message));
@@ -46,9 +47,24 @@ try {
 	assert.equal(await page.locator("#review-quote").inputValue(), "Victory at Ash");
 	await page.locator("#review-text").fill("Use a clearer heading.");
 	await page.locator("#review-replacement").fill("Victory at Ash colony");
-	await page.reload();
+	// A deployment replaces the stale Telegram screen and restores the comment draft automatically.
+	const entry = fixtures.get("battle-report");
+	assert.ok(entry);
+	const updated = structuredClone(entry.fixture);
+	updated.messages[0].text += "\nPreview revision updated.";
+	const updatedPath = join(root, "battle-report.json");
+	await Bun.write(updatedPath, JSON.stringify(updated));
+	fixtures.set("battle-report", { ...entry, path: updatedPath, fixture: updated });
+	const port = server.port;
+	const reloaded = page.waitForEvent("domcontentloaded");
+	await server.stop(true);
+	server = startServer({ fixtures, port, dist: paths.dist, reviewDatabase: join(root, "reviews.sqlite") });
+	await reloaded;
 	await page.getByText("Your unsaved draft has been restored.", { exact: true }).waitFor();
 	assert.equal(await page.locator("#review-quote").inputValue(), "Victory at Ash");
+	assert.equal(await page.locator("#review-text").inputValue(), "Use a clearer heading.");
+	assert.equal(await page.locator("#review-replacement").inputValue(), "Victory at Ash colony");
+	assert.match(await chat.locator(".Message .text-content").innerText(), /Preview revision updated/);
 	await page.locator("#review-save").click();
 	await page.getByText("Comment #1 saved on this server.", { exact: true }).waitFor();
 	let saved = await comments();
@@ -62,7 +78,7 @@ try {
 	assert.ok(zoomed && pin);
 	assert.ok(Math.abs(pin.x + pin.width / 2 - zoomed.x) <= 2, "DOM anchor must follow zoom");
 	await page.locator("#review-zoom").selectOption("fit");
-	// Select a substring in the rendered HTML, then comment through the toolbar.
+	// Highlighting words opens a floating composer without entering inspection mode.
 	await heading.evaluate((element) => {
 		const range = element.ownerDocument.createRange();
 		range.setStart(element.firstChild as Node, 0);
@@ -71,14 +87,21 @@ try {
 		selection?.removeAllRanges();
 		selection?.addRange(range);
 	});
-	await page.locator("#review-use-quote").click();
+	const composer = page.locator("#review-form:popover-open");
+	await composer.waitFor();
+	const composerBox = await composer.boundingBox();
+	const anchorBox = await heading.boundingBox();
+	assert.ok(composerBox && anchorBox && Math.abs(composerBox.y - anchorBox.y) < 100);
 	assert.equal(await page.locator("#review-quote").inputValue(), "Victory");
 	assert.equal(await page.locator("#review-text").inputValue(), "");
 	await page.locator("#review-text").fill("Only this word needs changing.");
+	await page.locator("#review-replacement").fill("Battle won");
+	await page.screenshot({ path: "wireframes/empire-views/review-composer.png", fullPage: true });
 	await page.locator("#review-save").click();
 	await page.getByText("Comment #2 saved on this server.", { exact: true }).waitFor();
 	saved = await comments();
 	assert.deepEqual(saved[1].target?.selection, { start: 0, end: 7 });
+	assert.equal(saved[1].replacement, "Battle won");
 	// Drag real text while selecting, rather than supplying a Range through the toolbar.
 	await page.locator("#comment-mode").click();
 	const word = await heading.evaluate((element) => {
@@ -94,6 +117,26 @@ try {
 	await page.mouse.move(headingBox.x + word.width, headingBox.y + headingBox.height / 2, { steps: 8 });
 	await page.mouse.up();
 	assert.equal(await page.locator("#review-quote").inputValue(), "Victory");
+	await page.keyboard.press("Escape");
+	assert.equal(await page.locator("#review-form").isVisible(), false);
+	// Select another word clear of existing comment pins, without inspection mode.
+	const lastWord = await heading.evaluate((element) => {
+		const range = element.ownerDocument.createRange();
+		range.setStart(element.firstChild as Node, 11);
+		range.setEnd(element.firstChild as Node, 14);
+		const box = range.getBoundingClientRect();
+		return { offset: box.left - element.getBoundingClientRect().left, width: box.width };
+	});
+	const normalBox = await heading.boundingBox();
+	assert.ok(normalBox);
+	await page.mouse.move(normalBox.x + lastWord.offset + 1, normalBox.y + normalBox.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(normalBox.x + lastWord.offset + lastWord.width, normalBox.y + normalBox.height / 2, {
+		steps: 8,
+	});
+	await page.mouse.up();
+	await composer.waitFor();
+	assert.equal(await page.locator("#review-quote").inputValue(), "Ash");
 	await page.locator("#review-cancel").click();
 	// A rebuilt Telegram timestamp must not detach feedback from the message body.
 	await page.locator("#comment-mode").click();
@@ -108,14 +151,15 @@ try {
 	await page.locator("#review-cancel").click();
 	// Inspection must not activate the native button; normal browsing must still work.
 	await page.locator("#comment-mode").click();
-	await chat.getByRole("button", { name: "Ship losses & stats", exact: true }).click();
+	await chat.getByRole("button", { name: "Ship losses and stats", exact: true }).click();
 	assert.equal(new URL(page.url()).hash, "#battle-report");
-	assert.equal(await page.locator("#review-quote").inputValue(), "Ship losses & stats");
+	assert.equal(await page.locator("#review-quote").inputValue(), "Ship losses and stats");
 	await page.locator("#review-cancel").click();
-	await chat.getByRole("button", { name: "Ship losses & stats", exact: true }).click();
+	await chat.getByRole("button", { name: "Ship losses and stats", exact: true }).click();
 	await chat.getByText("Ash · ship losses 1/2", { exact: true }).waitFor();
 	assert.notEqual(new URL(page.url()).hash, "#battle-report");
-	await page.goto(`${url}#battle-report`);
+	await chat.getByRole("button", { name: "⬅️ Battle report", exact: true }).click();
+	await page.waitForURL(/#battle-report$/);
 	await ready(page);
 	await page.locator('[data-theme="light"]').click();
 	await ready(page);
@@ -126,8 +170,17 @@ try {
 	await page.locator('.review-pin[aria-pressed="true"]').first().waitFor();
 	await page.locator("#review-comment-1").getByRole("button", { name: "Edit", exact: true }).click();
 	await page.locator("#review-text").fill("Edited heading feedback");
+	// Editing existing feedback must not be interrupted by a preview deployment.
+	await server.stop(true);
+	server = startServer({ fixtures, port, dist: paths.dist, reviewDatabase: join(root, "reviews.sqlite") });
+	await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+	assert.equal(await page.locator("#review-text").inputValue(), "Edited heading feedback");
 	await page.locator("#review-save").click();
 	await page.getByText("Comment #1 saved on this server.", { exact: true }).waitFor();
+	const refreshed = page.waitForEvent("domcontentloaded");
+	await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+	await refreshed;
+	await ready(page);
 	await page.locator("#review-comment-1").getByRole("button", { name: "Resolve", exact: true }).click();
 	await page.getByText("Comment resolved. Use Include resolved to see it.", { exact: true }).waitFor();
 	await page.locator("#review-resolved").check();
@@ -147,12 +200,12 @@ try {
 	await page.goto(`${url}#dispatch`);
 	await ready(page);
 	const app = chat.frameLocator("iframe");
-	const appHeading = app.getByRole("heading", { name: "Prepare dispatch", exact: true });
+	const appHeading = app.getByRole("heading", { name: "Prepare fleet", exact: true });
 	await appHeading.waitFor();
 	assert.equal(await app.locator("html").evaluate((node) => getComputedStyle(node).colorScheme), "dark");
 	await page.locator("#comment-mode").click();
 	await appHeading.click();
-	assert.equal(await page.locator("#review-quote").inputValue(), "Prepare dispatch");
+	assert.equal(await page.locator("#review-quote").inputValue(), "Prepare fleet");
 	await page.locator("#review-text").fill("Mini App heading feedback");
 	await page.locator("#review-save").click();
 	await page.getByText("Comment #3 saved on this server.", { exact: true }).waitFor();
@@ -166,6 +219,7 @@ try {
 		hasTouch: true,
 		isMobile: true,
 	});
+	phone.setDefaultTimeout(30000);
 	const mobile = await phone.newPage();
 	await mobile.goto(`${url}#battle-report`);
 	await ready(mobile);
@@ -175,7 +229,11 @@ try {
 		.getByRole("button", { name: "Round by round", exact: true })
 		.tap();
 	assert.equal(await mobile.locator("#review-quote").inputValue(), "Round by round");
+	const phoneComposer = await mobile.locator("#review-form:popover-open").boundingBox();
+	assert.ok(phoneComposer && phoneComposer.x >= 0 && phoneComposer.x + phoneComposer.width <= 420);
+	assert.ok(phoneComposer.y >= 0 && phoneComposer.y + phoneComposer.height <= 900);
 	await mobile.locator("#review-text").fill("Touch feedback");
+	await mobile.screenshot({ path: "wireframes/empire-views/review-phone-composer.png" });
 	await mobile.locator("#review-save").tap();
 	await mobile.getByText("Comment #4 saved on this server.", { exact: true }).waitFor();
 	assert.equal(await mobile.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
@@ -192,7 +250,7 @@ try {
 	assert.equal((await comments()).length, 4);
 	assert.deepEqual(errors, []);
 	console.log(
-		"Live review passed: native Telegram elements, exact text selection, DOM context, zoom, drafts, navigation, themes, Mini Apps, touch, persistence, edits, deep links and export.",
+		"Live review passed: deployment refresh, draft preservation, native Telegram elements, exact text selection, DOM context, zoom, navigation, themes, Mini Apps, touch, persistence, edits, deep links and export.",
 	);
 } finally {
 	await browser.close();
