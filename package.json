@@ -30,7 +30,11 @@
 		"admirals:build": "bun src/admiral-onboarding.ts build",
 		"admirals:serve": "bun src/admiral-onboarding.ts serve",
 		"admirals:render": "bun src/admiral-onboarding.ts render",
-		"test:admirals": "bun test/admiral-onboarding.smoke.ts"
+		"test:admirals": "bun test/admiral-onboarding.smoke.ts",
+		"batches:build": "bun src/ship-batches.ts build",
+		"batches:serve": "bun src/ship-batches.ts serve",
+		"batches:render": "bun src/ship-batches.ts render",
+		"test:batches": "bun test/ship-batches.smoke.ts"
 	},
 	"dependencies": {
 		"playwright": "^1.64.0"

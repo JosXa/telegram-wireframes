@@ -11,5 +11,5 @@
 		"skipLibCheck": true,
 		"verbatimModuleSyntax": true
 	},
-	"include": ["src", "test", "examples/empire-views", "examples/admiral-onboarding"]
+	"include": ["src", "test", "examples/empire-views", "examples/admiral-onboarding", "examples/ship-batches"]
 }

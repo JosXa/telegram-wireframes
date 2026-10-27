@@ -95,6 +95,15 @@ bun run admirals:serve
 
 The fleet review also opens a working Mini App. Character references and scene sheets stay beside the fixture source. The game's art-style document governs every image prompt.
 
+### Space Emperors: mixed ship batches
+
+The [ship batch study](examples/ship-batches) compares seven ways to compose one Shipyard batch from several ship types. Every button and typed reply works, so you can build, refresh until the batch finishes and order again inside Telegram.
+
+```sh
+bun run batches:render
+bun run batches:serve
+```
+
 ### Fixture format
 
 To connect chat screens, add preview metadata outside `messages`:
@@ -107,6 +116,15 @@ To connect chat screens, add preview metadata outside `messages`:
 ```
 
 Each entry maps `callback_data` or a sent command to a fixture registered with the same server. The mock replaces the current sample screen using Telegram updates and loads photos and Mini Apps from the destination fixture's directory. Pass every destination fixture to `serve` or `render` so registration can resolve the targets.
+
+The key `"*"` catches any other text the user sends, so a screen can wait for a typed reply. `{text}` in its target becomes the URI-encoded message. Buttons that stay on the current screen can answer with a toast or an alert through `answers`:
+
+```json
+"navigation": { "*": "amount-reply!{text}" },
+"answers": { "locked-heavy": { "text": "Needs the Orbital Shipyard at level 8 first." } }
+```
+
+A study can also pass `resolveFixture` to `startServer` and compute fixtures from their names, as the ship batch study does for every state its buttons reach.
 
 Mini Apps open in Web A's own iframe, with Telegram's header, permission prompt and theme/event bridge. Put an HTML page next to your fixture and use its relative path in a `web_app` button:
 

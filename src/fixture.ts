@@ -7,8 +7,18 @@ export type Fixture = {
 	messages: FixtureMessage[];
 	/** Optional Mini App screenshot: click this button and wait for the app's ready element. */
 	mini_app?: { button_text: string; ready_selector?: string };
-	/** Local preview routes: callback data or a sent command maps to a registered fixture name. */
+	/**
+	 * Local preview routes: callback data or a sent command maps to a registered fixture name. The
+	 * key "*" catches any other sent text; "{text}" in its target becomes the URI-encoded message.
+	 */
 	navigation?: Record<string, string>;
+	/** Callback answers for buttons that stay on the current screen, as with answerCallbackQuery. */
+	answers?: Record<string, CallbackAnswer>;
+};
+
+export type CallbackAnswer = {
+	text: string;
+	show_alert?: boolean;
 };
 
 export type FixtureBot = {

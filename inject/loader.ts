@@ -183,6 +183,16 @@ function createMiddleware(
 
 	return async (client, request) => {
 		if (forwarded.has(request)) return "pass";
+		const answer =
+			request instanceof Api.messages.GetBotCallbackAnswer
+				? fixture.answers?.[new TextDecoder().decode(request.data)]
+				: undefined;
+		if (answer)
+			return new Api.messages.BotCallbackAnswer({
+				cacheTime: 0,
+				message: answer.text,
+				alert: answer.show_alert || undefined,
+			});
 		if (request instanceof Api.messages.GetBotCallbackAnswer && fixture.navigation) {
 			const target = fixture.navigation[new TextDecoder().decode(request.data)];
 			if (!target)
@@ -195,7 +205,9 @@ function createMiddleware(
 		}
 		if (request instanceof Api.messages.SendMessage && fixture.navigation) {
 			const command = request.message.trim();
-			const target = Object.hasOwn(fixture.navigation, command) ? fixture.navigation[command] : undefined;
+			const target = Object.hasOwn(fixture.navigation, command)
+				? fixture.navigation[command]
+				: fixture.navigation["*"]?.replace("{text}", encodeURIComponent(command));
 			const updates = await navigate(client, target, request.message);
 			return new Api.Updates({
 				updates: [

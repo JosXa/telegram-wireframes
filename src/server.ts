@@ -44,12 +44,15 @@ export function startServer({
 	port = 0,
 	debug = false,
 	reviewDatabase = resolve(".reviews/feedback.sqlite"),
+	resolveFixture,
 }: {
 	dist: string;
 	fixtures: Map<string, RegisteredFixture>;
 	port?: number;
 	debug?: boolean;
 	reviewDatabase?: string;
+	/** Builds fixtures that are not registered, such as screens computed from a state in the name. */
+	resolveFixture?: (name: string) => Promise<RegisteredFixture | undefined>;
 }) {
 	const review = reviewHandler(fixtures, reviewDatabase);
 	const revision = crypto.randomUUID();
@@ -65,10 +68,15 @@ export function startServer({
 
 			const fixtureMatch = pathname.match(/^\/__wireframes__\/fixtures\/([^/]+)\/(.+)$/);
 			if (fixtureMatch) {
-				const entry = fixtures.get(decodeURIComponent(fixtureMatch[1]));
+				const name = decodeURIComponent(fixtureMatch[1]);
+				const registered = fixtures.get(name);
+				const entry = registered ?? (await resolveFixture?.(name));
 				if (!entry) return new Response("Unknown fixture", { status: 404 });
 				// Re-read on every request so that `serve` picks up edits on reload.
-				if (fixtureMatch[2] === "fixture.json") return new Response(Bun.file(entry.path));
+				if (fixtureMatch[2] === "fixture.json")
+					return registered
+						? new Response(Bun.file(entry.path))
+						: Response.json(entry.fixture, { headers: { "Cache-Control": "no-store" } });
 
 				const root = dirname(entry.path);
 				const file = resolve(root, decodeURIComponent(fixtureMatch[2].replace(/^files\//, "")));
