@@ -1,0 +1,37 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{
+				"command": "planet",
+				"description": "Your current planet"
+			},
+			{
+				"command": "build",
+				"description": "Buildings and upgrades"
+			},
+			{
+				"command": "fleet",
+				"description": "Fleets in flight"
+			}
+		]
+	},
+	"user": {
+		"first_name": "Joscha"
+	},
+	"now": "2026-11-10T19:54:00+01:00",
+	"messages": [
+		{
+			"from": "bot",
+			"widget": {
+				"html": "widget.html",
+				"width": 320,
+				"chat_data": "{\"p\":\"Lulu\",\"c\":\"1:1:3\",\"q\":[{\"n\":\"Mineral Mine\",\"l\":8,\"s\":1794336000000,\"e\":1794339240000},{\"n\":\"Logistics Depot\",\"l\":3,\"d\":2880000}]}"
+			},
+			"caption": "🏗 Lulu: Mineral Mine (⬆️ 8) is under construction, then Logistics Depot (⬆️ 3)."
+		}
+	]
+}

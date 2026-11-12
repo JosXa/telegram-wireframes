@@ -1,0 +1,94 @@
+<style>
+body{margin:0;padding:10px 12px;font-variant-numeric:tabular-nums}
+h1{margin:0;font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+button{font:inherit}
+#mi{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0 10px}
+.m{background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-text-color);padding:6px 0;font-size:14px;font-weight:400}
+.m.on{box-shadow:inset 0 0 0 1.5px var(--tg-theme-link-color);color:var(--tg-theme-link-color);font-weight:600}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.st{display:flex;align-items:center;flex:none}
+.st button{background:var(--tg-theme-secondary-bg-color);color:var(--tg-theme-link-color);width:32px;height:30px;padding:0;font-size:18px;line-height:1}
+.st .c{background:none;color:var(--tg-theme-text-color);width:48px;font-size:15px}
+.c small,.st button:disabled{color:var(--tg-theme-hint-color)}
+.c small,#sh .s{font-size:12px}
+#sl{display:flex;align-items:center;gap:12px;padding:4px 0}
+#sp{flex:1;height:32px;position:relative;touch-action:pan-y}
+#sp:before,#fl{content:'';position:absolute;left:0;right:0;top:14px;height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color)}
+#fl{right:auto;background:var(--tg-theme-link-color)}
+#th{position:absolute;top:6px;width:16px;height:16px;margin-left:-10px;border-radius:50%;background:var(--tg-theme-bg-color);border:2px solid var(--tg-theme-link-color)}
+#pv{width:40px;text-align:right}
+.k{align-items:baseline}
+.k b{font-size:22px;font-weight:600}
+.bad{color:var(--tg-theme-destructive-text-color)}
+#go{display:block;width:100%;margin-top:6px}
+#nt{margin-top:6px;text-align:center}
+#nt:empty{display:none}
+</style>
+<h1 id="h"></h1>
+<div class="s" id="sub"></div>
+<div id="mi"></div>
+<div class="s" id="fr"></div>
+<div id="sh"></div>
+<div class="row" id="sl"><span>Speed</span><div id="sp"><i id="fl"></i><i id="th"></i></div><span id="pv"></span></div>
+<div class="row k"><span>Travel time <b id="tt"></b></span><span class="s" id="ar"></span></div>
+<div class="row"><span>Gas for both legs</span><span id="gs"></span></div>
+<div class="row"><span>Cargo capacity</span><span id="cg"></span></div>
+<div class="row"><span>Back by</span><span id="bk"></span></div>
+<button id="go"></button>
+<div class="s" id="nt"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i),H=W&&W.HapticFeedback;
+const M={a:['⚔️','Attack','Attack on '],t:['📦','Transport','Transport to '],r:['🛡️','Reinforce','Reinforcements for ']};
+let s,c,pc,m,pend=0,err='';
+const tx=(i,t)=>$(i).textContent=t;
+const clk=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const p2=n=>String(n).padStart(2,'0');
+const dur=ms=>{const t=Math.ceil(ms/1e3),h=t/3600|0,m=t%3600/60|0;return h>23?(h/24|0)+' d '+h%24+' h':(h?h+':'+p2(m):m)+':'+p2(t%60)};
+const fmt=n=>{n=Math.trunc(n);if(n<1e5)return(''+n).replace(/\B(?=(\d{3})+$)/g,'\xa0');let i=0;while(n>=1e3&&i<6){n/=1e3;i++}return Math.trunc(n*10)/10+['','K','M','B','T','Qa','Qi'][i]};
+function load(){
+try{s=JSON.parse(W.chatData)||{}}catch(e){s={}}
+let v;try{v=!s.x&&JSON.parse(localStorage.getItem('d'))}catch(e){}
+[c,pc,m]=v||[s.c.slice(),s.pc,s.m];pend=0;
+$('mi').innerHTML=[...s.ms].map(k=>`<button class="m" data-m="${k}">${M[k][0]} ${M[k][1]}</button>`).join('');
+$('sh').innerHTML=s.s.map((x,i)=>`<div class="row"><div>${x[0]}<div class="s">attack ${x[5]} · hull ${x[6]} · speed ${x[2]}</div></div><span class="st"><button data-i="${i}" data-d="-1">−</button><button class="c" data-i="${i}"></button><button data-i="${i}" data-d="1">+</button></span></div>`).join('');
+}
+function q(){
+const k=s.k,f=pc/100,ch=s.s.map((x,i)=>[x,c[i]]).filter(y=>y[1]>0),top=Math.min(...ch.map(y=>y[0][2]));
+return[ch.length,ch.length?Math.round((k[2]+k[0]*k[1]/(top*f))*60)*1e3:0,Math.ceil(2*(k[3]*k[0]+ch.reduce((a,[x,n])=>a+n*x[3]*k[0]*f*f,0))),ch.reduce((a,[x,n])=>a+n*x[4],0)]}
+const lock=()=>pend||s.x;
+function draw(){
+const[nc,tr,gas,cg]=q(),k=s.k,t0=s.x||Date.now(),mn=M[m],sh=gas-s.g,L=lock(),go=$('go');
+tx('h',mn[0]+' '+mn[2]+s.t);
+tx('sub',s.w+' · 🌐 '+s.tc+(s.sn?' · 👁 '+clk(s.sn):''));
+tx('fr','From '+s.o+' · 🌐 '+s.oc+' · 🔥 '+fmt(s.g));
+for(const b of $('mi').children){b.classList.toggle('on',b.dataset.m==m);b.disabled=L}
+$('sh').querySelectorAll('button').forEach(b=>{const i=b.dataset.i,d=b.dataset.d,n=s.s[i][1];
+if(d)b.disabled=L||c[i]==(d>0?n:0);else{b.disabled=L;b.innerHTML=c[i]+'<small>/'+n+'</small>'}});
+const p=(pc-k[4])/(100-k[4])*100+'%';$('fl').style.width=$('th').style.left=p;tx('pv',pc+'%');
+tx('tt',nc?dur(tr):'–');tx('ar',nc?'at '+clk(t0+tr):'');
+tx('gs','🔥 '+fmt(gas));$('gs').className=sh>0&&!s.x?'bad':'';
+tx('cg',fmt(cg));tx('bk',nc?clk(t0+2*tr+(m=='a'?k[5]*6e4:0)):'–');
+go.disabled=L||!nc||sh>0;
+tx('go',s.x?'Dispatched at '+clk(s.x):pend?'⏳ One moment…':!nc?'Choose ships':sh>0?s.o+' needs 🔥 '+fmt(sh)+' more':m=='t'?'📦 Choose cargo ↗':mn[0]+' Dispatch');
+tx('nt',err||(s.x?'':sh>0?'Slower flight burns less gas.':''));$('nt').className='s'+(err?' bad':'');
+if(!s.x)try{localStorage.setItem('d',JSON.stringify([c,pc,m]))}catch(e){}
+}
+$('mi').onclick=e=>{const b=e.target.closest('button');if(b&&!lock()){m=b.dataset.m;draw()}};
+$('sh').onclick=e=>{const b=e.target.closest('button');if(!b||lock())return;const i=b.dataset.i,n=s.s[i][1],h=Math.ceil(n/2),v=c[i];
+c[i]=b.dataset.d?Math.min(n,Math.max(0,v+ +b.dataset.d)):v==n?0:v>=h?n:h;H&&H.selectionChanged();draw()};
+const sp=$('sp');let w,p0,dr=0;
+const mv=e=>{const k=s.k[4],v=Math.round(k+(100-k)*Math.min(1,Math.max(0,(e.clientX-w.left)/w.width)));if(v!=pc){pc=v;draw()}};
+sp.onpointerdown=e=>{if(lock())return;dr=1;p0=pc;w=sp.getBoundingClientRect();sp.setPointerCapture(e.pointerId);mv(e)};
+sp.onpointermove=e=>dr&&mv(e);
+sp.onpointerup=()=>dr=0;
+sp.onpointercancel=()=>{if(dr){dr=0;pc=p0;draw()}};
+$('go').onclick=()=>{if(!W)return;const d=s.tc+':'+m+':'+pc+':'+c.join('.');err='';
+if(m=='t')return W.openTelegramLink('https://t.me/space_emperors_bot/app?startapp=t'+d.replace(/\W/g,'_'));
+pend=1;draw();
+W.request('d:'+d).then(r=>{if(r.result!='ok')fail(r.result)},()=>fail("The order didn't reach "+s.o+'. Try again.'))};
+const fail=t=>{pend=0;err=t||'';draw()};
+if(W){load();W.onEvent('chatDataChanged',()=>{load();draw()})}
+draw();setInterval(draw,1e3);
+W&&W.ready();
+</script>

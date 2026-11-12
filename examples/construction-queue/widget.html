@@ -1,0 +1,46 @@
+<style>
+body{margin:0;padding:10px 12px 10px;font-variant-numeric:tabular-nums}
+.h{font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+#q{margin-top:6px}
+.e{padding:8px 0 6px;border-top:1px solid var(--tg-theme-section-separator-color)}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.big{font-size:22px;font-weight:600}
+.w{font-weight:600}
+.bar{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:4px 0 2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--tg-theme-link-color);transition:width 1s linear}
+.d{animation:f 1.5s ease-out}
+@keyframes f{from{color:var(--tg-theme-link-color)}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}.d{animation:none}}
+</style>
+<div class="h">🏗 Upgrade queue</div>
+<div class="s" id="sub"></div>
+<div id="q"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+let s,L,g;
+const p2=n=>String(n).padStart(2,'0');
+const D=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t/60%60|0,x=t%60;return h>=24?(h/24|0)+' d '+h%24+' h':h?h+':'+p2(m)+':'+p2(x):m+':'+p2(x)};
+const C=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+function load(){
+try{s=JSON.parse(W&&W.chatData)||{}}catch(e){s={}}
+let c=0;
+L=(s.q||[]).map(x=>{let a,b;if(x.e){a=x.s;b=c=x.e}else if(!x.k){a=c||Date.now();b=c=a+x.d}return{...x,a,b}});
+$('sub').textContent=s.p+' · 🌐 '+s.c;g='';draw();
+}
+const st=(x,n)=>x.k?'l':n>=x.b?'d':n>=x.a?'r':'w';
+function row(x,k,i){
+const nm=x.n+' (⬆️ '+x.l+')',at='<span class="s">at '+C(x.b)+'</span>';
+if(k=='d')return`<div class="e r d"><span>✅ ${nm}</span><span class="s">finished at ${C(x.b)}</span></div>`;
+if(k=='l')return`<div class="e">⏳ ${nm}<div class="s">🔒 Needs ${x.k[0]} at level ${x.k[1]} first.</div></div>`;
+if(k=='r')return`<div class="e">🔨 ${nm}<div class="r"><span class="big" id="t${i}"></span>${at}</div><div class="bar"><i id="b${i}"></i></div></div>`;
+return`<div class="e">⏳ ${nm}<div class="r"><span class="w" id="t${i}"></span>${at}</div><div class="s">Starts at ${C(x.a)}</div></div>`;
+}
+function draw(){
+const n=Date.now(),k=L.map(x=>st(x,n)).join('');
+if(k!=g){g=k;$('q').innerHTML=L.length?L.map((x,i)=>row(x,k[i],i)).join(''):'<div class="e s">Nothing is under construction. The cranes are standing around looking expensive.</div>'}
+L.forEach((x,i)=>{const t=$('t'+i),b=$('b'+i);if(t)t.textContent=D(x.b-n);if(b)b.style.width=Math.min(100,(n-x.a)/(x.b-x.a)*100).toFixed(2)+'%'});
+}
+load();setInterval(draw,1000);
+if(W){W.onEvent('chatDataChanged',load);W.ready()}
+</script>

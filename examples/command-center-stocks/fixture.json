@@ -1,0 +1,37 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{
+				"command": "planet",
+				"description": "Your current planet"
+			},
+			{
+				"command": "build",
+				"description": "Buildings and upgrades"
+			},
+			{
+				"command": "fleet",
+				"description": "Fleets in flight"
+			}
+		]
+	},
+	"user": {
+		"first_name": "Joscha"
+	},
+	"now": "2026-11-10T19:54:00+01:00",
+	"messages": [
+		{
+			"from": "bot",
+			"widget": {
+				"html": "widget.html",
+				"width": 320,
+				"chat_data": "{\"p\":\"Lulu\",\"c\":\"1:1:3\",\"b\":\"m\",\"h\":1,\"t\":1794336000000,\"m\":[5970,640,40000],\"g\":[1480,190,20000]}"
+			},
+			"caption": "⛏️ Mineral Mine 6 · 🌬️ Atmospheric Harvester 4 · 📦 Logistics Depot 3 · 🛠️ Orbital Shipyard 2"
+		}
+	]
+}

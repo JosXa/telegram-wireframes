@@ -1,0 +1,37 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{
+				"command": "planet",
+				"description": "Your current planet"
+			},
+			{
+				"command": "build",
+				"description": "Buildings and upgrades"
+			},
+			{
+				"command": "fleet",
+				"description": "Fleets in flight"
+			}
+		]
+	},
+	"user": {
+		"first_name": "Joscha"
+	},
+	"now": "2026-11-10T21:20:00+01:00",
+	"messages": [
+		{
+			"from": "bot",
+			"widget": {
+				"html": "widget.html",
+				"width": 320,
+				"chat_data": "{\"p\":\"Ash\",\"c\":\"1:4:2\",\"l\":[[7,\"1:1:3\",\"Nova\",1794339600000,1794343720000,\"a\",\"12 Strike ships · 6 Raiding ships\"],[9,\"1:6:1\",0,1794341100000,1794343940000],[8,\"1:1:3\",\"Nova\",1794341100000,1794342780000]]}"
+			},
+			"caption": "Stationed at Ash: 30 Starter ships · 8 Strike ships. In the stores: 💠 18 000 · 🔥 7 000."
+		}
+	]
+}

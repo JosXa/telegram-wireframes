@@ -1,0 +1,54 @@
+<style>
+body{margin:0;padding:10px 12px 10px;font-variant-numeric:tabular-nums}
+.h{font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.big{font-size:22px;font-weight:600}
+.e{margin-top:6px;padding-top:8px;border-top:1px solid var(--tg-theme-section-separator-color)}
+.bar{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:6px 0 2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--tg-theme-link-color);transition:width linear}
+.n{color:var(--tg-theme-link-color);font-weight:600}
+.d .big{animation:f 1.2s ease-out}
+@keyframes f{from{color:var(--tg-theme-text-color)}}
+button{width:100%;margin-top:10px}
+#m{min-height:18px;margin-top:4px;text-align:center}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none!important}.d .big{animation:none}}
+</style>
+<div class="h">⛏️ First Mineral Mine</div>
+<div class="s" id="sub"></div>
+<div id="v"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+let s,g;
+const p2=n=>String(n).padStart(2,'0');
+const D=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),m=t/60|0;return m+':'+p2(t%60)};
+const C=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const F=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');
+const nm=()=>`Mineral Mine (⬆️ ${s.l})`;
+function load(){
+try{s=JSON.parse(W&&W.chatData)}catch(e){}
+if(!s){$('sub').textContent='A first mine, somewhere in the galaxy.';$('v').innerHTML='';return}
+$('sub').textContent=s.p+' · 🌐 '+s.c;g=0;draw();
+}
+function draw(){
+if(!s)return;
+const n=Date.now(),k=n<s.e?1:2;
+if(k!=g){g=k;
+if(k==1){
+$('v').innerHTML=`<div class="e">🔨 ${nm()}<div class="r"><span class="big" id="t"></span><span class="s">at ${C(s.e)}</span></div><div class="bar"><i id="b"></i></div><div class="s">The crews have started digging.</div></div>`;
+const b=$('b'),d=s.e-s.s;b.style.width=Math.min(100,(n-s.s)/d*100)+'%';b.offsetWidth;b.style.transitionDuration=(s.e-n)+'ms';b.style.width='100%';
+}else{
+$('v').innerHTML=`<div class="e d"><div class="r"><span>✅ ${nm()}</span><span class="s">at ${C(s.e)}</span></div><div class="s">Production</div><div class="r"><span class="big n">💠 ${F(s.r[1])}/h</span><span class="s">was 💠 ${F(s.r[0])}/h</span></div><div class="s">The first ore is already rolling out.</div></div><button id="go">🎁 Claim: First Mineral Mine</button><div class="s" id="m"></div>`;
+$('go').onclick=claim;
+}}
+if(k==1)$('t').textContent=D(s.e-n);
+}
+function claim(){
+const o=$('go'),m=$('m');
+let p;try{p=W.request('claim')}catch(e){p=Promise.reject(e)}
+o.disabled=true;m.textContent='The Advisor is counting it out.';
+p.then(r=>{o.hidden=true;m.textContent=(r&&r.result)||''},e=>{o.disabled=false;const c=e&&e.code;m.textContent=c=='BUSY'||c=='RATE_LIMITED'?'One moment, your last order is still going through.':c=='NOT_ALLOWED'?'Only the planet’s owner can claim this.':'Something went wrong on our end. Try that again in a moment.'});
+}
+load();setInterval(draw,250);
+if(W){W.onEvent('chatDataChanged',load);W.ready()}
+</script>

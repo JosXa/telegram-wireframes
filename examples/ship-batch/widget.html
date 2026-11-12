@@ -1,0 +1,55 @@
+<style>
+body{margin:0;padding:10px 12px 10px;font-variant-numeric:tabular-nums}
+.h{font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.big{font-size:22px;font-weight:600}
+#k{margin-top:6px}
+.bar{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:4px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--tg-theme-link-color);transition:width 1s linear}
+.e{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+svg{display:block;margin-top:4px;overflow:visible}
+.g{fill:var(--tg-theme-secondary-bg-color);stroke:var(--tg-theme-hint-color);stroke-width:1;stroke-opacity:.5;transition:fill .6s}
+.g.y{fill:var(--tg-theme-link-color);stroke:var(--tg-theme-link-color);stroke-opacity:1}
+.g.n{fill:url(#f);stroke:var(--tg-theme-link-color);stroke-opacity:1}
+#f stop{stop-color:var(--tg-theme-link-color)}
+#f .o{stop-color:var(--tg-theme-secondary-bg-color)}
+@media (prefers-reduced-motion:reduce){.bar i,.g{transition:none}}
+</style>
+<div class="h">🛠 Ship batch</div>
+<div class="s" id="sub"></div>
+<div id="k"></div>
+<div id="l"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+let s,S,E,N,g;
+const p2=n=>String(n).padStart(2,'0');
+const D=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t/60%60|0,x=t%60;return h>=24?(h/24|0)+' d '+h%24+' h':h?h+':'+p2(m)+':'+p2(x):m+':'+p2(x)};
+const C=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const P='M7 0L13 14L7 11L1 14Z';
+function load(){
+try{s=JSON.parse(W&&W.chatData)||{}}catch(e){s={}}
+S=s.s;E=S;N=0;
+(s.b||[]).forEach(x=>{x.a=E;E+=x[1]*x[2]*1e3;N+=x[1]});
+g='';draw();
+}
+function row(x,i,d,n){
+const c=x[1],k=d>=c?'✅':d||n>=x.a?'🔨':'⏳';
+let v='';for(let j=0;j<c;j++)v+=`<path class="g${j<d?' y':j==d&&k=='🔨'?' n':''}" transform="translate(${j%18*16+1} ${(j/18|0)*18})" d="${P}"/>`;
+return`<div class="e"><div class="r"><span>${k} ${x[0]}</span><span class="s"><span id="x${i}"></span>${d} of ${c}</span></div><svg width="296" height="${Math.ceil(c/18)*18-4}">${k=='🔨'?'<linearGradient id="f" x1="0" y1="1" x2="0" y2="0"><stop id="o1"/><stop id="o2" class="o"/></linearGradient>':''}${v}</svg></div>`;
+}
+function draw(){
+const n=Date.now(),b=s.b||[];let t=0,w=[],q='';
+const st=b.map((x,i)=>{const e=n-x.a,d=Math.max(0,Math.min(x[1],Math.floor(e/1e3/x[2])));t+=d;if(d<x[1]&&e>=0)q=[i,(e/1e3%x[2])/x[2],x[2]*1e3-e%(x[2]*1e3)];return d});
+const key=st.join()+(q?q[0]:'');
+$('sub').textContent=`${s.p} · 🌐 ${s.c} · ${t} of ${N} finished`;
+if(key!=g){g=key;
+$('k').innerHTML=t<N?`<div class="s">Ready in</div><div class="r"><span class="big" id="c"></span><span class="s">at ${C(E)}</span></div><div class="bar"><i id="w"></i></div>`:`<div class="r"><span class="big">✅ ${N} ships</span><span class="s">finished at ${C(E)}</span></div><div class="s" style="margin-bottom:6px">Finished ships are already stationed.</div>`;
+$('l').innerHTML=b.map((x,i)=>row(x,i,st[i],n)).join('');
+}
+if(t<N){$('c').textContent=D(E-n);$('w').style.width=((n-S)/(E-S)*100).toFixed(2)+'%'}
+if(q){const p=(q[1]*100).toFixed(1)+'%';$('o1').setAttribute('offset',p);$('o2').setAttribute('offset',p);$('x'+q[0]).textContent='next in '+D(q[2])+' · '}
+}
+load();setInterval(draw,1000);
+if(W){W.onEvent('chatDataChanged',load);W.ready()}
+</script>

@@ -1,0 +1,37 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{
+				"command": "planet",
+				"description": "Your current planet"
+			},
+			{
+				"command": "build",
+				"description": "Buildings and upgrades"
+			},
+			{
+				"command": "fleet",
+				"description": "Fleets in flight"
+			}
+		]
+	},
+	"user": {
+		"first_name": "Joscha"
+	},
+	"now": "2026-11-10T19:58:00+01:00",
+	"messages": [
+		{
+			"from": "bot",
+			"widget": {
+				"html": "widget.html",
+				"width": 320,
+				"chat_data": "{\"t\":\"Ash\",\"c\":\"1:4:2\",\"w\":\"Korvin\",\"o\":\"Lulu\",\"h\":20,\"m\":1656000,\"g\":[30,2]}"
+			},
+			"caption": "👁 Espionage over Ash · 🌐 1:4:2\nKorvin's home planet."
+		}
+	]
+}

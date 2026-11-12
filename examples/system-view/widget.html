@@ -1,0 +1,64 @@
+<style>
+body{margin:0;padding:10px 12px 10px;font-variant-numeric:tabular-nums}
+.h{font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+svg{display:block;margin:8px 0 2px;overflow:hidden}
+.o{fill:none;stroke:var(--tg-theme-section-separator-color);stroke-width:1}
+.st{fill:var(--tg-theme-hint-color);fill-opacity:.45}
+text{font-size:10px;fill:var(--tg-theme-hint-color)}
+.me text{fill:var(--tg-theme-link-color);font-weight:600}
+.p{cursor:pointer}
+.ring{fill:none;stroke-width:1.5}
+.k0{stroke:var(--tg-theme-link-color)}.k1{stroke:#3fae6a}.k2{stroke:var(--tg-theme-hint-color)}.k3{stroke:var(--tg-theme-hint-color);stroke-dasharray:2 3}
+.rt{fill:none;stroke-width:1.5;stroke-dasharray:3 5}
+.f0{stroke:var(--tg-theme-link-color);fill:var(--tg-theme-link-color)}
+.f1{stroke:var(--tg-theme-destructive-text-color);fill:var(--tg-theme-destructive-text-color)}
+.fl{transition:transform 1s linear}
+.pu{fill:none;stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pu 1.8s ease-out infinite}
+@keyframes pu{0%{stroke:var(--tg-theme-destructive-text-color);transform:scale(1)}100%{stroke:var(--tg-theme-bg-color);transform:scale(2)}}
+.e{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.w{font-weight:600}
+.x{color:var(--tg-theme-destructive-text-color)}
+@media (prefers-reduced-motion:reduce){.pu{animation:none;stroke:var(--tg-theme-destructive-text-color)}.fl{transition:none}}
+</style>
+<div class="h">☀️ Star system</div>
+<div class="s" id="sub"></div>
+<svg id="m" width="296" height="200" viewBox="0 0 296 200"></svg>
+<div id="l"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+let s,P,M;
+const p2=n=>String(n).padStart(2,'0');
+const D=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t/60%60|0,x=t%60;return h>=24?(h/24|0)+' d '+h%24+' h':h?h+':'+p2(m)+':'+p2(x):m+':'+p2(x)};
+const C=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const BC={m:'#c99549',s:'#cdeee0',t:'#2e8d4c',v:'#ff8a3a',w:'#c98c48'};
+const SX=-24,SY=100,RO=o=>34+o*(300-34)/s.n;
+function load(){
+try{s=JSON.parse(W&&W.chatData)}catch(e){}
+if(!s)return;
+let r=[...s.c].reduce((a,x)=>a*31+x.charCodeAt(0)|0,9)>>>0||1;const R=()=>(r=r*16807%2147483647)/2147483647;
+let g='';for(let i=0;i<34;i++)g+=`<circle class="st" cx="${(R()*296).toFixed(0)}" cy="${(R()*200).toFixed(0)}" r="${(R()*.8+.3).toFixed(1)}"/>`;
+g+=`<circle cx="${SX}" cy="${SY}" r="42" fill="#ffb347"/><circle cx="${SX}" cy="${SY}" r="34" fill="#ffd27a"/>`;
+for(let o=1;o<=s.n;o++)g+=`<circle class="o" cx="${SX}" cy="${SY}" r="${RO(o)}"/>`;
+P={};let q2='',f2='';
+for(const[o,n,b,k]of s.p){const q=RO(o),m=Math.min(.95,Math.asin(Math.min(1,84/q))),a=(R()*2-1)*m,x=+(SX+q*Math.cos(a)).toFixed(1),y=+(SY+q*Math.sin(a)).toFixed(1);P[o]=[x,y,n];
+q2+=`<g class="p${k?'':' me'}" data-o="${o}"><circle cx="${x}" cy="${y}" r="15" fill="transparent"/><circle class="ring k${k}" cx="${x}" cy="${y}" r="${k?7:8.5}"/><circle cx="${x}" cy="${y}" r="5" fill="${BC[b]}"/><text x="${x}" y="${y+20}" text-anchor="middle">${n}</text></g>`}
+M=(s.f||[]).map(([k,a,b,t0,t1,w],i)=>{const A=a?P[a]:[300,-4],B=P[b],cx=(A[0]+B[0])/2+(k?30:-18),cy=(A[1]+B[1])/2+(k?40:-26);
+g+=`<path class="rt f${k}" fill="none" d="M${A[0]} ${A[1]}Q${cx} ${cy} ${B[0]} ${B[1]}" style="fill:none"/>`+(k?`<circle class="pu" cx="${B[0]}" cy="${B[1]}" r="9"/>`:'');f2+=`<g class="fl" id="f${i}"><circle class="f${k}" r="3"/></g>`;
+return{k,A,B,cx,cy,t0,t1,w}});
+$('m').innerHTML=g+q2+f2;
+$('m').querySelectorAll('.p').forEach(e=>e.onclick=()=>W&&W.openTelegramLink(`https://t.me/space_emperors_bot/app?startapp=p${s.c.replace(':','_')}_${e.dataset.o}`));
+
+$('sub').textContent=`🌐 ${s.c} · ${s.n} orbits · tap a planet to open it`;
+$('l').innerHTML=M.map((m,i)=>`<div class="e"><div class="r"><span class="${m.k?'x':''}">${m.k?'⚠️ Incoming fleet → '+m.B[2]:'🚀 Your fleet → '+m.B[2]}</span><span class="w" id="t${i}"></span></div><div class="r s"><span>${m.w}</span><span>at ${C(m.t1)}</span></div></div>`).join('');
+draw();
+}
+function draw(){
+if(!M)return;const n=Date.now();
+M.forEach((m,i)=>{const p=Math.max(0,Math.min(1,(n-m.t0)/(m.t1-m.t0))),u=1-p,x=u*u*m.A[0]+2*u*p*m.cx+p*p*m.B[0],y=u*u*m.A[1]+2*u*p*m.cy+p*p*m.B[1];
+$('f'+i).style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;$('t'+i).textContent=D(m.t1-n)});
+}
+load();setInterval(draw,1000);
+if(W){W.onEvent('chatDataChanged',load);W.ready()}
+</script>

@@ -1,0 +1,63 @@
+<style>
+body{margin:0;padding:10px 12px;font-variant-numeric:tabular-nums}
+h3{margin:0;font-size:16px;font-weight:600}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+#l{margin-top:8px}
+.ln{padding:7px 0 8px;border-top:1px solid var(--tg-theme-section-separator-color);cursor:pointer}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.k{font-size:17px;font-weight:600}
+.ln:first-child .k{font-size:22px}
+.tr{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:3px 0 6px}
+.tr i{display:block;height:100%;border-radius:2px;background:var(--tg-theme-hint-color);transition:width 1s linear}
+.a .tr i{background:var(--tg-theme-destructive-text-color)}
+.f .tr i{background:var(--tg-theme-link-color)}
+.s{font-size:13px}
+.m{color:var(--tg-theme-hint-color)}
+.a .m{color:var(--tg-theme-destructive-text-color)}
+.f .m{color:var(--tg-theme-link-color)}
+.d{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.u{color:var(--tg-theme-destructive-text-color);animation:p 1.6s ease-in-out infinite}
+@keyframes p{50%{color:var(--tg-theme-text-color)}}
+@media (prefers-reduced-motion:reduce){.u{animation:none}}
+button{display:block;width:100%;margin-top:8px}
+#e{margin-top:6px;color:var(--tg-theme-destructive-text-color)}
+</style>
+<h3 id="t"></h3>
+<div class="h" id="sub"></div>
+<div id="l"></div>
+<div id="z"></div>
+<div class="h" id="e"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+const M={a:['⚔️','Attack'],r:['🛡️','Reinforcements'],t:['📦','Transport'],s:['👁','Spy']};
+const N=['','A','Two','Three','Four','Five','Six','Seven','Eight','Nine'];
+let s={},L=[],els=[];
+const pad=n=>String(n).padStart(2,'0');
+const clk=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+function dur(ms){const t=Math.max(0,Math.ceil(ms/1e3));if(t>=86400)return(t/86400|0)+' d '+(t%86400/3600|0)+' h';const h=t/3600|0,m=t%3600/60|0;return(h?h+':'+pad(m):m)+':'+pad(t%60)}
+function from(x){return(x[2]?'<b>'+x[2]+'</b> · ':'')+'🌐 '+x[1]}
+function render(){
+try{s=JSON.parse(W&&W.chatData)||{}}catch(e){s={}}
+const now=Date.now(),all=(s.l||[]).slice().sort((a,b)=>a[4]-b[4]);
+L=all.filter(x=>x[4]>now);const done=all.filter(x=>x[4]<=now),n=L.length;
+$('t').textContent=n?'⚠️ Incoming fleet'+(n>1?'s':''):'⚔️ Battle above '+s.p;
+$('sub').textContent=n?(n>1?(N[n]||n)+' fleets are':'A fleet '+(L[0][2]?'from '+L[0][2]+' ':'')+'is')+' heading for '+s.p+' · 🌐 '+s.c+(L.some(x=>x[5])?'.':', and nobody knows why.'):'🌐 '+s.c+(done[0]?' · since '+clk(done[0][4]):'');
+$('l').innerHTML=L.map(x=>{const m=M[x[5]];return`<div class="ln ${x[5]=='r'?'f':m?'a':''}" data-i="${x[0]}"><div class="r"><span class="k"></span><span class="h">at ${clk(x[4])} ›</span></div><div class="tr"><i></i></div><div class="r s"><span>${from(x)}</span><span class="m">${m?'👁 '+m[1]:'Mission unknown'}</span></div>${x[6]?'<div class="h">'+x[6]+'</div>':''}</div>`}).join('');
+els=[...$('l').children].map((e,i)=>[e,e.querySelector('.k'),e.querySelector('i'),L[i]]);
+els.forEach(([e,,,x])=>e.onclick=()=>W&&W.openTelegramLink('https://t.me/space_emperors_bot/app?startapp=f'+x[0]));
+$('z').innerHTML=done.map(x=>`<div class="r s d"><span>${M[x[5]]?M[x[5]][0]+' ':''}${from(x)}</span><span class="h">arrived ${clk(x[4])}</span></div>`).join('')+(s.b&&!n?'<button id="w">⚔️ Watch the battle</button>':'');
+if($('w'))$('w').onclick=watch;
+tick();
+}
+function watch(){
+if(!W)return;const b=$('w');b.disabled=true;$('e').textContent='';
+W.request('bt:'+s.b).then(()=>{b.disabled=false},e=>{b.disabled=false;$('e').textContent=e.code=='BUSY'||e.code=='RATE_LIMITED'?'One moment, then try again.':'The sky over '+s.p+' went dark for a moment. Try again.'});
+}
+function tick(){
+const now=Date.now();let gone=0;
+els.forEach(([,k,i,x],j)=>{const left=x[4]-now;if(left<=0)gone=1;k.textContent=dur(left);k.classList.toggle('u',!j&&left<6e4);i.style.width=Math.min(100,Math.max(0,(now-x[3])/(x[4]-x[3])*100)).toFixed(1)+'%'});
+if(gone)render();
+}
+render();setInterval(tick,1e3);
+if(W){W.onEvent('chatDataChanged',render);W.ready()}
+</script>

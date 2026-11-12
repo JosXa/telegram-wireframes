@@ -1,0 +1,80 @@
+<style>
+body{margin:0;padding:10px 12px;font-variant-numeric:tabular-nums}
+h3{margin:0;font-size:16px;font-weight:600}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.k{font-size:22px;font-weight:600}
+.tr{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color)}
+.tr i{display:block;height:100%;border-radius:2px;background:var(--tg-theme-link-color);transition:width 1s linear}
+#sl{position:relative;margin:4px 20px 6px;padding:12px 0;touch-action:pan-y;cursor:pointer}
+#th{position:absolute;top:4px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--tg-theme-link-color)}
+.ro{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color);font-size:14px;display:grid;grid-template-columns:1fr 64px 40px;gap:8px;align-items:center}
+.ro b{text-align:right;font-weight:600}
+.ro .tr i{transition:none}
+.x{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+button{display:block;width:100%;margin-top:8px}
+.ln{background:none;color:var(--tg-theme-link-color);padding:6px 0 0}
+#e{color:var(--tg-theme-destructive-text-color);margin-top:4px}
+svg{display:block;margin:6px 0 2px}
+#dr{transition:transform 1s linear}
+@media (prefers-reduced-motion:reduce){#dr{transition:none}}
+</style>
+<h3 id="t"></h3>
+<div class="h" id="sub"></div>
+<div id="v"></div>
+<div class="h" id="e"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+const T=[['Resources',.5],['Stationed ships',1.5],['Buildings and work',3],['Research',6]];
+let s={},n=0,again=0,busy=0;
+const pad=x=>String(x).padStart(2,'0');
+const clk=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+function dur(ms){const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t%3600/60|0;return(h?h+':'+pad(m):m)+':'+pad(t%60)}
+const pct=p=>p>=1?'100%':Math.min(99,Math.round(p*100))+'%';
+const dr=k=>k==1?'drone':'drones';
+function render(){
+try{s=JSON.parse(W&&W.chatData)||{}}catch(e){s={}}
+$('t').textContent='👁 Espionage over '+s.t;
+$('sub').textContent=(s.w?s.w+' · ':'')+'🌐 '+s.c+' · '+Math.round(s.m/6e4)+' min from '+s.o;
+if(s.l&&!s.r)return fly();
+if(s.r&&!again)return done();
+n=n||Math.min(s.h,s.n||5);
+$('v').innerHTML=`<div class="r" style="margin-top:8px"><span><span class="k" id="n"></span> <span class="h" id="nl"></span></span><span class="h">${s.h} in the hangar</span></div><div id="sl"><div class="tr"><i id="fi" style="transition:none"></i></div><div id="th"></div></div>${T.map((x,i)=>`<div class="ro"><span>${x[0]}</span><div class="tr"><i id="p${i}"></i></div><b id="q${i}"></b></div>`).join('')}<div class="x h">${s.d==null?'Nobody knows how many drones guard '+s.t+', so these odds assume none.':'Last seen: '+s.d+' '+dr(s.d)+' guarding '+s.t+'. Each one downs one of yours.'} The drones do not come back.</div><div class="r x"><span>Gas for the trip</span><span id="g"></span></div><button id="b"></button>`;
+const sl=$('sl');
+sl.onpointerdown=e=>{sl.setPointerCapture(e.pointerId);pick(e)};
+sl.onpointermove=e=>{if(sl.hasPointerCapture(e.pointerId))pick(e)};
+$('b').onclick=go;
+draw();
+}
+function pick(e){const b=$('sl').getBoundingClientRect();n=Math.max(1,Math.min(s.h,Math.round(1+(e.clientX-b.left)/b.width*(s.h-1))));draw()}
+function draw(){
+const f=(n-1)/(s.h-1||1)*100,r=n/(1+(s.d||0));
+$('th').style.left=$('fi').style.width=f+'%';
+$('n').textContent=n;$('nl').textContent=dr(n);
+T.forEach((x,i)=>{const p=1-Math.exp(-r/x[1]);$('p'+i).style.width=p*100+'%';$('q'+i).textContent=pct(p)});
+$('g').textContent='🔥 '+(s.g[0]+s.g[1]*n);
+$('b').textContent=busy?'Drones lifting off…':'👁 Spy with '+n+' '+dr(n);$('b').disabled=busy;
+}
+function go(){
+if(!W||busy)return;busy=1;$('e').textContent='';draw();
+W.request('spy:'+n).then(x=>{busy=0;draw();if(x.result!='ok')$('e').textContent=x.result=='gas'?'The tanks at '+s.o+' are too low for this trip.':'The hangar holds fewer drones now. Pick again.'},e=>{busy=0;draw();$('e').textContent=e.code=='BUSY'||e.code=='RATE_LIMITED'?'One moment, then try again.':'The hangar crews did not answer. Try again.'});
+}
+function fly(){
+const[k,d,a]=s.l;
+$('v').innerHTML=`<svg viewBox="0 0 296 24" width="100%" height="24"><path d="M8 12H288" stroke="var(--tg-theme-hint-color)" stroke-width="1.5" stroke-dasharray="3 5"/><circle cx="8" cy="12" r="4" fill="var(--tg-theme-link-color)"/><circle cx="288" cy="12" r="4" fill="var(--tg-theme-destructive-text-color)"/><path id="dr" d="M0 7l5 5-5 5-5-5z" fill="var(--tg-theme-link-color)"/></svg><div class="r h"><span>${s.o}</span><span>${s.t}</span></div><div class="r" style="margin-top:6px"><span class="k" id="k"></span><span class="h">at ${clk(a)}</span></div><div class="h">${k} ${dr(k)} on their way to ${s.t}.</div>`;
+tick();
+}
+function tick(){
+if(!$('k'))return;const[,d,a]=s.l,now=Date.now();
+if(now>=a&&!s.r){$('k').textContent='0:00';return}
+$('k').textContent=dur(a-now);
+$('dr').style.transform=`translateX(${8+280*Math.min(1,Math.max(0,(now-d)/(a-d)))}px)`;
+}
+function done(){
+const[k,l,t]=s.r;
+$('v').innerHTML=`<div class="r x" style="margin-top:8px"><span>Reached ${s.t}</span><span>${k-l} of ${k}</span></div><div class="r x"><span>Seen</span><span>${clk(t)}</span></div><div class="x">📜 The espionage report is below.</div><button class="ln" id="a">Spy again</button>`;
+$('a').onclick=()=>{again=1;n=0;render()};
+}
+render();setInterval(tick,1e3);
+if(W){W.onEvent('chatDataChanged',()=>{again=0;render()});W.ready()}
+</script>

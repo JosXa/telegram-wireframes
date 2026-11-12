@@ -1,0 +1,51 @@
+<style>
+body{margin:0;padding:10px 12px 10px;font-variant-numeric:tabular-nums}
+.h{font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.big{font-size:22px;font-weight:600}
+#w{display:flex;gap:12px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--tg-theme-section-separator-color)}
+#k{flex:1;min-width:0}
+.e{padding:4px 0 6px}
+.e+.e{border-top:1px solid var(--tg-theme-section-separator-color);padding-top:6px}
+.bar{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:4px 0 3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--tg-theme-link-color);transition:width 1s linear}
+#pl{flex:none;display:block}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+<div class="h">🛰️ Command Center</div>
+<div class="s" id="sub"></div>
+<div id="w"><svg id="pl" width="92" height="92" viewBox="-46 -46 92 92"></svg><div id="k"></div></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+let s;
+const p2=n=>String(n).padStart(2,'0');
+const D=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t/60%60|0,x=t%60;return h>=24?(h/24|0)+' d '+h%24+' h':h?h+':'+p2(m)+':'+p2(x):m+':'+p2(x)};
+const F=n=>{n=Math.floor(n);if(n<1e5)return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');let i=0;while(n>=1e5*1e3**i&&i<5)i++;const v=Math.floor(n/1e3**i*10)/10;return v+['','K','M','B','T','Qa'][i]};
+const B={m:['⛰️ mountainous','#2e6b5b','#c99549','#ecc77e','#9fd6c1'],s:['🏔️ snowy','#2b4f9f','#cdeee0','#ffffff','#bfe2ff'],t:['🏝️ tropical','#1c9fa6','#2e8d4c','#86d27c','#a6f0e8'],v:['🌋️ volcanic','#3d2240','#7d4a5c','#ffa23a','#d98a4e'],w:['🏜️ wasteland','#c98c48','#5c2f4b','#e9a6a0','#f2c3aa']};
+function planet(b,c){
+let r=[...c].reduce((a,x)=>a*31+x.charCodeAt(0)|0,7)>>>0||1;const R=()=>(r=r*16807%2147483647)/2147483647,O=(x,y,q,f)=>{const d=Math.hypot(x,y);q=Math.min(q,40-d);return q>1?`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${q.toFixed(1)}" fill="${f}"/>`:''};
+let g='';for(let i=0;i<3;i++){const a=R()*6.283,d=8+R()*18,x=Math.cos(a)*d,y=Math.sin(a)*d;for(let j=0;j<7;j++)g+=O(x+(R()-.5)*22,y+(R()-.5)*16,4+R()*8,b[2])}
+for(let i=0;i<7;i++)g+=O((R()-.5)*60,(R()-.5)*60,1+R()*2,b[3]);
+if(b[0][0]=='🏔')g+=O(0,-31,12,'#fff')+O(0,33,9,'#fff');
+return`<defs><radialGradient id="sh" cx=".34" cy=".3" r=".78"><stop offset="0" stop-color="#fff1d2" stop-opacity=".35"/><stop offset=".45" stop-color="#fff1d2" stop-opacity="0"/><stop offset="1" stop-color="#091033" stop-opacity=".72"/></radialGradient></defs><circle r="44.5" fill="none" stroke="${b[4]}" stroke-opacity=".2" stroke-width="3"/><circle r="41" fill="${b[1]}"/>${g}<circle r="41" fill="url(#sh)"/><circle r="41" fill="none" stroke="${b[4]}" stroke-opacity=".7" stroke-width="1.5"/>`;
+}
+function load(){
+try{s=JSON.parse(W&&W.chatData)}catch(e){}
+if(!s)return;
+const b=B[s.b]||B.m;
+$('sub').innerHTML=`🪐 ${s.p} · 🌐 ${s.c}<br>${b[0]}${s.h?' · Home planet':''}`;
+$('pl').innerHTML=planet(b,s.c);
+$('k').innerHTML=['m','g'].map(k=>`<div class="e"><div class="r"><span class="big">${k=='m'?'💠':'🔥'} <span id="${k}a"></span></span><span class="s" id="${k}p"></span></div><div class="bar"><i id="${k}b"></i></div><div class="s" id="${k}t"></div></div>`).join('');
+draw();
+}
+function draw(){
+if(!s)return;
+const n=Date.now();
+for(const k of['m','g']){const[a,p,c]=s[k],v=a>=c?a:Math.min(c,a+p*(n-s.t)/36e5),f=v>=c;
+$(k+'a').textContent=F(v);$(k+'b').style.width=Math.min(100,v/c*100).toFixed(2)+'%';
+$(k+'p').textContent=f?'stopped':F(p)+'/h';$(k+'t').textContent=`Storage ${F(c)} · `+(f?'full':'full in '+D((c-v)/p*36e5))}
+}
+load();setInterval(draw,1000);
+if(W){W.onEvent('chatDataChanged',load);W.ready()}
+</script>

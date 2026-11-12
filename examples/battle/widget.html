@@ -1,0 +1,109 @@
+<style>
+body{margin:0;padding:10px 12px;font-variant-numeric:tabular-nums}
+h3{margin:0;font-size:16px;font-weight:600}
+.h{color:var(--tg-theme-hint-color);font-size:13px}
+.r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.k{font-size:22px;font-weight:600}
+#rs{display:flex;gap:4px;margin:8px 0 2px}
+#rs i{flex:1;height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);overflow:hidden}
+#rs b{display:block;height:100%;border-radius:2px;background:var(--tg-theme-link-color);transition:width 1s linear}
+.o{font-size:13px;font-weight:600;padding:5px 0 1px}
+.gr{display:flex;align-items:center;gap:8px;padding:4px 0;border-top:1px solid var(--tg-theme-section-separator-color);font-size:13px}
+.gr>span{flex:none;min-width:56px;text-align:right;color:var(--tg-theme-text-color)}
+.gr>span:first-child{width:92px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh{flex:1;display:flex;flex-wrap:wrap;gap:2px}
+.sh i{width:6px;height:6px;border-radius:1px;background:currentColor;box-shadow:inset 0 0 0 1px currentColor;transition:background-color .5s,box-shadow .5s}
+.sh i.l{background:transparent}
+.sh i.g{background:var(--tg-theme-secondary-bg-color);box-shadow:inset 0 0 0 1px transparent}
+.nt .sh i{transition:none}
+.me{color:var(--tg-theme-link-color)}
+.foe{color:var(--tg-theme-destructive-text-color)}
+.c{color:var(--tg-theme-text-color)}
+.x{padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.x span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x span+span{white-space:nowrap}
+#bt{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+#e{color:var(--tg-theme-destructive-text-color);margin-top:4px}
+@media (prefers-reduced-motion:reduce){.sh i,#rs b{transition:none}}
+</style>
+<h3 id="t"></h3>
+<div class="h" id="sub"></div>
+<div id="rs"></div>
+<div id="v"></div>
+<div class="h" id="e"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i);
+const S={a:'⚔️',d:'🛡️'};
+let s={},G=[],R=0,shown=0,rp=0,tm,dn;
+const pad=n=>String(n).padStart(2,'0');
+const num=n=>n<1e5?String(n).replace(/\B(?=(\d{3})+$)/g,' '):(n/1e3).toFixed(1)+'K';
+const clk=t=>new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const dur=ms=>{const t=Math.max(0,Math.ceil(ms/1e3));return(t/60|0)+':'+pad(t%60)};
+const at=r=>s.t+(r-1)*6e4;
+const cls=x=>x[0]==s.v?'me':'foe';
+const unit=x=>Math.ceil(x[3]/30);
+function load(){try{s=JSON.parse(W&&W.chatData)||{}}catch(e){s={}}G=s.g||[];if(G.length+new Set(G.map(x=>x[1])).size>9)G=mg(x=>x[0]+x[1],x=>S[x[0]]+' '+x[1]);if(G.length>9)G=mg(x=>x[0],x=>S[x[0]]+(x[0]=='a'?' Attackers':' Defenders'));R=Math.max(0,...G.map(x=>x[4].length))}
+function mg(k,L){const m={};G.forEach(x=>{const y=m[k(x)]||=[x[0],'',L(x),0,[],9];y[3]+=x[3];x[4].forEach((a,i)=>y[4][i]=(y[4][i]||0)+a);y[5]=Math.min(y[5],x[5]||1)});return Object.values(m)}
+function grid(){
+let h='',own='';
+G.forEach((x,j)=>{if(x[1]&&x[1]!=own){own=x[1];h+=`<div class="o ${cls(x)}">${S[x[0]]} ${own}</div>`}h+=`<div class="gr ${cls(x)}"><span>${x[2]}</span><div class="sh" id="s${j}">${'<i></i>'.repeat(Math.ceil(x[3]/unit(x)))}</div><span id="n${j}"></span></div>`});
+return h;
+}
+function paint(r,anim){
+G.forEach((x,j)=>{
+const j0=x[5]||1,on=r>=j0,u=unit(x),a=on?x[4][r-1]:j0>1?0:x[3],b=r<=j0?x[3]:x[4][r-2],A=Math.ceil(a/u),B=Math.ceil(b/u);
+$('n'+j).innerHTML=!on&&j0>1?`<span class="h">joins in round ${j0}</span>`:a+'<span class="h"> of '+x[3]+'</span>';
+[...$('s'+j).children].forEach((e,i)=>{const c=!on?(j0>1?'g':''):i<A?'':i<B?'l':'g';e.style.transitionDelay=anim&&c=='l'?(B-1-i)*70+'ms':'';e.className=c});
+});
+strip(r);
+}
+function strip(r){
+const N=s.o?R:6;
+if($('rs').children.length!=N)$('rs').innerHTML='<i><b></b></i>'.repeat(N);
+[...$('rs').children].forEach((e,i)=>e.firstChild.style.width=i<r?'100%':i==r&&!s.o&&!rp?Math.min(100,Math.max(0,(Date.now()-at(r))/600)).toFixed(1)+'%':'0');
+}
+function step(r){
+document.body.classList.add('nt');paint(r-1);void document.body.offsetWidth;document.body.classList.remove('nt');
+requestAnimationFrame(()=>paint(r,1));
+}
+function sub(r){$('sub').textContent='🌐 '+s.c+' · '+(rp?'Replay · ':'')+'Round '+r+' of '+(s.o?R:6)}
+function live(anim){
+$('t').textContent='⚔️ Battle above '+s.p;sub(R);
+$('v').innerHTML=`<div class="r" style="margin-top:6px"><span><span class="k" id="k"></span> <span class="h" id="kl"></span></span><span class="h" id="at"></span></div>`+grid()+(s.v=='d'?'<div class="h x">🔒 The mines keep running. New orders wait until the sky is quiet again.</div>':'');
+anim?step(R):paint(R);shown=R;tick();
+}
+function done(){
+rp=0;shown=R;clearInterval(tm);$('t').textContent='⚔️ Battle above '+s.p;
+$('sub').textContent='🌐 '+s.c+' · Ended in round '+R+' at '+clk(at(R));
+const O={a:'The defenders are gone. The attackers load what they can carry.',d:'The attackers are gone. '+s.p+' held.',x:'Six rounds and no winner. The attackers turn home with empty holds.'};
+let h=grid()+`<div class="x">${O[s.o]||''}</div>`;
+for(const k of'ad'){const g=s.g.filter(x=>x[0]==k),n=g.reduce((t,x)=>t+x[3],0),l=g.reduce((t,x)=>t+x[3]-x[4][R-1],0);h+=`<div class="r x"><span>${S[k]} ${[...new Set(g.map(x=>x[1]))].join(' · ')}</span><span>lost ${l} of ${n}</span></div>`}
+if(s.s)h+=`<div class="r x"><span>Salvage</span><span>💠 ${num(s.s[0])} · 🔥 ${num(s.s[1])}</span></div>`;
+$('v').innerHTML=h+'<div id="bt"><button id="rp">↺ Replay</button><button id="b">📜 Battle report</button></div>';
+paint(R);$('rp').onclick=replay;$('b').onclick=report;
+}
+function replay(){
+rp=1;$('e').textContent='';$('rp').disabled=1;$('rp').textContent='↺ Replaying';let r=0;paint(0);
+const go=()=>{if(++r>R)return done();sub(r);step(r)};
+go();tm=setInterval(go,1200);
+}
+function report(){
+if(!W)return;const b=$('b');b.disabled=true;$('e').textContent='';
+W.request('br:'+s.b).then(()=>{b.disabled=false;b.textContent='📜 Sent below'},e=>{b.disabled=false;$('e').textContent=e.code=='BUSY'||e.code=='RATE_LIMITED'?'One moment, then try again.':'The record keepers are still writing. Try again.'});
+}
+function tick(){
+if(s.o||rp||!$('k'))return;
+const nx=at(R+1);
+$('k').textContent=dur(nx-Date.now());$('kl').textContent='until round '+(R+1);$('at').textContent='at '+clk(nx);strip(R);
+}
+function update(){
+const was=shown;load();clearTimeout(dn);
+if(rp)return;
+if(R>was||!s.o)live(R==was+1);
+if(s.o)dn=setTimeout(done,R>was?1800:0);
+}
+load();
+if(s.o)done();else live(Date.now()-at(R)<2e3);
+setInterval(tick,1e3);
+if(W){W.onEvent('chatDataChanged',update);W.ready()}
+</script>
