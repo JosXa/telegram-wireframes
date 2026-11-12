@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Shipyard widgets · Space Emperors</title>
+		<link rel="stylesheet" href="widget-lab.css" />
+	</head>
+	<body data-theme="light">
+		<header class="intro">
+			<p class="kicker">Space Emperors · Shipyard</p>
+			<h1>Mixed ship batches as widgets</h1>
+			<p>
+				Each Shipyard is one message whose bubble runs a widget. The draft lives in the widget, so dragging and
+				tapping edits nothing until the player orders. The order goes to the bot as one request, the bot edits the
+				widget's state, and the same message then counts down the batch, line by line, without further edits.
+			</p>
+			<ul>
+				<li>Drag a slider or tap the steps, then order. The mock bot answers like the real one would.</li>
+				<li>Move the clock to finish ships; the bot edits the widget and posts the notification when the batch ends.</li>
+				<li>➕ Add ships switches the same message back to the composer for the running batch.</li>
+				<li>
+					The buttons under each widget stay inline buttons: typed names and navigation do not belong in a widget.
+					<a href="index.html">Button layouts A–G</a>
+				</li>
+			</ul>
+			<div class="controls">
+				<label>Telegram theme <select id="theme"><option value="light">Light</option><option value="dark">Dark</option></select></label>
+				<span>Clock</span>
+				<button type="button" data-minutes="1">⏩ 1 min</button>
+				<button type="button" data-minutes="5">⏩ 5 min</button>
+				<button type="button" data-minutes="20">⏩ 20 min</button>
+				<button type="button" id="reset">↺ Start over</button>
+				<b id="clock"></b>
+			</div>
+		</header>
+		<main id="phones"></main>
+		<script type="module" src="widget-lab.js"></script>
+	</body>
+</html>

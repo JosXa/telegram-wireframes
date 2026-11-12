@@ -1,0 +1,28 @@
+.rw {
+	display: grid;
+	grid-template-columns: 48px 1fr auto auto;
+	align-items: center;
+	gap: 2px 6px;
+	padding: 7px 0;
+	border-top: 1px solid var(--tg-theme-section-separator-color);
+}
+.rw:first-child {
+	border: 0;
+}
+.rw .sh {
+	grid-row: span 2;
+}
+.rw .n {
+	grid-column: 3 / 5;
+	text-align: right;
+	font-weight: 600;
+}
+.rw.off b {
+	color: var(--tg-theme-hint-color);
+}
+.rw .h {
+	grid-column: 3 / 5;
+}
+.rw .b2 {
+	min-width: 34px;
+}

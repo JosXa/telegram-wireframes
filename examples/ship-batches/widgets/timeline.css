@@ -1,0 +1,35 @@
+.tl {
+	display: flex;
+	gap: 3px;
+	margin-top: 8px;
+	height: 30px;
+}
+.sg {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	overflow: hidden;
+	padding: 0;
+	border-radius: 6px;
+}
+.it {
+	padding: 3px 6px;
+	border-radius: 8px;
+}
+.add {
+	display: flex;
+	gap: 4px;
+	margin: 8px 0;
+}
+.add .b2 {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	padding: 6px 2px;
+}
+.tl:empty {
+	display: none;
+}

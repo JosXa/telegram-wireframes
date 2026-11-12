@@ -1,0 +1,26 @@
+.tabs {
+	display: flex;
+	gap: 4px;
+	margin-top: 8px;
+}
+.tab {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: end;
+	gap: 2px;
+	height: 52px;
+	padding: 4px 2px;
+}
+.gr {
+	display: grid;
+	grid-template-columns: auto 1fr 40px;
+	align-items: center;
+	gap: 3px 8px;
+	margin: 6px 0;
+	font-size: 13px;
+}
+.gr .v {
+	text-align: right;
+}
