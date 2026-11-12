@@ -44,16 +44,18 @@ function collectLogs(page: Page, debug: boolean) {
 async function waitForChat(page: Page, entry: RegisteredFixture, timeoutMs: number) {
 	const messages = entry.fixture.messages.length;
 	const photos = entry.fixture.messages.filter((message) => message.photo).length;
+	const widgets = entry.fixture.messages.filter((message) => message.widget).length;
 
 	await page.waitForFunction(
-		({ messages, photos }) => {
+		({ messages, photos, widgets }) => {
 			const rendered = document.querySelectorAll(".Message").length;
 			const loaded = [...document.querySelectorAll<HTMLImageElement>(".Message img.full-media")].filter(
 				(image) => image.complete && image.naturalWidth > 0,
 			).length;
-			return rendered >= messages && loaded >= photos;
+			const widgetsLoaded = document.querySelectorAll(".Message iframe.wireframe-widget[data-loaded]").length;
+			return rendered >= messages && loaded >= photos && widgetsLoaded >= widgets;
 		},
-		{ messages, photos },
+		{ messages, photos, widgets },
 		{ timeout: timeoutMs, polling: 250 },
 	);
 	await page.waitForTimeout(SETTLE_MS);
@@ -93,7 +95,7 @@ async function renderOne(browser: Browser, entry: RegisteredFixture, theme: Them
 			await page.getByRole("button", { name: button_text, exact: true }).click();
 			// Use Telegram's normal permission prompt, rather than bypassing its UI state.
 			await page.locator(".Modal.confirm .confirm-dialog-button").first().click();
-			const app = page.frameLocator("iframe");
+			const app = page.frameLocator("iframe:not(.wireframe-widget)");
 			await app.locator(ready_selector).waitFor({ timeout: options.timeoutMs });
 			await page.waitForTimeout(SETTLE_MS);
 			const appFile = join(options.outDir, `${entry.name}-${theme}-mini-app.png`);

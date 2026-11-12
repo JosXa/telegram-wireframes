@@ -14,6 +14,11 @@ export type Fixture = {
 	navigation?: Record<string, string>;
 	/** Callback answers for buttons that stay on the current screen, as with answerCallbackQuery. */
 	answers?: Record<string, CallbackAnswer>;
+	/**
+	 * Fixed preview clock as an ISO 8601 date-time with offset. Message times count back from it, and
+	 * widgets read it from Date.now() and new Date().
+	 */
+	now?: string;
 };
 
 export type CallbackAnswer = {
@@ -46,8 +51,24 @@ export type FixtureMessage = {
 	caption?: string;
 	caption_entities?: MessageEntity[];
 	show_caption_above_media?: boolean;
+	/** Bot messages only. Combine with caption, caption_entities and show_caption_above_media. */
+	widget?: Widget;
 	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup;
 };
+
+/** As in Bot API 10.4. `html` may also be a path to an .html file, relative to the fixture file. */
+export type Widget = {
+	id?: string;
+	width?: number;
+	height?: number;
+	html: string;
+	public_data?: string;
+	chat_data?: string;
+};
+
+export function isWidgetHtmlPath(html: string) {
+	return /\.html?$/i.test(html) && !/[<\n]/.test(html);
+}
 
 export type BotCommand = {
 	command: string;

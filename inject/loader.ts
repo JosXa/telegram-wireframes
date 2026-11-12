@@ -8,8 +8,9 @@ import createMockedMessage from "../mockUtils/createMockedMessage";
 import createMockedUser from "../mockUtils/createMockedUser";
 import type { MockDocument, MockMessage, MockTypes } from "../mockUtils/MockTypes";
 import { buildEntities, buildReplyMarkup } from "./convert";
-import type { Fixture, FixtureMessage } from "./fixture";
+import { type Fixture, type FixtureMessage, isWidgetHtmlPath } from "./fixture";
 import { buildLangPack } from "./langpack";
+import type { WireframeWidget } from "./Widget";
 
 export const WIREFRAME_SCENARIO_PREFIX = "wireframe:";
 
@@ -43,6 +44,16 @@ async function fetchJson<T>(url: string): Promise<T> {
 	return (await response.json()) as T;
 }
 
+async function fetchText(url: string) {
+	const response = await fetch(url);
+	if (!response.ok) throw new Error(`[wireframes] ${url}: HTTP ${response.status}`);
+	return response.text();
+}
+
+function previewClock(fixture: Fixture) {
+	return fixture.now ? Date.parse(fixture.now) : Date.now();
+}
+
 async function loadPhoto(url: string, id: number) {
 	const response = await fetch(url);
 	if (!response.ok) throw new Error(`[wireframes] ${url}: HTTP ${response.status}`);
@@ -70,6 +81,7 @@ async function buildMessage(
 	date: number,
 	fixtureRoot: string,
 	documents: MockDocument[],
+	fixture: Fixture,
 ): Promise<MockMessage> {
 	const result: MockMessage = {
 		id,
@@ -84,6 +96,19 @@ async function buildMessage(
 	if (message.photo) {
 		documents.push(await loadPhoto(`${fixtureRoot}/files/${encodeURI(message.photo)}`, id));
 		result.media = { type: "photo", id } as MockMessage["media"];
+	}
+
+	if (message.widget) {
+		const { html } = message.widget;
+		const wireframeWidget: WireframeWidget = {
+			widget: {
+				...message.widget,
+				html: isWidgetHtmlPath(html) ? await fetchText(`${fixtureRoot}/files/${encodeURI(html)}`) : html,
+			},
+			now: previewClock(fixture),
+			viewer: fixture.user?.first_name ?? "You",
+		};
+		Object.assign(result, { noforwards: true, wireframeWidget });
 	}
 
 	return result;
@@ -131,7 +156,7 @@ function createMiddleware(
 			? `${self.location.origin}/__wireframes__/fixtures/${encodeURIComponent(target)}`
 			: fixtureRoot;
 		const next = target ? await fetchJson<Fixture>(`${root}/fixture.json`) : fixture;
-		const date = Math.floor(Date.now() / 1000);
+		const date = Math.floor(previewClock(next) / 1000);
 		const documents: MockDocument[] = [];
 		const source: FixtureMessage[] = sent
 			? [
@@ -143,7 +168,7 @@ function createMiddleware(
 				]
 			: next.messages;
 		const messages = await Promise.all(
-			source.map((message) => buildMessage(message, ++messageId, date, root, documents)),
+			source.map((message) => buildMessage(message, ++messageId, date, root, documents, next)),
 		);
 		const previous = client.mockData.messages[BOT_ID];
 		const edit = previous.length === 1 && messages.length === 1 && !previous[0].out && !messages[0].out;
@@ -296,16 +321,17 @@ export async function loadWireframe(name: string) {
 	]);
 
 	const documents: MockDocument[] = [];
-	const now = Math.floor(Date.now() / 1000);
+	const now = Math.floor(previewClock(fixture) / 1000);
 	const count = fixture.messages.length;
 	const messages = await Promise.all(
 		fixture.messages.map((message, index) =>
 			buildMessage(
 				message,
 				index + 1,
-				now - (count - index) * MESSAGE_INTERVAL_SECONDS,
+				now - (count - 1 - index) * MESSAGE_INTERVAL_SECONDS,
 				fixtureRoot,
 				documents,
+				fixture,
 			),
 		),
 	);

@@ -37,8 +37,36 @@ Supported today:
 - Inline keyboards: callback, URL, Web App, login, switch-inline, copy, game and invoice buttons, plus `style` and `disabled`.
 - Reply keyboards, including contact, location, poll and Web App buttons.
 - Bot name, description, peer color and command menu.
+- [Widgets](https://core.telegram.org/bots/widgets) (Bot API 10.4), with `html` inline or as a path to an `.html` file relative to the fixture. See [Widgets](#widgets).
 
 [`src/fixture.ts`](src/fixture.ts) has the full format, and [`examples/`](examples) has a complete chat.
+
+### Widgets
+
+A widget message carries the [`Widget`](https://core.telegram.org/bots/api#widget) object of the returned Message, so `chat_data` and `public_data` hold the state the bot sent. The top-level `now` fixes the preview clock: the last message is sent at `now`, earlier messages count back from it, and widgets read it from `Date.now()` and `new Date()`.
+
+```json
+{
+  "now": "2026-11-10T21:02:00+01:00",
+  "messages": [
+    {
+      "from": "bot",
+      "widget": { "html": "widget.html", "width": 320, "chat_data": "{\"o\":\"Lulu\",\"t\":\"Ash\"}" },
+      "caption": "⚔️ Your fleet is on its way to Ash."
+    }
+  ]
+}
+```
+
+The validator enforces Telegram's limits: at most 32768 bytes of HTML and 4096 bytes after zlib level 9, 1024 bytes per data field, and widgets only on bot messages. [`examples/fleet-movement`](examples/fleet-movement) shows a fleet on its way to its target.
+
+Web A has no widget support yet, so the renderer approximates it. It runs the HTML in a sandboxed iframe inside the message bubble, where Telegram's apps run it in QuickJS and draw the DOM natively. Inside the iframe, the renderer:
+
+- sets the `--tg-theme-*` palette for light or dark, the default stylesheet, and the time band at the bottom when no caption follows (`env(safe-area-inset-*)` reads the matching `--tg-content-safe-area-inset-*`);
+- provides `window.TelegramWidget` with the fixture's data, `ready()`, events and `HapticFeedback`; `request()`, `openLink()` and `copyText()` only log to the console, and `request()` never resolves;
+- freezes the clock and pauses CSS animations and transitions, so screenshots repeat.
+
+The iframe enforces none of the widget profile's restrictions, so check unsupported CSS and JavaScript against the [widget docs](https://core.telegram.org/bots/widgets). Times the widget formats follow the renderer's locale and time zone. Widget messages are marked `protect_content`, as on Telegram.
 
 ## Usage
 
@@ -197,7 +225,7 @@ The performance command measures 180 drag frames at neighbourhood, regional and 
 
 ## How it works
 
-Web A ships a mocked client for its own tests. telegram-wireframes pins a Web A commit, applies [a small patch](patches/web-a.patch) that repairs the mock client and adds a hook, and injects [a loader](inject/) into Web A's worker. The loader fetches your fixture from a local server and converts the Bot API objects into the MTProto objects Telegram's servers would send. From there, Web A renders the chat as it would any other, and Playwright takes the screenshot.
+Web A ships a mocked client for its own tests. telegram-wireframes pins a Web A commit, applies [a small patch](patches/web-a.patch) that repairs the mock client and adds hooks for the scenario and widgets, and injects [a loader](inject/) into Web A's worker. The loader fetches your fixture from a local server and converts the Bot API objects into the MTProto objects Telegram's servers would send. From there, Web A renders the chat as it would any other, and Playwright takes the screenshot.
 
 Web A changes weekly. `upstream.json` pins the commit. [`.opencode/commands/update-web-a.md`](.opencode/commands/update-web-a.md) describes how to move the pin forward and repair the patch.
 

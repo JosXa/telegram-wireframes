@@ -6,7 +6,7 @@ Renders Telegram bot chats from Bot API JSON with Telegram Web A's own renderer,
 
 **Wireframe a Telegram bot by writing the messages it will send, and see them the way Telegram draws them.**
 
-- **Fixtures reuse bot output.** A fixture is a list of messages written with Bot API field names: `text`, `entities`, `photo`, `caption`, `reply_markup`. Bot code can emit fixtures from the same objects it passes to grammY or any other library, so a wireframe turns into real screen code and real screen code turns back into wireframes.
+- **Fixtures reuse bot output.** A fixture is a list of messages written with Bot API field names: `text`, `entities`, `photo`, `widget`, `caption`, `reply_markup`. Bot code can emit fixtures from the same objects it passes to grammY or any other library, so a wireframe turns into real screen code and real screen code turns back into wireframes.
 - **Telegram does the drawing.** The renderer is [Telegram Web A](https://github.com/Ajaxy/telegram-tt) running its mocked client, with a small patch and our loader injected. This project never redraws Telegram UI. Use Web A as the reference and accept differences to the iOS and Android apps for wireframing.
 - **Offline and deterministic.** No account, no network, no Telegram servers. One command turns fixtures into PNGs, so wireframes can live next to the bot code and run in CI.
 - **Current with Telegram.** Telegram ships new chat features often, and Web A follows. Use `/update-web-a` to keep the pinned Web A commit current.
@@ -20,6 +20,8 @@ Renders Telegram bot chats from Bot API JSON with Telegram Web A's own renderer,
 - `parse_mode: "HTML"` and `"MarkdownV2"` as an alternative to hand-written entities.
 - Group chats with several members and bots, inline query results.
 - Storyboards: a sequence of states (edits, button presses) rendered as frames or a short video.
+- Widget interaction: answers to `TelegramWidget.request()` and `chatDataChanged` updates, so a tap can move a widget to its next state.
+- Native widget rendering once Web A supports widgets, replacing the iframe approximation.
 
 ## Layout
 
@@ -28,9 +30,9 @@ Renders Telegram bot chats from Bot API JSON with Telegram Web A's own renderer,
 | `src/fixture.ts` | Fixture types, a Bot API subset. Copied into Web A, so it has no imports. |
 | `src/validate.ts` | Fixture checks that run before rendering. |
 | `src/upstream.ts` | Fetches the pinned Web A commit into `.cache/web-a`, applies the patch, injects `inject/`, installs and builds. |
-| `src/server.ts` | Serves the Web A build and the fixtures under `/__wireframes__/`. |
+| `src/server.ts` | Serves the Web A build, the fixtures under `/__wireframes__/`, and the widget host page outside Web A's content security policy. |
 | `src/render.ts` | Playwright screenshots, one per fixture and theme. |
-| `inject/` | Our code that runs inside Web A's worker: fixture loader, Bot API → TL converter, language pack. Copied to `src/lib/gramjs/client/wireframes/` in Web A. |
+| `inject/` | Our code inside Web A: fixture loader, Bot API → TL converter and language pack in the worker, and the widget frame (`Widget.tsx`) on the main thread. Copied to `src/lib/gramjs/client/wireframes/` in Web A. |
 | `patches/web-a.patch` | The only changes to Web A's own files. |
 | `upstream.json` | Pinned Web A repository, branch and commit. |
 | `examples/` | Reference fixtures. Every update must still render them. |
@@ -53,6 +55,9 @@ Each hunk in `patches/web-a.patch` and its purpose, so conflicts can be resolved
 - `MockClient`: no-op stubs for methods the real `TelegramClient` gained after the mock was written (`setIsPremium` and others).
 - `MockClient` `upload.GetFile`: honors `offset` and `limit`. Returning the whole file per part corrupts images larger than one part.
 - `createMockedPhoto`: reads `w` and `h` from the mock document for the photo sizes.
+- `MediaContent.wireframeWidget` and `buildMessageContent`: carry the widget that `inject/loader.ts` puts on the mock message into the message content. Web A has no widget media yet; replace these hunks with its own type once it does.
+- `buildContentClassName`: treats a widget as invertible media, so the bubble gets the media layout and `show_caption_above_media` works.
+- `Message.tsx`: renders `inject/Widget.tsx` in the media slot before photos and counts it as media after text for captions above.
 
 Requests that Web A needs to boot and the stock mock leaves unanswered are answered in `inject/loader.ts`, not in the patch.
 

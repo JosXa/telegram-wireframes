@@ -6,6 +6,16 @@ import type { Fixture } from "./fixture";
 import { reviewHandler } from "./review";
 import { validateFixture } from "./validate";
 
+const WIDGET_HOST = `<!doctype html><script>
+addEventListener("message", (event) => {
+	if (event.source !== parent || typeof event.data?.wireframeWidgetDocument !== "string") return;
+	document.open();
+	document.write(event.data.wireframeWidgetDocument);
+	document.close();
+});
+parent.postMessage({ wireframeWidgetHost: 1 }, "*");
+</script>`;
+
 export type RegisteredFixture = {
 	name: string;
 	path: string;
@@ -65,6 +75,9 @@ export function startServer({
 
 			if (pathname === "/__wireframes__/config.json")
 				return Response.json({ debug, revision }, { headers: { "Cache-Control": "no-store" } });
+
+			if (pathname === "/__wireframes__/widget.html")
+				return new Response(WIDGET_HOST, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 
 			const fixtureMatch = pathname.match(/^\/__wireframes__\/fixtures\/([^/]+)\/(.+)$/);
 			if (fixtureMatch) {

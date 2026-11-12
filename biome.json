@@ -7,7 +7,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/*.patch"]
+		"includes": ["**", "!**/*.patch", "!examples/*/widget.html"]
 	},
 	"formatter": {
 		"enabled": true,

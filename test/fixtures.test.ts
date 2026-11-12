@@ -38,6 +38,22 @@ describe("validateFixture", () => {
 		await expect(validateFixture(fixture, "/tmp/x.json")).rejects.toThrow("photo not found");
 	});
 
+	test("accepts the widget example with its HTML file", async () => {
+		const fixtures = await registerFixtures(["examples/fleet-movement/fixture.json"]);
+		expect([...fixtures.keys()]).toEqual(["fleet-movement"]);
+	});
+
+	test("rejects widget HTML over the compressed size limit", async () => {
+		const noise = Array.from({ length: 6000 }, (_, index) => ((index * 7919) % 65521).toString(36)).join("");
+		const fixture: Fixture = { ...minimal, messages: [{ from: "bot", widget: { html: `<p>${noise}</p>` } }] };
+		await expect(validateFixture(fixture, "/tmp/x.json")).rejects.toThrow("after zlib level 9, over 4096");
+	});
+
+	test("rejects widgets from the user", async () => {
+		const fixture: Fixture = { ...minimal, messages: [{ from: "user", widget: { html: "<p>Hi</p>" } }] };
+		await expect(validateFixture(fixture, "/tmp/x.json")).rejects.toThrow("only bot messages carry widgets");
+	});
+
 	test("rejects text mixed with a caption", async () => {
 		const fixture: Fixture = { ...minimal, messages: [{ from: "bot", text: "a", caption: "b" }] };
 		await expect(validateFixture(fixture, "/tmp/x.json")).rejects.toThrow("mixes text");

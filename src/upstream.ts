@@ -50,7 +50,7 @@ async function readText(path: string) {
 }
 
 async function injectFiles() {
-	const files = (await readdir(paths.injectDir)).filter((name) => name.endsWith(".ts")).sort();
+	const files = (await readdir(paths.injectDir)).filter((name) => /\.tsx?$/.test(name)).sort();
 	return [...files.map((name) => join(paths.injectDir, name)), paths.fixtureTypes];
 }
 
@@ -153,7 +153,7 @@ export async function typecheck() {
 /** Writes the changes made to tracked Web A files back to patches/web-a.patch. */
 export async function savePatch() {
 	// Web A commits its build output, so dist/ is excluded.
-	const diff = await $`git -C ${WEB_A} diff -- . ${":(exclude)dist"}`.text();
+	const diff = await $`git -C ${WEB_A} diff HEAD -- . ${":(exclude)dist"}`.text();
 	await Bun.write(paths.patchFile, diff);
 	await Bun.write(paths.buildStamp, await buildKey(await readUpstream()));
 	const files = diff.match(/^diff --git a\/(\S+)/gm)?.map((line) => line.split(" ")[2].slice(2)) ?? [];

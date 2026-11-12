@@ -1,3 +1,108 @@
+diff --git a/src/api/gramjs/apiBuilders/messageContent.ts b/src/api/gramjs/apiBuilders/messageContent.ts
+index fddbdfa..37867d2 100644
+--- a/src/api/gramjs/apiBuilders/messageContent.ts
++++ b/src/api/gramjs/apiBuilders/messageContent.ts
+@@ -89,6 +89,9 @@ export function buildMessageContent(
+     };
+   }
+ 
++  const { wireframeWidget } = mtpMessage as { wireframeWidget?: MediaContent['wireframeWidget'] };
++  if (wireframeWidget) content = { ...content, wireframeWidget };
++
+   const hasUnsupportedMedia = mtpMessage.media instanceof GramJs.MessageMediaUnsupported;
+ 
+   if (!richMessage && mtpMessage.message && !hasUnsupportedMedia
+diff --git a/src/api/types/messages.ts b/src/api/types/messages.ts
+index b032121..7f75917 100644
+--- a/src/api/types/messages.ts
++++ b/src/api/types/messages.ts
+@@ -4,6 +4,7 @@ import type {
+   ApiBotInlineResult,
+   ApiWebDocument,
+ } from './bots';
++import type { WireframeWidget } from '../../lib/gramjs/client/wireframes/Widget';
+ import type { ApiInstantViewPage } from './instantView';
+ import type { ApiMessageAction } from './messageActions';
+ import type { ApiAttachment, ApiPeerNotifySettings, ApiRestrictionReason } from './misc';
+@@ -724,6 +725,7 @@ export interface ApiComposedMessageWithAI {
+ }
+ 
+ export type MediaContent = {
++  wireframeWidget?: WireframeWidget;
+   text?: ApiFormattedTextWithEmojiOnlyCount;
+   richMessage?: ApiRichMessage;
+   photo?: ApiPhoto;
+diff --git a/src/components/middle/message/Message.tsx b/src/components/middle/message/Message.tsx
+index 201050b..1ab5f93 100644
+--- a/src/components/middle/message/Message.tsx
++++ b/src/components/middle/message/Message.tsx
+@@ -209,6 +209,7 @@ import MessageMeta from './MessageMeta';
+ import MessagePhoneCall from './MessagePhoneCall';
+ import PaidMediaOverlay from './PaidMediaOverlay';
+ import Photo from './Photo';
++import WireframeWidget from '../../../lib/gramjs/client/wireframes/Widget';
+ import Poll from './poll/Poll';
+ import Reactions from './reactions/Reactions';
+ import RoundVideo from './RoundVideo';
+@@ -612,7 +613,7 @@ const Message = ({
+     voice, document, sticker, contact,
+     invoice, location,
+     action, game, storyData, giveaway,
+-    giveawayResults, todo, dice,
++    giveawayResults, todo, dice, wireframeWidget,
+   } = getMessageContent(message);
+ 
+   const withVoiceTranscription = Boolean(!isTranscriptionHidden && (isTranscriptionError || transcribedText));
+@@ -1564,7 +1565,7 @@ const Message = ({
+       outgoingStatus && 'with-outgoing-icon',
+     );
+ 
+-    const hasMediaAfterText = isAlbum || (!isAlbum && photo) || (!isAlbum && video && !isRoundVideo);
++    const hasMediaAfterText = wireframeWidget || isAlbum || (!isAlbum && photo) || (!isAlbum && video && !isRoundVideo);
+     const hasContentAfterText = hasMediaAfterText || (!hasAnimatedEmoji && hasFactCheck);
+     const isMetaInText = metaPosition === 'in-text';
+ 
+@@ -1640,6 +1641,13 @@ const Message = ({
+             onMediaClick={handleAlbumMediaClick}
+           />
+         )}
++        {wireframeWidget && (
++          <WireframeWidget
++            content={wireframeWidget}
++            theme={theme}
++            hasCaptionBelow={Boolean(hasText) && !isInvertedMedia}
++          />
++        )}
+         {!isAlbum && photo && (
+           <Photo
+             photo={photo}
+diff --git a/src/components/middle/message/helpers/buildContentClassName.ts b/src/components/middle/message/helpers/buildContentClassName.ts
+index 5e77342..35d4b3b 100644
+--- a/src/components/middle/message/helpers/buildContentClassName.ts
++++ b/src/components/middle/message/helpers/buildContentClassName.ts
+@@ -51,7 +51,7 @@ export function buildContentClassName(
+   const {
+     photo = paidMediaPhoto, video = paidMediaVideo,
+     audio, voice, document, contact, location, invoice, storyData,
+-    giveaway, giveawayResults, richMessage,
++    giveaway, giveawayResults, richMessage, wireframeWidget,
+   } = content;
+   const hasRichMessageAudio = Boolean(richMessage && getRichMessageAudios(richMessage).ids.length);
+   const text = album?.hasMultipleCaptions ? undefined : getMessageContent(album?.captionMessage || message).text;
+@@ -59,11 +59,11 @@ export function buildContentClassName(
+ 
+   const isRoundVideo = video?.mediaType === 'video' && video.isRound;
+   const isInvertedMedia = message.isInvertedMedia;
+-  const isInvertibleMedia = photo || (video && !isRoundVideo) || album || webPage;
++  const isInvertibleMedia = photo || (video && !isRoundVideo) || album || webPage || wireframeWidget;
+ 
+   const classNames = [MESSAGE_CONTENT_CLASS_NAME];
+   const pollMedia = poll?.attachedMedia;
+-  const isMedia = storyData || photo || video || location || invoice?.extendedMedia || paidMedia
++  const isMedia = wireframeWidget || storyData || photo || video || location || invoice?.extendedMedia || paidMedia
+     || pollMedia?.photo || pollMedia?.video || pollMedia?.location;
+   const hasText = text || location?.mediaType === 'venue' || isGeoLiveActive || hasFactCheck || poll;
+   const isMediaWithNoText = isMedia && !hasText;
 diff --git a/src/lib/gramjs/client/MockClient.ts b/src/lib/gramjs/client/MockClient.ts
 index 92cf47b..e270e13 100644
 --- a/src/lib/gramjs/client/MockClient.ts

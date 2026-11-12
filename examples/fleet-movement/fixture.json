@@ -1,0 +1,37 @@
+{
+	"bot": {
+		"first_name": "Space Emperors",
+		"username": "spaceemperorsbot",
+		"description": "Persistent space strategy. Build, scout, raid.",
+		"color": 5,
+		"commands": [
+			{
+				"command": "planet",
+				"description": "Your current planet"
+			},
+			{
+				"command": "build",
+				"description": "Buildings and upgrades"
+			},
+			{
+				"command": "fleet",
+				"description": "Fleets in flight"
+			}
+		]
+	},
+	"user": {
+		"first_name": "Joscha"
+	},
+	"now": "2026-11-10T21:02:00+01:00",
+	"messages": [
+		{
+			"from": "bot",
+			"widget": {
+				"html": "widget.html",
+				"width": 320,
+				"chat_data": "{\"v\":1,\"p\":\"o\",\"m\":\"a\",\"o\":\"Lulu\",\"oc\":\"1:1:3\",\"t\":\"Ash\",\"tc\":\"1:4:2\",\"w\":\"Korvin\",\"d\":1794339600000,\"a\":1794343720000,\"f\":[[\"Strike ship\",12],[\"Raiding ship\",6]]}"
+			},
+			"caption": "⚔️ Your fleet is on its way to Ash, 🌐 1:4:2, and arrives at 21:49."
+		}
+	]
+}

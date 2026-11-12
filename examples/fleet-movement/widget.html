@@ -1,0 +1,86 @@
+<style>
+body{margin:0;padding:10px 12px;font-variant-numeric:tabular-nums}
+h1{margin:0;font-size:16px;font-weight:600}
+.s{color:var(--tg-theme-hint-color);font-size:13px}
+svg{display:block;width:100%;margin:4px 0 2px}
+.rt{fill:none;stroke:var(--tg-theme-hint-color);stroke-width:1.5;stroke-dasharray:3 5}
+#dn{fill:none;stroke:var(--tg-theme-link-color);stroke-width:2;stroke-linecap:round}
+.st{fill:var(--tg-theme-hint-color)}
+#hm{fill:var(--tg-theme-link-color)}
+#tg{fill:var(--tg-theme-hint-color)}
+.foe #tg{fill:var(--tg-theme-destructive-text-color)}
+#pg{fill:none;stroke-width:1.5;stroke:none;transform-box:fill-box;transform-origin:center}
+.foe.pl #pg{animation:p 1.6s ease-out infinite}
+@keyframes p{0%{stroke:var(--tg-theme-destructive-text-color);transform:scale(1)}100%{stroke:var(--tg-theme-bg-color);transform:scale(2.4)}}
+.lb{fill:var(--tg-theme-text-color);font-size:11px}
+#sh{fill:var(--tg-theme-text-color);transition:transform 1s linear}
+.k{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:2px 0 4px}
+.k b{font-size:22px;font-weight:600}
+.row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--tg-theme-section-separator-color)}
+.bar{height:4px;border-radius:2px;background:var(--tg-theme-secondary-bg-color);margin:0 0 8px}
+.bar i{display:block;height:100%;border-radius:2px;background:var(--tg-theme-destructive-text-color);transition:width 1s linear}
+#b{display:block;width:100%;margin-top:6px}
+#ms{color:var(--tg-theme-destructive-text-color);font-size:13px;margin-top:6px}
+#ms:empty{display:none}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<h1 id="h"></h1>
+<div class="s" id="sub"></div>
+<svg id="sv" viewBox="0 0 296 78">
+<g id="sk"></g>
+<path class="rt" d="M22 54Q148 0 274 40"/>
+<polyline id="dn"/>
+<circle id="pg" cx="274" cy="40" r="6"/>
+<circle id="hm" cx="22" cy="54" r="6"/>
+<circle id="tg" cx="274" cy="40" r="6"/>
+<text class="lb" id="on" x="12" y="73"></text>
+<text class="lb" id="tn" x="284" y="59" text-anchor="end"></text>
+<path id="sh" d="M6 0-5-4.5-2.5 0-5 4.5Z"/>
+</svg>
+<div class="k" id="k"><span id="l"></span><span class="s" id="at"></span></div>
+<div class="bar" id="br"><i id="bf"></i></div>
+<div class="row" id="lr"><span id="ll"></span><span id="lv"></span></div>
+<div class="row" id="lu"></div>
+<button id="b"></button>
+<div id="ms"></div>
+<script>
+const W=window.TelegramWidget,$=i=>document.getElementById(i),C=$('sv').classList;
+let s={},pend=0,q=7;
+const load=()=>{try{s=JSON.parse(W.chatData)||{}}catch(e){s={}}pend=0};
+const R=()=>(q=q*16807%2147483647)/2147483647;
+$('sk').innerHTML=Array.from({length:16},()=>`<circle class="st" cx="${R()*296|0}" cy="${R()*78|0}" r="${(R()*.8+.3).toFixed(1)}"/>`).join('');
+const pt=u=>{const v=1-u;return[v*v*22+296*v*u+u*u*274,v*v*54+u*u*40]};
+const clk=t=>'at '+new Date(t).toLocaleTimeString(navigator.language,{hour:'2-digit',minute:'2-digit'});
+const p2=n=>String(n).padStart(2,'0');
+const dur=ms=>{const t=Math.max(0,Math.ceil(ms/1e3)),h=t/3600|0,m=t%3600/60|0;return h>23?(h/24|0)+' d '+h%24+' h':(h?h+':'+p2(m):m)+':'+p2(t%60)};
+const fmt=n=>{n=Math.trunc(n);if(n<1e5)return(''+n).replace(/\B(?=(\d{3})+$)/g,'\xa0');let i=0;while(n>=1e3&&i<6){n/=1e3;i++}return Math.trunc(n*10)/10+['','K','M','B','T','Qa','Qi'][i]};
+const M={a:'⚔️ Attack on ',t:'📦 Transport to ',r:'🛡️ Reinforcements for '};
+const tx=(i,t)=>$(i).textContent=t,hd=(i,h)=>$(i).hidden=h;
+function draw(){
+const n=Date.now(),p=s.p,f=s.f||[],l=s.l;
+let u,bk=1,lab,num,at,sub;
+tx('h',(M[s.m]||'')+s.t);tx('on',s.o);tx('tn',s.t);
+C.toggle('foe',s.m=='a');C.toggle('pl',p=='o'||p=='b');
+if(p=='o'){bk=0;u=(n-s.d)/(s.a-s.d);sub=s.w+' · 🌐 '+s.tc;lab='Arrival in';num=dur(s.a-n);at=clk(s.a)}
+else if(p=='b'){bk=0;u=1;const i=Math.min(s.n,((n-s.a)/6e4|0)+1);sub='Battle above '+s.t+' · 🌐 '+s.tc;lab='Round';num=i+' of '+s.n;at=i<s.n?'next in '+dur(s.a+i*6e4-n):'last round';$('bf').style.width=Math.min(100,(n-s.a)/(s.n-1)/600)+'%'}
+else{u=Math.min(1,(s.b-s.d)/(s.a-s.d))*(1-(n-s.b)/(s.e-s.b));lab='Back in';num=dur(s.e-n);at=clk(s.e);sub=p=='d'?'Back at '+s.o+' · 🌐 '+s.oc:p=='r'?'Recalled '+clk(s.b)+', flying home to '+s.o:'Flying home to '+s.o+' · 🌐 '+s.oc}
+const U=v=>.07+.85*Math.min(1,Math.max(0,v)),u0=bk?U((Math.min(s.b,s.a)-s.d)/(s.a-s.d)):.07;u=U(u);
+const[x,y]=pt(u),[x2,y2]=pt(u+.01),pts=[];
+for(let j=0;j<=20;j++)pts.push(pt(u0+(u-u0)*j/20).map(v=>v.toFixed(1)).join(','));
+$('dn').setAttribute('points',pts.join(' '));
+$('sh').style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${(Math.atan2(y2-y,x2-x)*57.3+bk*180).toFixed(1)}deg)`;
+$('sh').style.display=p=='d'?'none':'';tx('sub',sub);$('l').innerHTML=lab+' <b>'+num+'</b>';tx('at',at);
+hd('k',p=='d');hd('br',p!='b');
+hd('lr',!l||p!='h'&&p!='d');tx('ll',p=='d'?'Loot delivered':'Returning loot');if(l)tx('lv','💠 '+fmt(l[0])+' · 🔥 '+fmt(l[1]));
+tx('lu',f.map(z=>z[0]+' × '+z[1]).join(' · '));
+const b=$('b');hd('b',!(p=='o'&&n<s.a||p=='b'));b.disabled=pend;
+tx('b',p=='b'?'⚔️ Watch the battle':pend?'↩️ Recalling…':'↩️ Recall');
+}
+$('b').onclick=()=>{if(!W)return;const k=s.p=='o'?'recall':'battle';tx('ms','');if(k=='recall'){pend=1;draw()}
+W.request(k).then(r=>{if(r.result&&r.result!='ok')fail(r.result)},()=>fail("The order didn't reach the fleet. Try again."))};
+const fail=t=>{pend=0;tx('ms',t);draw()};
+if(W){load();W.onEvent('chatDataChanged',()=>{load();draw()})}
+draw();setInterval(draw,1e3);
+W&&W.ready();
+</script>
